@@ -7,3 +7,6 @@
 [submodule "code/extlibs/spdlog"]
 	path = code/extlibs/spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "code/extlibs/json"]
+	path = code/extlibs/json
+	url = https://github.com/nlohmann/json
