@@ -4,3 +4,6 @@
 [submodule "code/extlibs/dynamic_bitset"]
 	path = code/extlibs/dynamic_bitset
 	url = https://github.com/pinam45/dynamic_bitset
+[submodule "code/extlibs/spdlog"]
+	path = code/extlibs/spdlog
+	url = https://github.com/gabime/spdlog
