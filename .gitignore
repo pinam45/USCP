@@ -11,6 +11,15 @@ code/cmake-build-*/
 
 code/ide/VS*/
 
+
+########################
+### Problem instances
+########################
+
+code/resources/OR-Library/*.txt
+code/resources/steiner-triple-covering/data.*
+code/resources/steiner-triple-covering/README
+
 ########################
 ### Latex
 ########################
