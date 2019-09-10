@@ -25,6 +25,7 @@ cmutils_set_classic_output_folders()
 include(cmake/dynamic_bitset.cmake)
 include(cmake/spdlog.cmake)
 include(cmake/json.cmake)
+include(cmake/inja.cmake)
 
 # Declare solver
 add_executable(solver)
@@ -48,6 +49,7 @@ target_link_libraries(
   dynamic_bitset
   spdlog
   nlohmann_json
+  inja
 )
 
 # Link threads library
