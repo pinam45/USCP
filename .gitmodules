@@ -10,3 +10,6 @@
 [submodule "code/extlibs/json"]
 	path = code/extlibs/json
 	url = https://github.com/nlohmann/json
+[submodule "code/extlibs/inja"]
+	path = code/extlibs/inja
+	url = https://github.com/pantor/inja
