@@ -37,6 +37,14 @@ std::ostream& uscp::problem::operator<<(std::ostream& os,
 void uscp::problem::to_json(nlohmann::json& j, const uscp::problem::instance& instance)
 {
 	nlohmann::json json;
+	if(instance.info != nullptr)
+	{
+		json["info"] = *instance.info;
+	}
+	else
+	{
+		json["info"] = "";
+	}
 	json["points_number"] = instance.points_number;
 	json["subsets_number"] = instance.subsets_number;
 	for(size_t i = 0; i < instance.subsets_points.size(); ++i)

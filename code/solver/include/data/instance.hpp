@@ -34,6 +34,7 @@ namespace uscp::problem
 
 	struct instance final
 	{
+		const instance_info* info = nullptr;
 		size_t points_number = 0;
 		size_t subsets_number = 0;
 		std::vector<dynamic_bitset<>> subsets_points;

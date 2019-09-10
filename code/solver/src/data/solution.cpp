@@ -68,6 +68,7 @@ void uscp::to_json(nlohmann::json& j, const uscp::solution& solution)
 	json["selected_subsets_numbers"] = std::move(selected_subsets_numbers);
 
 	json["selected_subsets"] = solution.selected_subsets.to_string();
+	json["selected_subsets_number"] = solution.selected_subsets.count();
 	json["covered_points"] = solution.covered_points.to_string();
 	json["cover_all_points"] = solution.cover_all_points;
 	j = std::move(json);

@@ -63,6 +63,7 @@ namespace uscp::problem::sts
 	  STS_INSTANCES_TABLE(_EXPAND_AS_INSTANCE_INFO)};
 
 	bool read(const std::filesystem::path& path, uscp::problem::instance& instance) noexcept;
+	bool read(const uscp::problem::instance_info& info, uscp::problem::instance& instance) noexcept;
 
 	bool write(const uscp::problem::instance& instance,
 	           const std::filesystem::path& path,

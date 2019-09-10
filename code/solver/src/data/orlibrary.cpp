@@ -55,7 +55,7 @@ bool uscp::problem::orlibrary::read(const std::filesystem::path& path,
 	}
 
 	LOGGER->info("Started to read problem instance from file {}", path);
-	uscp::problem::instance instance;
+	uscp::problem::instance instance = instance_out;
 
 	// Read points number
 	size_t points_number = 0;
@@ -141,6 +141,31 @@ bool uscp::problem::orlibrary::read(const std::filesystem::path& path,
 	             subsets_number,
 	             elapsed_seconds.count());
 
+	return true;
+}
+
+bool uscp::problem::orlibrary::read(const uscp::problem::instance_info& info,
+                                    uscp::problem::instance& instance) noexcept
+{
+	instance.info = &info;
+	if(!read(info.file, instance))
+	{
+		return false;
+	}
+	if(info.points != instance.points_number)
+	{
+		LOGGER->warn(
+		  "Instance have invalid points number, instance information: {}, instance read: {}",
+		  info,
+		  instance);
+		return false;
+	}
+	if(info.subsets != instance.subsets_number)
+	{
+		LOGGER->warn(
+		  "Invalid subsets number, instance information: {}, instance read: {}", info, instance);
+		return false;
+	}
 	return true;
 }
 

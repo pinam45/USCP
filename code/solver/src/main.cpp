@@ -19,8 +19,7 @@ namespace
 {
 	constexpr bool CHECK_INSTANCES = false;
 	constexpr bool GENERATE_PROBLEM = false;
-	//constexpr const char* PROBLEM_FILE_PATH = "resources/OR-Library/scp41.txt";
-	constexpr const char* PROBLEM_FILE_PATH = "resources/steiner-triple-covering/data.27";
+	constexpr const uscp::problem::instance_info& INSTANCE_INFO = uscp::problem::sts::instances[2];
 
 	void check_instances() noexcept
 	{
@@ -69,7 +68,7 @@ int main()
 		}
 		else
 		{
-			if(!uscp::problem::sts::read(PROBLEM_FILE_PATH, problem_instance))
+			if(!uscp::problem::sts::read(INSTANCE_INFO, problem_instance))
 			{
 				LOGGER->error("Failed to read problem");
 				return EXIT_FAILURE;
