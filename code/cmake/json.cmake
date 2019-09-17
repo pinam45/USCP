@@ -10,6 +10,7 @@ endif()
 
 # Include json
 set(JSON_BuildTests OFF CACHE INTERNAL "")
+set(BUILD_TESTING OFF CACHE INTERNAL "")
 add_subdirectory(${JSON_DIR})
 if(NOT TARGET nlohmann_json)
 	message(FATAL_ERROR "nlohmann_json target is missing")
