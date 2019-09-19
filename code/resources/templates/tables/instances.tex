@@ -1,0 +1,22 @@
+%!TEX root = ../main.tex
+\rowcolors{1}{gray!10}{white}
+\begin{longtable}{*{6}{c}}
+	\hiderowcolors
+	\caption{<<name>> instances}
+	\label{table:<<name>>}\\
+	\toprule
+	Instance & Rows & Columns & Density & Cost range & BKS\\
+	\midrule
+	\endfirsthead
+	\caption[]{<<name>> instances (continued)}\\
+	\toprule
+	Instance & Rows & Columns & Density & Cost range & BKS\\
+	\midrule
+	\endhead
+	\bottomrule
+	\endfoot
+	\showrowcolors
+	<* for instance in instances *>
+	<<instance/info/name>> & <<instance/info/points>> & <<instance/info/subsets>> & <<instance/info/density>> & [<<instance/info/cost_min>>;<<instance/info/cost_max>>] & <<instance/info/bks>>\\
+	<* endfor *>
+\end{longtable}

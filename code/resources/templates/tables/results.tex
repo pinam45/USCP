@@ -1,0 +1,22 @@
+%!TEX root = ../main.tex
+\rowcolors{1}{gray!10}{white}
+\begin{longtable}{*{<<add(2, length(solutions_groups_names))>>}{c}}
+	\hiderowcolors
+	\caption{<<name>> instances results}
+	\label{table:<<name>>}\\
+	\toprule
+	Instance & BKS <* for solutions_group_name in solutions_groups_names*>& <<solutions_group_name>><* endfor *>\\
+	\midrule
+	\endfirsthead
+	\caption[]{<<name>> instances results (continued)}\\
+	\toprule
+	Instance & BKS <* for solutions_group_name in solutions_groups_names*>& <<solutions_group_name>><* endfor *>\\
+	\midrule
+	\endhead
+	\bottomrule
+	\endfoot
+	\showrowcolors
+<* for instance in instances *>
+	<<instance/info/name>> & <<instance/info/bks>><* for solutions_group_name in solutions_groups_names*><* for solutions_group in instance/solutions_groups*><* if solutions_group/name == solutions_group_name *>& <* for solution in solutions_group/solutions *><* if not loop/is_first *>, <* endif *><* if solution/selected_subsets_number <= instance/info/bks *>\textbf{<<solution/selected_subsets_number>>}<* else *><<solution/selected_subsets_number>><* endif *><* endfor *><* endif *><* endfor *><* endfor *>\\
+<* endfor *>
+\end{longtable}

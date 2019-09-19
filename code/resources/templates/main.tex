@@ -1,0 +1,112 @@
+%!TEX program = lualatex
+\documentclass[12pt,a4paper,twoside]{article}
+
+%----------------------------------------
+% Packages
+%----------------------------------------
+
+% Programming facilities
+\usepackage{etoolbox}
+\usepackage{ifxetex}
+\usepackage{ifluatex}
+% Encoding
+\usepackage[T1]{fontenc}
+\ifboolexpr{bool{xetex} or bool{luatex}}{%
+	\usepackage{fontspec}
+}{%
+	\usepackage[utf8]{inputenc}
+}
+% General purpose
+\usepackage[english]{babel}
+\usepackage[top=2cm, bottom=1.8cm, left=1.8cm, right=1.8cm, head=14pt, foot=36pt]{geometry}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage[table]{xcolor}
+\usepackage{float}
+% Mathematics
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathrsfs}
+\usepackage{amsthm}
+\usepackage{dsfont}
+\usepackage{braket}
+\usepackage{stmaryrd}
+% Tables
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{ltablex}
+\usepackage{tabu}
+\usepackage{booktabs}
+\usepackage{multirow}
+% PGF-TikZ
+\usepackage{pgf}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usepackage{tikz}
+\usepackage[mode=tex]{standalone}
+\usepackage{import}
+
+%----------------------------------------
+% Informations
+%----------------------------------------
+
+% Cover infos
+\title{<<default(title,"")>>}
+\author{<<default(author,"")>>}
+\date{<<default(date,"\\today")>>}
+
+% Fancy style options
+\lhead{\small <<default(title,"")>>}
+\rhead{\small <<default(date,"\\today")>>}
+\chead{}
+\lfoot{\url{https://github.com/pinam45/USCP}}
+\rfoot{\thepage}
+\cfoot{}
+\pagestyle{fancy}
+
+%----------------------------------------
+% Tables
+%----------------------------------------
+
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+
+%----------------------------------------
+% Plots
+%----------------------------------------
+
+\pgfplotsset{
+  table/search path={./plots},
+}
+
+%----------------------------------------
+% Links
+%----------------------------------------
+
+% Links config, especialy for the table of contents
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  linktoc=all,
+  citecolor=black
+}
+
+%----------------------------------------
+% Document
+%----------------------------------------
+\begin{document}
+	\maketitle{}
+	\section{Instances}
+		<* for instances_group in instances_groups *>
+		\input{./tables/<<instances_group/instances_table_path>>}
+		<* endfor *>
+	\section{Results}
+		<* for instances_group in instances_groups *>
+		\input{./tables/<<instances_group/results_table_path>>}
+		<* endfor *>
+\end{document}
