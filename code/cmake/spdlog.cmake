@@ -11,8 +11,8 @@ endif()
 # Include spdlog
 set(SPDLOG_BUILD_EXAMPLES OFF CACHE BOOL "")
 add_subdirectory(${SPDLOG_DIR})
-if(NOT TARGET spdlog)
-	message(FATAL_ERROR "spdlog target is missing")
+if(NOT TARGET spdlog_header_only)
+	message(FATAL_ERROR "spdlog_header_only target is missing")
 endif()
 
 # Set target IDE folder
@@ -22,8 +22,8 @@ if(TARGET spdlog_headers_for_ide)
 endif()
 
 # Disable warnings on spdlog headers
-get_target_property(spdlog_include_directories spdlog INTERFACE_INCLUDE_DIRECTORIES)
-set_target_properties(spdlog PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "")
-target_include_directories(spdlog SYSTEM INTERFACE ${spdlog_include_directories})
+get_target_property(spdlog_include_directories spdlog_header_only INTERFACE_INCLUDE_DIRECTORIES)
+set_target_properties(spdlog_header_only PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "")
+target_include_directories(spdlog_header_only SYSTEM INTERFACE ${spdlog_include_directories})
 
 message(STATUS "Configuring spdlog - Done")

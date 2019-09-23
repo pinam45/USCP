@@ -47,7 +47,7 @@ target_include_directories(
 target_link_libraries(
   solver PRIVATE
   dynamic_bitset
-  spdlog
+  spdlog_header_only
   nlohmann_json
   inja
 )
