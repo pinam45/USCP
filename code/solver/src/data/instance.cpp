@@ -9,8 +9,7 @@
 #include "utils/logger.hpp"
 #include "utils/ostream_config_guard.hpp"
 #include "utils/format.hpp"
-
-#include <chrono>
+#include "utils/timer.hpp"
 
 void uscp::problem::to_json(nlohmann::json& j, const uscp::problem::instance& instance)
 {
@@ -48,7 +47,7 @@ uscp::problem::instance uscp::problem::generate(std::string_view name,
 	assert(min_covering_subsets <= max_covering_subsets);
 	assert(max_covering_subsets <= subsets_number);
 
-	const auto start = std::chrono::system_clock::now();
+	const timer timer;
 
 	instance instance;
 	instance.name = name;
@@ -78,12 +77,10 @@ uscp::problem::instance uscp::problem::generate(std::string_view name,
 		}
 	}
 
-	const auto end = std::chrono::system_clock::now();
-	const std::chrono::duration<double> elapsed_seconds = end - start;
 	LOGGER->info("successfully generated problem instance with {} points and {} subsets in {}s",
 	             points_number,
 	             subsets_number,
-	             elapsed_seconds.count());
+	             timer.elapsed());
 
 	return instance;
 }

@@ -8,9 +8,9 @@
 #include "algorithms/rwls.hpp"
 #include "algorithms/greedy.hpp"
 #include "utils/logger.hpp"
+#include "utils/timer.hpp"
 
 #include <vector>
-#include <chrono>
 #include <deque>
 
 //#define NDEBUG_SCORE
@@ -429,7 +429,7 @@ uscp::solution uscp::rwls::solve(const uscp::problem::instance& problem,
                                  random_engine& generator,
                                  size_t steps_number)
 {
-	const auto start = std::chrono::system_clock::now();
+	const timer timer;
 
 	//TODO: preprocessing?
 
@@ -443,12 +443,10 @@ uscp::solution uscp::rwls::solve(const uscp::problem::instance& problem,
 		{
 			data.best_solution = data.current_solution;
 			data.best_solution_subset_numbers = data.best_solution.selected_subsets.count();
-			const auto now = std::chrono::system_clock::now();
-			const std::chrono::duration<double> elapsed_seconds = now - start;
 			SPDLOG_LOGGER_DEBUG(LOGGER,
 			                    "RWLS new best solution with {} subsets at {}s",
 			                    data.best_solution_subset_numbers,
-			                    elapsed_seconds.count());
+			                    timer.elapsed());
 
 			const size_t selected_subset = rwls_select_subset_no_timestamp(data);
 			rwls_remove_subset(data, selected_subset);
@@ -505,11 +503,10 @@ uscp::solution uscp::rwls::solve(const uscp::problem::instance& problem,
 		++step;
 	}
 
-	const auto end = std::chrono::system_clock::now();
-	const std::chrono::duration<double> elapsed_seconds = end - start;
-	LOGGER->info("Found RWLS solution with {} subsets in {}s",
+	LOGGER->info("Found RWLS solution to {} with {} subsets in {}s",
+	             problem.name,
 	             data.best_solution.selected_subsets.count(),
-	             elapsed_seconds.count());
+	             timer.elapsed());
 
 	return data.best_solution;
 }

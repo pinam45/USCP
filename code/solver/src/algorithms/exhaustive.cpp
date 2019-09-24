@@ -8,6 +8,7 @@
 #include "algorithms/exhaustive.hpp"
 #include "utils/logger.hpp"
 #include "utils/permutations.hpp"
+#include "utils/timer.hpp"
 
 uscp::solution uscp::exhaustive::solve(const uscp::problem::instance& problem)
 {
@@ -16,7 +17,7 @@ uscp::solution uscp::exhaustive::solve(const uscp::problem::instance& problem)
 	  "Started exhaustive search for problem instance with {} points and {} subsets",
 	  problem.points_number,
 	  problem.subsets_number);
-	const auto start = std::chrono::system_clock::now();
+	const timer timer;
 	solution current_solution(problem);
 
 	for(size_t bits_on = 0; bits_on <= problem.subsets_number && !current_solution.cover_all_points;
@@ -31,25 +32,24 @@ uscp::solution uscp::exhaustive::solve(const uscp::problem::instance& problem)
 		}
 	}
 
-	const auto end = std::chrono::system_clock::now();
-	const std::chrono::duration<double> elapsed_seconds = end - start;
 	if(!current_solution.cover_all_points)
 	{
 		LOGGER->warn(
 		  "Exhaustive search enumerated all possible solution and failed to find one covering all points in {}s",
-		  elapsed_seconds.count());
+		  timer.elapsed());
 	}
 	else
 	{
 		LOGGER->info("Found optimal solution by exhaustive search with {} subsets in {}s",
 		             current_solution.selected_subsets.count(),
-		             elapsed_seconds.count());
+		             timer.elapsed());
 	}
 	return current_solution;
 }
 
 uscp::solution uscp::exhaustive::solve_ram(const uscp::problem::instance& problem)
 {
+	(void)problem;
 	//TODO
 	assert(false);
 	return uscp::solution(problem::instance());

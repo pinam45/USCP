@@ -7,14 +7,14 @@
 //
 #include "data/instances/orlibrary/rail.hpp"
 #include "utils/logger.hpp"
+#include "utils/timer.hpp"
 
 #include <fstream>
-#include <chrono>
 
 bool uscp::problem::orlibrary::rail::read(const std::filesystem::path& path,
                                           uscp::problem::instance& instance_out) noexcept
 {
-	const auto start = std::chrono::system_clock::now();
+	const timer timer;
 
 	std::error_code error;
 	if(!std::filesystem::exists(path, error))
@@ -138,12 +138,10 @@ bool uscp::problem::orlibrary::rail::read(const std::filesystem::path& path,
 	// Success
 	instance_out = std::move(instance);
 
-	const auto end = std::chrono::system_clock::now();
-	const std::chrono::duration<double> elapsed_seconds = end - start;
 	LOGGER->info("Successfully read problem instance with {} points and {} subsets in {}s",
 	             points_number,
 	             subsets_number,
-	             elapsed_seconds.count());
+	             timer.elapsed());
 
 	return true;
 }

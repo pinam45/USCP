@@ -7,10 +7,11 @@
 //
 #include "algorithms/greedy.hpp"
 #include "utils/logger.hpp"
+#include "utils/timer.hpp"
 
 uscp::solution uscp::greedy::solve(const uscp::problem::instance& problem) noexcept
 {
-	const auto start = std::chrono::system_clock::now();
+	const timer timer;
 
 	solution solution(problem);
 	while(!solution.cover_all_points)
@@ -54,12 +55,11 @@ uscp::solution uscp::greedy::solve(const uscp::problem::instance& problem) noexc
 		//solution.compute_cost();
 	}
 
-	const auto end = std::chrono::system_clock::now();
-	const std::chrono::duration<double> elapsed_seconds = end - start;
 	SPDLOG_LOGGER_DEBUG(LOGGER,
-	                    "Found greedy solution with {} subsets in {}s",
+	                    "Found greedy solution to {} with {} subsets in {}s",
+	                    problem.name,
 	                    solution.selected_subsets.count(),
-	                    elapsed_seconds.count());
+	                    timer.elapsed());
 
 	return solution;
 }
