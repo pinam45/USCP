@@ -32,30 +32,31 @@ printer::printer() noexcept
 	});
 }
 
-void printer::add_instance(std::string_view instance_group, const uscp::problem::instance& instance)
+void printer::add_instance(std::string_view instance_group,
+                           const uscp::problem::instance_info& instance)
 {
+	assert(!instance_group.empty());
+	assert(!instance.name.empty());
 	// find or add group
-	auto it =
-	  std::find_if(std::begin(m_instances),
-	               std::end(m_instances),
-	               [&](const std::pair<std::string, std::vector<uscp::problem::instance>>& group) {
-		               return group.first == instance_group;
-	               });
+	auto it = std::find_if(
+	  std::begin(m_instances),
+	  std::end(m_instances),
+	  [&](const std::pair<std::string, std::vector<uscp::problem::instance_info>>& group) {
+		  return group.first == instance_group;
+	  });
 	if(it == std::end(m_instances))
 	{
-		m_instances.emplace_back(instance_group, std::vector<uscp::problem::instance>());
+		m_instances.emplace_back(instance_group, std::vector<uscp::problem::instance_info>());
 		it = --std::end(m_instances);
 	}
 
 	// find or add instance
-	if(instance.info == nullptr
-	   || std::find_if(std::begin(it->second),
-	                   std::end(it->second),
-	                   [&](const uscp::problem::instance& list_instance) {
-		                   return list_instance.info != nullptr
-		                          && list_instance.info->name == instance.info->name;
-	                   })
-	        == std::end(it->second))
+	if(std::find_if(std::begin(it->second),
+	                std::end(it->second),
+	                [&](const uscp::problem::instance_info& list_instance) {
+		                return list_instance.name == instance.name;
+	                })
+	   == std::end(it->second))
 	{
 		it->second.push_back(instance);
 	}
@@ -77,14 +78,16 @@ bool printer::generate_results() noexcept
 	  template_folder + std::string(config::partial::TABLES_TEMPLATE_SUBFOLDER);
 
 	std::error_code error;
-	if(!std::filesystem::create_directories(output_folder, error) || error)
+	std::filesystem::create_directories(output_folder, error);
+	if(error)
 	{
 		SPDLOG_LOGGER_DEBUG(
 		  LOGGER, "std::filesystem::create_directories failed: {}", error.message());
 		LOGGER->warn("Directory creation failed for: {}", output_folder);
 		return false;
 	}
-	if(!std::filesystem::create_directories(tables_output_folder, error) || error)
+	std::filesystem::create_directories(tables_output_folder, error);
+	if(error)
 	{
 		SPDLOG_LOGGER_DEBUG(
 		  LOGGER, "std::filesystem::create_directories failed: {}", error.message());
@@ -105,22 +108,17 @@ bool printer::generate_results() noexcept
 	}
 
 	std::vector<nlohmann::json> data_document_instances_groups;
-	for(const std::pair<std::string, std::vector<uscp::problem::instance>>& instances_group:
+	for(const std::pair<std::string, std::vector<uscp::problem::instance_info>>& instances_group:
 	    m_instances)
 	{
 		nlohmann::json data_instances_group;
 		data_instances_group["name"] = instances_group.first;
 		data_instances_group["solutions_groups_names"] = solutions_groups_names;
 		std::vector<nlohmann::json> data_instances;
-		for(const uscp::problem::instance& instance: instances_group.second)
+		for(const uscp::problem::instance_info& instance: instances_group.second)
 		{
 			nlohmann::json data_instance;
-			if(instance.info == nullptr)
-			{
-				LOGGER->warn("A problem instance without information was ignored");
-				continue;
-			}
-			data_instance["info"] = *instance.info;
+			data_instance["info"] = instance;
 			std::vector<nlohmann::json> data_solutions_groups;
 			for(const std::pair<const std::string, std::vector<uscp::solution>>& solutions_group:
 			    m_solutions)
@@ -130,12 +128,7 @@ bool printer::generate_results() noexcept
 				std::vector<uscp::solution> solutions;
 				for(const uscp::solution& solution: solutions_group.second)
 				{
-					if(solution.problem.info == nullptr)
-					{
-						//LOGGER->warn("A solution related to a problem instance without information was ignored");
-						continue;
-					}
-					if(solution.problem.info->name == instance.info->name)
+					if(solution.problem.name == instance.name)
 					{
 						solutions.push_back(solution);
 					}

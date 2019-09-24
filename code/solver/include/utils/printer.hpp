@@ -66,14 +66,15 @@ public:
 	printer& operator=(const printer&) = delete;
 	printer& operator=(printer&&) noexcept = default;
 
-	void add_instance(std::string_view instance_group, const uscp::problem::instance& instance);
+	void add_instance(std::string_view instance_group,
+	                  const uscp::problem::instance_info& instance);
 	void add_solution(std::string_view solutions_group, const uscp::solution& solution);
 
 	bool generate_results() noexcept;
 
 private:
 	inja::Environment m_environment;
-	std::vector<std::pair<std::string, std::vector<uscp::problem::instance>>>
+	std::vector<std::pair<std::string, std::vector<uscp::problem::instance_info>>>
 	  m_instances; //keep input order
 	std::unordered_map<std::string, std::vector<uscp::solution>> m_solutions;
 
