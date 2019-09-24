@@ -5,14 +5,14 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "data/orlibrary.hpp"
+#include "data/instances/orlibrary/orlibrary.hpp"
 #include "utils/logger.hpp"
 
 #include <fstream>
 #include <chrono>
 
-bool uscp::problem::orlibrary::read(const std::filesystem::path& path,
-                                    uscp::problem::instance& instance_out) noexcept
+bool uscp::problem::orlibrary::orlibrary::read(const std::filesystem::path& path,
+                                               uscp::problem::instance& instance_out) noexcept
 {
 	const auto start = std::chrono::system_clock::now();
 
@@ -114,7 +114,11 @@ bool uscp::problem::orlibrary::read(const std::filesystem::path& path,
 			return false;
 		}
 		instance_stream >> subsets_covering_point;
-		assert(subsets_covering_point <= subsets_number);
+		if(subsets_covering_point > subsets_number)
+		{
+			LOGGER->warn("Invalid value");
+			return false;
+		}
 		for(size_t i_subset = 0; i_subset < subsets_covering_point; ++i_subset)
 		{
 			size_t subset_number = 0;
@@ -124,9 +128,17 @@ bool uscp::problem::orlibrary::read(const std::filesystem::path& path,
 				return false;
 			}
 			instance_stream >> subset_number;
-			assert(subset_number > 0);
+			if(subset_number < 0)
+			{
+				LOGGER->warn("Invalid value");
+				return false;
+			}
 			--subset_number; // numbered from 1 in the file
-			assert(subset_number < subsets_number);
+			if(subset_number > subsets_number)
+			{
+				LOGGER->warn("Invalid value");
+				return false;
+			}
 			instance.subsets_points[subset_number][i_point] = true;
 		}
 	}
@@ -144,34 +156,9 @@ bool uscp::problem::orlibrary::read(const std::filesystem::path& path,
 	return true;
 }
 
-bool uscp::problem::orlibrary::read(const uscp::problem::instance_info& info,
-                                    uscp::problem::instance& instance) noexcept
-{
-	instance.info = &info;
-	if(!read(info.file, instance))
-	{
-		return false;
-	}
-	if(info.points != instance.points_number)
-	{
-		LOGGER->warn(
-		  "Instance have invalid points number, instance information: {}, instance read: {}",
-		  info,
-		  instance);
-		return false;
-	}
-	if(info.subsets != instance.subsets_number)
-	{
-		LOGGER->warn(
-		  "Invalid subsets number, instance information: {}, instance read: {}", info, instance);
-		return false;
-	}
-	return true;
-}
-
-bool uscp::problem::orlibrary::write(const uscp::problem::instance& instance,
-                                     const std::filesystem::path& path,
-                                     bool override_file) noexcept
+bool uscp::problem::orlibrary::orlibrary::write(const uscp::problem::instance& instance,
+                                                const std::filesystem::path& path,
+                                                bool override_file) noexcept
 {
 	const auto start = std::chrono::system_clock::now();
 
@@ -262,44 +249,5 @@ bool uscp::problem::orlibrary::write(const uscp::problem::instance& instance,
 	const std::chrono::duration<double> elapsed_seconds = end - start;
 	LOGGER->info("successfully written problem instance in {}s", elapsed_seconds.count());
 
-	return true;
-}
-
-bool uscp::problem::orlibrary::check_instances() noexcept
-{
-	for(const uscp::problem::instance_info& instance_info: uscp::problem::orlibrary::instances)
-	{
-		uscp::problem::instance instance;
-		if(!uscp::problem::orlibrary::read(instance_info.file, instance))
-		{
-			LOGGER->warn("Failed to read problem {}", instance_info);
-			return false;
-		}
-		if(instance_info.points != instance.points_number)
-		{
-			LOGGER->warn(
-			  "Instance have invalid points number, instance information: {}, instance read: {}",
-			  instance_info,
-			  instance);
-			return false;
-		}
-		if(instance_info.subsets != instance.subsets_number)
-		{
-			LOGGER->warn("Invalid subsets number, instance information: {}, instance read: {}",
-			             instance_info,
-			             instance);
-			return false;
-		}
-
-		// check if the problem have a solution
-		if(!uscp::problem::has_solution(instance))
-		{
-			LOGGER->warn(
-			  "Instance is unsolvable (some elements cannot be covered using provided subsets), instance information: {}, instance read: {}",
-			  instance_info,
-			  instance);
-			return false;
-		}
-	}
 	return true;
 }

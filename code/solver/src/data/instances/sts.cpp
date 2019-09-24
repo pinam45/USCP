@@ -5,7 +5,7 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "data/sts.hpp"
+#include "data/instances/sts.hpp"
 #include "utils/logger.hpp"
 
 #include <fstream>
@@ -104,9 +104,17 @@ bool uscp::problem::sts::read(const std::filesystem::path& path,
 				return false;
 			}
 			instance_stream >> subset_number;
-			assert(subset_number > 0);
+			if(subset_number < 0)
+			{
+				LOGGER->warn("Invalid value");
+				return false;
+			}
 			--subset_number; // numbered from 1 in the file
-			assert(subset_number < subsets_number);
+			if(subset_number > subsets_number)
+			{
+				LOGGER->warn("Invalid value");
+				return false;
+			}
 			instance.subsets_points[subset_number][i_point] = true;
 		}
 	}
@@ -124,75 +132,14 @@ bool uscp::problem::sts::read(const std::filesystem::path& path,
 	return true;
 }
 
-bool uscp::problem::sts::read(const uscp::problem::instance_info& info,
-                              uscp::problem::instance& instance) noexcept
-{
-	instance.info = &info;
-	if(!read(info.file, instance))
-	{
-		return false;
-	}
-	if(info.points != instance.points_number)
-	{
-		LOGGER->warn(
-		  "Instance have invalid points number, instance information: {}, instance read: {}",
-		  info,
-		  instance);
-		return false;
-	}
-	if(info.subsets != instance.subsets_number)
-	{
-		LOGGER->warn(
-		  "Invalid subsets number, instance information: {}, instance read: {}", info, instance);
-		return false;
-	}
-	return true;
-}
-
 bool uscp::problem::sts::write(const uscp::problem::instance& instance,
                                const std::filesystem::path& path,
                                bool override_file) noexcept
 {
+	(void)instance;
+	(void)path;
+	(void)override_file;
 	//TODO
 	assert(false);
 	return false;
-}
-
-bool uscp::problem::sts::check_instances() noexcept
-{
-	for(const uscp::problem::instance_info& instance_info: uscp::problem::sts::instances)
-	{
-		uscp::problem::instance instance;
-		if(!uscp::problem::sts::read(instance_info.file, instance))
-		{
-			LOGGER->warn("Failed to read problem {}", instance_info);
-			return false;
-		}
-		if(instance_info.points != instance.points_number)
-		{
-			LOGGER->warn(
-			  "Instance have invalid points number, instance information: {}, instance read: {}",
-			  instance_info,
-			  instance);
-			return false;
-		}
-		if(instance_info.subsets != instance.subsets_number)
-		{
-			LOGGER->warn("Invalid subsets number, instance information: {}, instance read: {}",
-			             instance_info,
-			             instance);
-			return false;
-		}
-
-		// check if the problem have a solution
-		if(!uscp::problem::has_solution(instance))
-		{
-			LOGGER->warn(
-			  "Instance is unsolvable (some elements cannot be covered using provided subsets), instance information: {}, instance read: {}",
-			  instance_info,
-			  instance);
-			return false;
-		}
-	}
-	return true;
 }

@@ -12,39 +12,10 @@
 
 #include <chrono>
 
-void uscp::problem::to_json(nlohmann::json& j, const uscp::problem::instance_info& instance)
-{
-	nlohmann::json json;
-	json["file"] = instance.file;
-	json["name"] = instance.name;
-	json["points"] = instance.points;
-	json["subsets"] = instance.subsets;
-	json["density"] = format(instance.density, 4);
-	json["cost_min"] = instance.cost_min;
-	json["cost_max"] = instance.cost_max;
-	json["bks"] = instance.bks;
-	j = std::move(json);
-}
-
-std::ostream& uscp::problem::operator<<(std::ostream& os,
-                                        const uscp::problem::instance_info& instance)
-{
-	nlohmann::json json = instance;
-	os << json.dump(4);
-	return os;
-}
-
 void uscp::problem::to_json(nlohmann::json& j, const uscp::problem::instance& instance)
 {
 	nlohmann::json json;
-	if(instance.info != nullptr)
-	{
-		json["info"] = *instance.info;
-	}
-	else
-	{
-		json["info"] = "";
-	}
+	json["name"] = instance.name;
 	json["points_number"] = instance.points_number;
 	json["subsets_number"] = instance.subsets_number;
 	for(size_t i = 0; i < instance.subsets_points.size(); ++i)
@@ -61,13 +32,15 @@ std::ostream& uscp::problem::operator<<(std::ostream& os, const uscp::problem::i
 	return os;
 }
 
-uscp::problem::instance uscp::problem::generate(size_t points_number,
+uscp::problem::instance uscp::problem::generate(std::string_view name,
+                                                size_t points_number,
                                                 size_t subsets_number,
                                                 uscp::random_engine& generator,
                                                 size_t min_covering_subsets,
                                                 size_t max_covering_subsets) noexcept
 {
 
+	assert(!name.empty());
 	assert(points_number > 0);
 	assert(subsets_number > 0);
 	assert(min_covering_subsets > 0);
@@ -78,6 +51,7 @@ uscp::problem::instance uscp::problem::generate(size_t points_number,
 	const auto start = std::chrono::system_clock::now();
 
 	instance instance;
+	instance.name = name;
 	instance.points_number = points_number;
 	instance.subsets_number = subsets_number;
 	instance.subsets_points.resize(subsets_number);
@@ -114,12 +88,13 @@ uscp::problem::instance uscp::problem::generate(size_t points_number,
 	return instance;
 }
 
-uscp::problem::instance uscp::problem::generate(size_t points_number,
+uscp::problem::instance uscp::problem::generate(std::string_view name,
+                                                size_t points_number,
                                                 size_t subsets_number,
                                                 uscp::random_engine& generator) noexcept
 {
 	// Balas and Ho parameters
-	return generate(points_number, subsets_number, generator, 2, subsets_number);
+	return generate(name, points_number, subsets_number, generator, 2, subsets_number);
 }
 
 bool uscp::problem::has_solution(const uscp::problem::instance& instance) noexcept
@@ -131,4 +106,26 @@ bool uscp::problem::has_solution(const uscp::problem::instance& instance) noexce
 	}
 
 	return cover.all();
+}
+
+void uscp::problem::to_json(nlohmann::json& j, const uscp::problem::instance_info& instance)
+{
+	nlohmann::json json;
+	json["file"] = instance.file;
+	json["name"] = instance.name;
+	json["points"] = instance.points;
+	json["subsets"] = instance.subsets;
+	json["density"] = format(instance.density, 4);
+	json["cost_min"] = instance.cost_min;
+	json["cost_max"] = instance.cost_max;
+	json["bks"] = instance.bks;
+	j = std::move(json);
+}
+
+std::ostream& uscp::problem::operator<<(std::ostream& os,
+                                        const uscp::problem::instance_info& instance)
+{
+	nlohmann::json json = instance;
+	os << json.dump(4);
+	return os;
 }
