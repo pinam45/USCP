@@ -128,7 +128,7 @@ bool uscp::problem::orlibrary::orlibrary::read(const std::filesystem::path& path
 				return false;
 			}
 			instance_stream >> subset_number;
-			if(subset_number < 0)
+			if(subset_number == 0)
 			{
 				LOGGER->warn("Invalid value");
 				return false;

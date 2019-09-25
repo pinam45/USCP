@@ -120,7 +120,7 @@ bool uscp::problem::orlibrary::rail::read(const std::filesystem::path& path,
 			}
 			size_t point_number;
 			instance_stream >> point_number;
-			if(point_number < 0)
+			if(point_number == 0)
 			{
 				LOGGER->warn("Invalid value");
 				return false;

@@ -109,6 +109,8 @@
 	ORLIBRARY_ORLIBRARY_ENTRY(ENTRY, "scpcyc10.txt", "CYC10", 11520, 5120, 0.001f, 1, 1, 1798) \
 	ORLIBRARY_ORLIBRARY_ENTRY(ENTRY, "scpcyc11.txt", "CYC11", 28160, 11264, 0.0004f, 1, 1, 3968)
 
+// fixed CLR13 point number compared to DOI 10.1016/j.asoc.2018.10.025
+
 namespace uscp::problem::orlibrary::orlibrary
 {
 	bool read(const std::filesystem::path& path, uscp::problem::instance& instance) noexcept;

@@ -7,7 +7,7 @@
 //
 #include "utils/timer.hpp"
 
-timer::timer() noexcept:start(std::chrono::system_clock::now())
+timer::timer() noexcept: start(std::chrono::system_clock::now())
 {
 }
 
