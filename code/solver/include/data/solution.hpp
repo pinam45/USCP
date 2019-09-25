@@ -16,6 +16,14 @@
 
 namespace uscp
 {
+	struct solution_serial final
+	{
+		problem::instance_serial problem;
+		std::vector<size_t> selected_subsets;
+	};
+	void to_json(nlohmann::json& j, const solution_serial& solution_serial);
+	void from_json(const nlohmann::json& j, solution_serial& solution_serial);
+
 	struct solution final
 	{
 		const problem::instance& problem;
@@ -30,6 +38,9 @@ namespace uscp
 		solution& operator=(solution&& other) noexcept;
 
 		void compute_cover() noexcept;
+
+		[[nodiscard]] solution_serial serialize() const noexcept;
+		bool load(const solution_serial& serial) noexcept;
 	};
 	void to_json(nlohmann::json& j, const solution& solution);
 	std::ostream& operator<<(std::ostream& os, const solution& solution);

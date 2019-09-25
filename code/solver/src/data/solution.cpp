@@ -6,9 +6,24 @@
 // https://opensource.org/licenses/MIT
 //
 #include "data/solution.hpp"
+#include "utils/logger.hpp"
 
 #include <sstream>
 #include <vector>
+
+void uscp::to_json(nlohmann::json& j, const uscp::solution_serial& solution_serial)
+{
+	j = nlohmann::json{
+	  {"problem", solution_serial.problem},
+	  {"selected_subsets", solution_serial.selected_subsets},
+	};
+}
+
+void uscp::from_json(const nlohmann::json& j, uscp::solution_serial& solution_serial)
+{
+	j.at("problem").get_to(solution_serial.problem);
+	j.at("selected_subsets").get_to(solution_serial.selected_subsets);
+}
 
 uscp::solution::solution(const uscp::problem::instance& problem_)
   : problem(problem_)
@@ -49,6 +64,60 @@ void uscp::solution::compute_cover() noexcept
 		selected_subset = selected_subsets.find_next(selected_subset);
 	}
 	cover_all_points = covered_points.all();
+}
+
+uscp::solution_serial uscp::solution::serialize() const noexcept
+{
+	solution_serial serial;
+	serial.problem = problem.serialize();
+	serial.selected_subsets.reserve(selected_subsets.count());
+	selected_subsets.iterate_bits_on(
+	  [&](size_t bit_on) { serial.selected_subsets.push_back(bit_on); });
+	return serial;
+}
+
+bool uscp::solution::load(const uscp::solution_serial& serial) noexcept
+{
+	if(serial.problem.name != problem.name)
+	{
+		LOGGER->warn(
+		  "Tried to load solution for problem instance {} to solution for problem instance {}",
+		  serial.problem.name,
+		  problem.name);
+		return false;
+	}
+	if(serial.problem.points_number != problem.points_number)
+	{
+		LOGGER->warn("Tried to load solution but problem have {} points instead of {}",
+		             serial.problem.points_number,
+		             problem.points_number);
+		return false;
+	}
+	if(serial.problem.subsets_number != problem.subsets_number)
+	{
+		LOGGER->warn("Tried to load solution but problem have {} subsets instead of {}",
+		             serial.problem.subsets_number,
+		             problem.subsets_number);
+		return false;
+	}
+
+	assert(selected_subsets.size() == problem.subsets_number);
+	selected_subsets.reset();
+	for(size_t bit_on: serial.selected_subsets)
+	{
+		if(bit_on >= problem.subsets_number)
+		{
+			LOGGER->warn(
+			  "Tried to load solution with subset numbered {} for an instance with {} subsets",
+			  bit_on,
+			  problem.subsets_number);
+			return false;
+		}
+		selected_subsets.set(bit_on);
+	}
+	compute_cover();
+
+	return true;
 }
 
 void uscp::to_json(nlohmann::json& j, const uscp::solution& solution)
