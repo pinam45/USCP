@@ -71,6 +71,8 @@ namespace
 	std::vector<size_t> compute_subset_neighbors(const uscp::problem::instance& problem,
 	                                             size_t subset_number) noexcept;
 
+	void rwls_compute_subsets_neighbors(rwls_data& data) noexcept;
+
 	int rwls_compute_subset_score(const rwls_data& data, size_t subset_number) noexcept;
 
 	void rwls_init(rwls_data& data) noexcept;
@@ -126,6 +128,30 @@ namespace
 			}
 		}
 		return subset_neighbors;
+	}
+
+	void rwls_compute_subsets_neighbors(rwls_data& data) noexcept
+	{
+		for(size_t i_current_subset = 0; i_current_subset < data.problem.subsets_number;
+		    ++i_current_subset)
+		{
+			for(size_t i_other_subset = i_current_subset + 1;
+			    i_other_subset < data.problem.subsets_number;
+			    ++i_other_subset)
+			{
+				if((data.problem.subsets_points[i_current_subset]
+				    & data.problem.subsets_points[i_other_subset])
+				     .any())
+				{
+					{
+						data.subsets_information[i_current_subset].neighbors.push_back(
+						  i_other_subset);
+						data.subsets_information[i_other_subset].neighbors.push_back(
+						  i_current_subset);
+					}
+				}
+			}
+		}
 	}
 
 	int rwls_compute_subset_score(const rwls_data& data, size_t subset_number) noexcept
@@ -185,15 +211,18 @@ namespace
 			    .count();
 		}
 
-		// subset information
+		// subset scores
 		for(size_t i = 0; i < data.problem.subsets_number; ++i)
 		{
 			data.subsets_information[i].score = rwls_compute_subset_score(data, i);
 			assert(data.current_solution.selected_subsets[i]
 			         ? data.subsets_information[i].score <= 0
 			         : data.subsets_information[i].score >= 0);
-			data.subsets_information[i].neighbors = compute_subset_neighbors(data.problem, i);
+			//data.subsets_information[i].neighbors = compute_subset_neighbors(data.problem, i);
 		}
+
+		// subset neighbors
+		rwls_compute_subsets_neighbors(data);
 	}
 
 	void rwls_add_subset(rwls_data& data, size_t subset_number) noexcept
