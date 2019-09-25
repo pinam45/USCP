@@ -11,6 +11,29 @@
 #include "utils/format.hpp"
 #include "utils/timer.hpp"
 
+void uscp::problem::to_json(nlohmann::json& j, const uscp::problem::instance_serial& serial)
+{
+	j = nlohmann::json{{"name", serial.name},
+	                   {"points_number", serial.points_number},
+	                   {"subsets_number", serial.subsets_number}};
+}
+
+void uscp::problem::from_json(const nlohmann::json& j, uscp::problem::instance_serial& serial)
+{
+	j.at("name").get_to(serial.name);
+	j.at("points_number").get_to(serial.points_number);
+	j.at("subsets_number").get_to(serial.subsets_number);
+}
+
+uscp::problem::instance_serial uscp::problem::instance::serialize() const noexcept
+{
+	instance_serial serial;
+	serial.name = name;
+	serial.points_number = points_number;
+	serial.subsets_number = subsets_number;
+	return serial;
+}
+
 void uscp::problem::to_json(nlohmann::json& j, const uscp::problem::instance& instance)
 {
 	nlohmann::json json;

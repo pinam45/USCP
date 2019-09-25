@@ -18,6 +18,15 @@
 
 namespace uscp::problem
 {
+	struct instance_serial final
+	{
+		std::string name;
+		size_t points_number = 0;
+		size_t subsets_number = 0;
+	};
+	void to_json(nlohmann::json& j, const instance_serial& serial);
+	void from_json(const nlohmann::json& j, instance_serial& serial);
+
 	struct instance final
 	{
 		std::string name;
@@ -30,6 +39,9 @@ namespace uscp::problem
 		instance(instance&&) noexcept = default;
 		instance& operator=(const instance&) = default;
 		instance& operator=(instance&&) noexcept = default;
+
+		[[nodiscard]] instance_serial serialize() const noexcept;
+		// no load: use name to parse instance from file
 	};
 	void to_json(nlohmann::json& j, const instance& instance);
 	std::ostream& operator<<(std::ostream& os, const instance& instance);
