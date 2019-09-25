@@ -558,3 +558,55 @@ uscp::solution uscp::rwls::solve(const uscp::problem::instance& problem,
 
 	return data.best_solution;
 }
+void uscp::rwls::to_json(nlohmann::json& j, const uscp::rwls::report_serial& serial)
+{
+	j = nlohmann::json{
+	  {"solution_initial", serial.solution_initial},
+	  {"solution_final", serial.solution_final},
+	  {"steps", serial.steps},
+	  {"time", serial.time},
+	};
+}
+
+void uscp::rwls::from_json(const nlohmann::json& j, uscp::rwls::report_serial& serial)
+{
+	j.at("solution_initial").get_to(serial.solution_initial);
+	j.at("solution_final").get_to(serial.solution_final);
+	j.at("steps").get_to(serial.steps);
+	j.at("time").get_to(serial.time);
+}
+
+uscp::rwls::report::report(const problem::instance& problem) noexcept
+  : solution_initial(problem), solution_final(problem), found_at()
+{
+}
+
+uscp::rwls::report_serial uscp::rwls::report::serialize() const noexcept
+{
+	report_serial serial;
+	assert(solution_initial.problem.name == solution_final.problem.name);
+	serial.solution_initial = solution_initial.serialize();
+	serial.solution_final = solution_final.serialize();
+	serial.steps = found_at.steps;
+	serial.time = found_at.time;
+	return serial;
+}
+
+bool uscp::rwls::report::load(const uscp::rwls::report_serial& serial) noexcept
+{
+	if(!solution_initial.load(serial.solution_initial))
+	{
+		LOGGER->warn("Failed to load initial solution");
+		return false;
+	}
+	if(!solution_final.load(serial.solution_final))
+	{
+		LOGGER->warn("Failed to load final solution");
+		return false;
+	}
+	found_at.steps = serial.steps;
+	found_at.time = serial.time;
+
+	return true;
+}
+
