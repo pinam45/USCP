@@ -385,7 +385,13 @@ namespace
 		  data.points_information[point_to_cover].subsets_covering
 		  & ~data.current_solution.selected_subsets;
 		assert(subsets_covering_not_selected.any());
+		if(subsets_covering_not_selected.none())
+		{
+			LOGGER->error("No subset not selected cover this point, problem not preprocessed?");
+			abort();
+		}
 		size_t add_subset = subsets_covering_not_selected.find_first();
+		bool add_subset_is_tabu = rwls_is_tabu(data, add_subset);
 		std::pair<int, int> best_score_minus_timestamp(
 		  data.subsets_information[add_subset].score,
 		  -data.subsets_information[add_subset].timestamp);
@@ -394,14 +400,27 @@ namespace
 			{
 				return;
 			}
-			const std::pair<int, int> current_score_timestamp(
+			const std::pair<int, int> current_score_minus_timestamp(
 			  data.subsets_information[bit_on].score, -data.subsets_information[bit_on].timestamp);
-			if(current_score_timestamp > best_score_minus_timestamp && !rwls_is_tabu(data, bit_on))
+			if(add_subset_is_tabu)
 			{
-				best_score_minus_timestamp = current_score_timestamp;
+				best_score_minus_timestamp = current_score_minus_timestamp;
+				add_subset = bit_on;
+				add_subset_is_tabu = rwls_is_tabu(data, add_subset);
+				return;
+			}
+			if(current_score_minus_timestamp > best_score_minus_timestamp
+			   && !rwls_is_tabu(data, bit_on))
+			{
+				best_score_minus_timestamp = current_score_minus_timestamp;
 				add_subset = bit_on;
 			}
 		});
+
+		if(rwls_is_tabu(data, add_subset))
+		{
+			LOGGER->warn("Selected subset is tabu");
+		}
 		return add_subset;
 	}
 
