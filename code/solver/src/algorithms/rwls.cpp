@@ -6,7 +6,6 @@
 // https://opensource.org/licenses/MIT
 //
 #include "algorithms/rwls.hpp"
-#include "algorithms/greedy.hpp"
 #include "utils/logger.hpp"
 #include "utils/timer.hpp"
 
@@ -64,6 +63,12 @@ namespace
 		                   uscp::random_engine& generator) noexcept;
 	};
 
+	struct rwls_solve_info
+	{
+		size_t steps;
+		double time;
+	};
+
 	//=================================================================================================
 	// functions declarations
 	//=================================================================================================
@@ -75,7 +80,7 @@ namespace
 
 	int rwls_compute_subset_score(const rwls_data& data, size_t subset_number) noexcept;
 
-	void rwls_init(rwls_data& data) noexcept;
+	void rwls_init(rwls_data& data, const uscp::solution& solution) noexcept;
 
 	void rwls_add_subset(rwls_data& data, size_t subset_number) noexcept;
 	void rwls_remove_subset(rwls_data& data, size_t subset_number) noexcept;
@@ -87,6 +92,11 @@ namespace
 	size_t rwls_select_subset_to_remove(const rwls_data& data) noexcept;
 	size_t rwls_select_subset_to_add(const rwls_data& data, size_t point_to_cover) noexcept;
 	size_t rwls_select_uncovered_point(rwls_data& data) noexcept;
+
+	[[nodiscard]] uscp::solution improve_impl(const uscp::solution& solution,
+	                                          uscp::random_engine& generator,
+	                                          uscp::rwls::stop stopping_criterion,
+	                                          uscp::rwls::stop& found_at);
 
 	//=================================================================================================
 	// implementations
@@ -191,9 +201,9 @@ namespace
 		return subset_score;
 	}
 
-	void rwls_init(rwls_data& data) noexcept
+	void rwls_init(rwls_data& data, const uscp::solution& solution) noexcept
 	{
-		data.best_solution = uscp::greedy::solve(data.problem);
+		data.best_solution = solution;
 		data.best_solution_subset_numbers = data.best_solution.selected_subsets.count();
 		data.current_solution = data.best_solution;
 
@@ -471,93 +481,89 @@ namespace
 		});
 		return selected_point;
 	}
-} // namespace
 
-uscp::solution uscp::rwls::solve(const uscp::problem::instance& problem,
-                                 random_engine& generator,
-                                 size_t steps_number)
-{
-	const timer timer;
-
-	//TODO: preprocessing?
-
-	rwls_data data(problem, generator);
-	rwls_init(data);
-
-	size_t step = 1;
-	while(step <= steps_number)
+	uscp::solution improve_impl(const uscp::solution& solution,
+	                            uscp::random_engine& generator,
+	                            uscp::rwls::stop stopping_criterion,
+	                            uscp::rwls::stop& found_at)
 	{
-		while(data.uncovered_points.none())
+		//TODO: preprocessing?
+		timer timer;
+		rwls_data data(solution.problem, generator);
+		rwls_init(data, solution);
+		SPDLOG_LOGGER_DEBUG(LOGGER,
+		                    "RWLS inited with solution with {} subsets in {}s",
+		                    data.best_solution_subset_numbers,
+		                    timer.elapsed());
+
+		timer.reset();
+		size_t step = 0;
+		found_at.steps = 0;
+		found_at.time = 0;
+		while(step < stopping_criterion.steps && timer.elapsed() < stopping_criterion.time)
 		{
-			data.best_solution = data.current_solution;
-			data.best_solution_subset_numbers = data.best_solution.selected_subsets.count();
-			SPDLOG_LOGGER_DEBUG(LOGGER,
-			                    "RWLS new best solution with {} subsets at {}s",
-			                    data.best_solution_subset_numbers,
-			                    timer.elapsed());
-
-			const size_t selected_subset = rwls_select_subset_no_timestamp(data);
-			rwls_remove_subset(data, selected_subset);
-		}
-
-		// remove subset
-		const size_t remove_subset = rwls_select_subset_to_remove(data);
-		rwls_remove_subset(data, remove_subset);
-		data.subsets_information[remove_subset].timestamp = step;
-
-		// add subset
-		const size_t selected_point = rwls_select_uncovered_point(data);
-		const size_t add_subset = rwls_select_subset_to_add(data, selected_point);
-		rwls_add_subset(data, add_subset);
-
-		data.subsets_information[add_subset].timestamp = step;
-		rwls_make_tabu(data, add_subset);
-
-		// update points weights
-		data.uncovered_points.iterate_bits_on([&](size_t uncovered_points_bit_on) noexcept {
-			++data.points_information[uncovered_points_bit_on].weight;
-
-			// update subsets score depending on this point weight
-			if(data.points_information[uncovered_points_bit_on].subsets_covering_in_solution == 0)
+			while(data.uncovered_points.none())
 			{
+				data.best_solution = data.current_solution;
+				data.best_solution_subset_numbers = data.best_solution.selected_subsets.count();
+
+				found_at.steps = step;
+				found_at.time = timer.elapsed();
+				SPDLOG_LOGGER_DEBUG(LOGGER,
+				                    "RWLS new best solution with {} subsets at {}s",
+				                    data.best_solution_subset_numbers,
+				                    timer.elapsed());
+
+				const size_t selected_subset = rwls_select_subset_no_timestamp(data);
+				rwls_remove_subset(data, selected_subset);
+			}
+
+			// remove subset
+			const size_t remove_subset = rwls_select_subset_to_remove(data);
+			rwls_remove_subset(data, remove_subset);
+			data.subsets_information[remove_subset].timestamp = static_cast<int>(step);
+
+			// add subset
+			const size_t selected_point = rwls_select_uncovered_point(data);
+			const size_t add_subset = rwls_select_subset_to_add(data, selected_point);
+			rwls_add_subset(data, add_subset);
+
+			data.subsets_information[add_subset].timestamp = static_cast<int>(step);
+			rwls_make_tabu(data, add_subset);
+
+			// update points weights
+			data.uncovered_points.iterate_bits_on([&](size_t uncovered_points_bit_on) noexcept {
+				assert(data.points_information[uncovered_points_bit_on].subsets_covering_in_solution
+				       == 0);
+
+				++data.points_information[uncovered_points_bit_on].weight;
+
+				// update subsets score depending on this point weight
 				// subset that can cover the point if added to solution
 				data.points_information[uncovered_points_bit_on]
 				  .subsets_covering.iterate_bits_on([&](size_t subsets_covering_bit_on) noexcept {
 					  ++data.subsets_information[subsets_covering_bit_on].score;
 				  });
-			}
-			else if(data.points_information[uncovered_points_bit_on].subsets_covering_in_solution
-			        == 1)
-			{
-				// only subset in the solution covering the point
-				data.points_information[uncovered_points_bit_on]
-				  .subsets_covering.iterate_bits_on([&](size_t subsets_covering_bit_on) noexcept {
-					  if(data.current_solution.selected_subsets[subsets_covering_bit_on])
-					  {
-						  ++data.subsets_information[subsets_covering_bit_on].score;
-						  return false;
-					  }
-					  return true;
-				  });
-			}
-		});
+			});
 #if !defined(NDEBUG) && !defined(NDEBUG_SCORE)
-		for(size_t i = 0; i < data.problem.subsets_number; ++i)
-		{
-			assert(data.subsets_information[i].score == rwls_compute_subset_score(data, i));
-		}
+			for(size_t i = 0; i < data.problem.subsets_number; ++i)
+			{
+				assert(data.subsets_information[i].score == rwls_compute_subset_score(data, i));
+			}
 #endif
 
-		++step;
+			++step;
+		}
+
+		LOGGER->info("Found RWLS solution to {} with {} subsets in {}s",
+		             data.problem.name,
+		             data.best_solution.selected_subsets.count(),
+		             timer.elapsed());
+
+		return data.best_solution;
 	}
+} // namespace
 
-	LOGGER->info("Found RWLS solution to {} with {} subsets in {}s",
-	             problem.name,
-	             data.best_solution.selected_subsets.count(),
-	             timer.elapsed());
-
-	return data.best_solution;
-}
 void uscp::rwls::to_json(nlohmann::json& j, const uscp::rwls::report_serial& serial)
 {
 	j = nlohmann::json{
@@ -610,3 +616,20 @@ bool uscp::rwls::report::load(const uscp::rwls::report_serial& serial) noexcept
 	return true;
 }
 
+uscp::solution uscp::rwls::improve(const uscp::solution& solution,
+                                   random_engine& generator,
+                                   stop stopping_criterion)
+{
+	stop stopped_at;
+	return improve_impl(solution, generator, stopping_criterion, stopped_at);
+}
+
+uscp::rwls::report uscp::rwls::improve_report(const uscp::solution& solution,
+                                              uscp::random_engine& generator,
+                                              stop stopping_criterion)
+{
+	report report(solution.problem);
+	report.solution_initial = solution;
+	report.solution_final = improve_impl(solution, generator, stopping_criterion, report.found_at);
+	return report;
+}

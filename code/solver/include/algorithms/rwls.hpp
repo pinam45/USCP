@@ -48,9 +48,12 @@ namespace uscp::rwls
 		bool load(const report_serial& serial) noexcept;
 	};
 
-	[[nodiscard]] solution solve(const problem::instance& problem,
-	                             random_engine& generator,
-	                             size_t steps_number);
+	[[nodiscard]] solution improve(const uscp::solution& solution,
+	                               random_engine& generator,
+	                               stop stopping_criterion);
+	[[nodiscard]] report improve_report(const uscp::solution& solution,
+	                                    random_engine& generator,
+	                                    stop stopping_criterion);
 } // namespace uscp::rwls
 
 #endif //USCP_RWLS_HPP
