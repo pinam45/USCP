@@ -13,3 +13,6 @@
 [submodule "code/extlibs/inja"]
 	path = code/extlibs/inja
 	url = https://github.com/pantor/inja
+[submodule "code/extlibs/cxxopts"]
+	path = code/extlibs/cxxopts
+	url = https://github.com/jarro2783/cxxopts
