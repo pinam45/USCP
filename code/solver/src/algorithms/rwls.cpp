@@ -142,6 +142,7 @@ namespace
 
 	void rwls_compute_subsets_neighbors(rwls_data& data) noexcept
 	{
+#pragma omp parallel for default(none) shared(data) if(data.problem.subsets_number > 8)
 		for(size_t i_current_subset = 0; i_current_subset < data.problem.subsets_number;
 		    ++i_current_subset)
 		{
@@ -153,6 +154,7 @@ namespace
 				    & data.problem.subsets_points[i_other_subset])
 				     .any())
 				{
+#pragma omp critical
 					{
 						data.subsets_information[i_current_subset].neighbors.push_back(
 						  i_other_subset);
@@ -208,12 +210,14 @@ namespace
 		data.current_solution = data.best_solution;
 
 		// points information
+#pragma omp parallel for default(none) shared(data) if(data.problem.subsets_number > 32)
 		for(size_t i = 0; i < data.problem.subsets_number; ++i)
 		{
 			data.problem.subsets_points[i].iterate_bits_on([&](size_t bit_on) noexcept {
 				data.points_information[bit_on].subsets_covering.set(i);
 			});
 		}
+#pragma omp parallel for default(none) shared(data) if(data.problem.points_number > 128)
 		for(size_t i = 0; i < data.problem.points_number; ++i)
 		{
 			data.points_information[i].subsets_covering_in_solution =
@@ -222,6 +226,7 @@ namespace
 		}
 
 		// subset scores
+#pragma omp parallel for default(none) shared(data) if(data.problem.subsets_number > 8)
 		for(size_t i = 0; i < data.problem.subsets_number; ++i)
 		{
 			data.subsets_information[i].score = rwls_compute_subset_score(data, i);
@@ -271,8 +276,15 @@ namespace
 		             == rwls_compute_subset_score(data, subset_number));
 
 		// update neighbors
-		for(size_t i_neighbor: data.subsets_information[subset_number].neighbors)
+#pragma omp parallel for default(none) \
+  shared(data,                         \
+         subset_number,                \
+         point_now_covered_twice,      \
+         points_newly_covered) if(data.subsets_information[subset_number].neighbors.size() > 8)
+		for(size_t i = 0; i < data.subsets_information[subset_number].neighbors.size(); ++i)
+		//for(size_t i_neighbor: data.subsets_information[subset_number].neighbors)
 		{
+			const size_t i_neighbor = data.subsets_information[subset_number].neighbors[i];
 			data.subsets_information[i_neighbor].canAddToSolution = true;
 			if(data.current_solution.selected_subsets[i_neighbor])
 			{
@@ -337,8 +349,15 @@ namespace
 		data.subsets_information[subset_number].canAddToSolution = false;
 
 		// update neighbors
-		for(size_t i_neighbor: data.subsets_information[subset_number].neighbors)
+#pragma omp parallel for default(none) \
+  shared(data,                         \
+         subset_number,                \
+         points_newly_ucovered,        \
+         point_now_covered_once) if(data.subsets_information[subset_number].neighbors.size() > 8)
+		//for(size_t i_neighbor: data.subsets_information[subset_number].neighbors)
+		for(size_t i = 0; i < data.subsets_information[subset_number].neighbors.size(); ++i)
 		{
+			const size_t i_neighbor = data.subsets_information[subset_number].neighbors[i];
 			data.subsets_information[i_neighbor].canAddToSolution = true;
 			if(data.current_solution.selected_subsets[i_neighbor])
 			{

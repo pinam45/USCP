@@ -52,6 +52,15 @@ target_link_libraries(
   inja
 )
 
+# Link OpenMP in Release if found
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+	target_link_libraries(solver PRIVATE $<$<CONFIG:Release>:OpenMP::OpenMP_CXX>)
+	message(STATUS "OpenMP found, it will be used")
+else()
+	message(WARNING "OpenMP not found, it will not be used")
+endif()
+
 # Link threads library
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
