@@ -12,7 +12,32 @@
 
 namespace uscp::greedy
 {
+	struct report_serial final
+	{
+		solution_serial solution_final;
+		double time = 0;
+	};
+	void to_json(nlohmann::json& j, const report_serial& serial);
+	void from_json(const nlohmann::json& j, report_serial& serial);
+
+	struct report final
+	{
+		solution solution_final;
+		double time;
+
+		explicit report(const problem::instance& problem) noexcept;
+		report(const report&) = default;
+		report(report&&) noexcept = default;
+		report& operator=(const report& other) = default;
+		report& operator=(report&& other) noexcept = default;
+
+		[[nodiscard]] report_serial serialize() const noexcept;
+		bool load(const report_serial& serial) noexcept;
+	};
+
 	[[nodiscard]] solution solve(const problem::instance& problem) noexcept;
-}
+
+	[[nodiscard]] report solve_report(const problem::instance& problem) noexcept;
+} // namespace uscp::greedy
 
 #endif //USCP_GREEDY_HPP
