@@ -26,6 +26,7 @@ include(cmake/dynamic_bitset.cmake)
 include(cmake/spdlog.cmake)
 include(cmake/json.cmake)
 include(cmake/inja.cmake)
+include(cmake/cxxopts.cmake)
 
 # Declare solver
 add_executable(solver)
@@ -50,6 +51,7 @@ target_link_libraries(
   spdlog_header_only
   nlohmann_json
   inja
+  cxxopts
 )
 
 # Link OpenMP in Release if found
