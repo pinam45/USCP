@@ -44,6 +44,9 @@ target_include_directories(
   "${CMAKE_CURRENT_SOURCE_DIR}/solver/include"
 )
 
+# Generate git information target
+cmutils_generate_git_info_target(git_info ${CMAKE_CURRENT_SOURCE_DIR})
+
 # Link dependencies
 target_link_libraries(
   solver PRIVATE
@@ -52,6 +55,7 @@ target_link_libraries(
   nlohmann_json
   inja
   cxxopts
+  git_info
 )
 
 # Link OpenMP in Release if found
