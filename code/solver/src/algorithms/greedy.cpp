@@ -52,6 +52,7 @@ uscp::solution uscp::greedy::solve(const uscp::problem::instance& problem) noexc
 
 uscp::greedy::report uscp::greedy::solve_report(const uscp::problem::instance& problem) noexcept
 {
+	SPDLOG_LOGGER_DEBUG(LOGGER, "({}) Start building greedy solution", problem.name);
 	const timer timer;
 
 	report report(problem);
@@ -100,7 +101,7 @@ uscp::greedy::report uscp::greedy::solve_report(const uscp::problem::instance& p
 
 	report.time = timer.elapsed();
 	SPDLOG_LOGGER_DEBUG(LOGGER,
-	                    "Found greedy solution to {} with {} subsets in {}s",
+	                    "({}) Built greedy solution with {} subsets in {}s",
 	                    problem.name,
 	                    report.solution_final.selected_subsets.count(),
 	                    report.time);

@@ -142,6 +142,8 @@ namespace
 
 	void rwls_compute_subsets_neighbors(rwls_data& data) noexcept
 	{
+		SPDLOG_LOGGER_DEBUG(LOGGER, "({}) start building subsets neighbors", data.problem.name);
+		timer timer;
 #pragma omp parallel for default(none) shared(data) if(data.problem.subsets_number > 8)
 		for(size_t i_current_subset = 0; i_current_subset < data.problem.subsets_number;
 		    ++i_current_subset)
@@ -164,6 +166,8 @@ namespace
 				}
 			}
 		}
+		SPDLOG_LOGGER_DEBUG(
+		  LOGGER, "({}) Built subsets neighbors in {}s", data.problem.name, timer.elapsed());
 	}
 
 	int rwls_compute_subset_score(const rwls_data& data, size_t subset_number) noexcept
@@ -506,14 +510,13 @@ namespace
 	                            uscp::rwls::stop stopping_criterion,
 	                            uscp::rwls::stop& found_at)
 	{
-		//TODO: preprocessing?
+		LOGGER->info("({}) Start optimising by RWLS solution with {} subsets",
+		             solution.problem.name,
+		             solution.selected_subsets.count());
 		timer timer;
 		rwls_data data(solution.problem, generator);
 		rwls_init(data, solution);
-		SPDLOG_LOGGER_DEBUG(LOGGER,
-		                    "RWLS inited with solution with {} subsets in {}s",
-		                    data.best_solution_subset_numbers,
-		                    timer.elapsed());
+		SPDLOG_LOGGER_DEBUG(LOGGER, "({}) RWLS inited in {}s", data.problem.name, timer.elapsed());
 
 		timer.reset();
 		size_t step = 0;
@@ -529,7 +532,8 @@ namespace
 				found_at.steps = step;
 				found_at.time = timer.elapsed();
 				SPDLOG_LOGGER_DEBUG(LOGGER,
-				                    "RWLS new best solution with {} subsets at {}s",
+				                    "({}) RWLS new best solution with {} subsets at {}s",
+				                    data.problem.name,
 				                    data.best_solution_subset_numbers,
 				                    timer.elapsed());
 
@@ -574,7 +578,7 @@ namespace
 			++step;
 		}
 
-		LOGGER->info("Found RWLS solution to {} with {} subsets in {}s",
+		LOGGER->info("({}) Optimised RWLS solution to {} subsets in {}s",
 		             data.problem.name,
 		             data.best_solution.selected_subsets.count(),
 		             timer.elapsed());
