@@ -15,26 +15,62 @@
 #include <nlohmann/json.hpp>
 
 #include <filesystem>
+#include <optional>
 
 namespace uscp::problem
 {
 	struct instance_serial final
 	{
+		bool reduced = false;
 		std::string name;
 		size_t points_number = 0;
 		size_t subsets_number = 0;
+
+		instance_serial() = default;
+		instance_serial(const instance_serial&) = default;
+		instance_serial(instance_serial&&) noexcept = default;
+		instance_serial& operator=(const instance_serial&) = default;
+		instance_serial& operator=(instance_serial&&) noexcept = default;
 	};
 	void to_json(nlohmann::json& j, const instance_serial& serial);
 	void from_json(const nlohmann::json& j, instance_serial& serial);
 
+	struct reduction final
+	{
+		// relative to full solution
+		dynamic_bitset<> points_covered;
+		dynamic_bitset<> subsets_dominated;
+		dynamic_bitset<> subsets_included;
+
+		reduction(size_t points_number, size_t subsets_number) noexcept;
+		reduction(const reduction&) = default;
+		reduction(reduction&&) noexcept = default;
+		reduction& operator=(const reduction&) = default;
+		reduction& operator=(reduction&&) noexcept = default;
+	};
+
+	struct instance;
+	struct reduction_info final
+	{
+		const instance* parent_instance;
+		reduction reduction_applied;
+
+		explicit reduction_info(const instance* parent_instance) noexcept;
+		reduction_info(const reduction_info&) = default;
+		reduction_info(reduction_info&&) noexcept = default;
+		reduction_info& operator=(const reduction_info&) = default;
+		reduction_info& operator=(reduction_info&&) noexcept = default;
+	};
+
 	struct instance final
 	{
+		std::optional<reduction_info> reduction;
 		std::string name;
 		size_t points_number = 0;
 		size_t subsets_number = 0;
 		std::vector<dynamic_bitset<>> subsets_points;
 
-		instance() = default;
+		explicit instance(std::optional<reduction_info> reduction = {}) noexcept;
 		instance(const instance&) = default;
 		instance(instance&&) noexcept = default;
 		instance& operator=(const instance&) = default;
@@ -59,6 +95,8 @@ namespace uscp::problem
 	                                random_engine& generator) noexcept;
 
 	[[nodiscard]] bool has_solution(const instance& instance) noexcept;
+
+	[[nodiscard]] instance reduce(const instance& full_instance);
 
 	struct instance_info final
 	{
@@ -107,7 +145,6 @@ namespace uscp::problem
 	  , read_function(read_function_)
 	{
 	}
-
 } // namespace uscp::problem
 
 #endif //USCP_INSTANCE_HPP
