@@ -108,6 +108,7 @@ namespace uscp::problem
 		size_t cost_min;
 		size_t cost_max;
 		size_t bks;
+		bool can_reduce;
 
 		bool (*read_function)(const std::filesystem::path&, uscp::problem::instance&);
 
@@ -119,6 +120,7 @@ namespace uscp::problem
 		                        size_t cost_min,
 		                        size_t cost_max,
 		                        size_t bks,
+		                        bool can_reduce,
 		                        bool (*read_function)(const std::filesystem::path&, instance&));
 	};
 	void to_json(nlohmann::json& j, const instance_info& instance);
@@ -132,6 +134,7 @@ namespace uscp::problem
 	                                       size_t cost_min_,
 	                                       size_t cost_max_,
 	                                       size_t bks_,
+	                                       bool can_reduce_,
 	                                       bool (*read_function_)(const std::filesystem::path&,
 	                                                              uscp::problem::instance&))
 	  : file(file_)
@@ -142,6 +145,7 @@ namespace uscp::problem
 	  , cost_min(cost_min_)
 	  , cost_max(cost_max_)
 	  , bks(bks_)
+	  , can_reduce(can_reduce_)
 	  , read_function(read_function_)
 	{
 	}

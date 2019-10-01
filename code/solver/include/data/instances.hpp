@@ -16,36 +16,40 @@
 #include <string_view>
 #include <filesystem>
 
-#define EXPAND_AS_FILE(                                                         \
-  file, name, points, subsets, density, cost_min, cost_max, BKS, read_function) \
+#define EXPAND_AS_FILE(                                                                     \
+  file, name, points, subsets, density, cost_min, cost_max, BKS, can_reduce, read_function) \
 	file,
-#define EXPAND_AS_NAME(                                                         \
-  file, name, points, subsets, density, cost_min, cost_max, BKS, read_function) \
+#define EXPAND_AS_NAME(                                                                     \
+  file, name, points, subsets, density, cost_min, cost_max, BKS, can_reduce, read_function) \
 	name,
-#define EXPAND_AS_POINTS(                                                       \
-  file, name, points, subsets, density, cost_min, cost_max, BKS, read_function) \
+#define EXPAND_AS_POINTS(                                                                   \
+  file, name, points, subsets, density, cost_min, cost_max, BKS, can_reduce, read_function) \
 	points,
-#define EXPAND_AS_SUBSETS(                                                      \
-  file, name, points, subsets, density, cost_min, cost_max, BKS, read_function) \
+#define EXPAND_AS_SUBSETS(                                                                  \
+  file, name, points, subsets, density, cost_min, cost_max, BKS, can_reduce, read_function) \
 	subsets,
-#define EXPAND_AS_DENSITY(                                                      \
-  file, name, points, subsets, density, cost_min, cost_max, BKS, read_function) \
+#define EXPAND_AS_DENSITY(                                                                  \
+  file, name, points, subsets, density, cost_min, cost_max, BKS, can_reduce, read_function) \
 	density,
-#define EXPAND_AS_COST_MIN(                                                     \
-  file, name, points, subsets, density, cost_min, cost_max, BKS, read_function) \
+#define EXPAND_AS_COST_MIN(                                                                 \
+  file, name, points, subsets, density, cost_min, cost_max, BKS, can_reduce, read_function) \
 	cost_min,
-#define EXPAND_AS_COST_MAX(                                                     \
-  file, name, points, subsets, density, cost_min, cost_max, BKS, read_function) \
+#define EXPAND_AS_COST_MAX(                                                                 \
+  file, name, points, subsets, density, cost_min, cost_max, BKS, can_reduce, read_function) \
 	cost_max,
-#define EXPAND_AS_BKS(                                                          \
-  file, name, points, subsets, density, cost_min, cost_max, BKS, read_function) \
+#define EXPAND_AS_BKS(                                                                      \
+  file, name, points, subsets, density, cost_min, cost_max, BKS, can_reduce, read_function) \
 	BKS,
-#define EXPAND_AS_READ_FUNCTION(                                                \
-  file, name, points, subsets, density, cost_min, cost_max, BKS, read_function) \
+#define EXPAND_AS_CAN_REDUCE(                                                               \
+  file, name, points, subsets, density, cost_min, cost_max, BKS, can_reduce, read_function) \
+	can_reduce,
+#define EXPAND_AS_READ_FUNCTION(                                                            \
+  file, name, points, subsets, density, cost_min, cost_max, BKS, can_reduce, read_function) \
 	read_function,
-#define EXPAND_AS_INSTANCE_INFO(                                                \
-  file, name, points, subsets, density, cost_min, cost_max, BKS, read_function) \
-	instance_info{file, name, points, subsets, density, cost_min, cost_max, BKS, read_function},
+#define EXPAND_AS_INSTANCE_INFO(                                                            \
+  file, name, points, subsets, density, cost_min, cost_max, BKS, can_reduce, read_function) \
+	instance_info{                                                                          \
+	  file, name, points, subsets, density, cost_min, cost_max, BKS, can_reduce, read_function},
 
 #define INSTANCES_TABLE_SIZE                                                       \
 	ORLIBRARY_ORLIBRARY_INSTANCES_TABLE_SIZE + ORLIBRARY_RAIL_INSTANCES_TABLE_SIZE \
@@ -72,6 +76,8 @@ namespace uscp::problem
 	  INSTANCES_TABLE(EXPAND_AS_COST_MAX)};
 	static constexpr std::array<size_t, INSTANCES_TABLE_SIZE> instances_bks = {
 	  INSTANCES_TABLE(EXPAND_AS_BKS)};
+	static constexpr std::array<bool, INSTANCES_TABLE_SIZE> instances_can_reduce = {
+	  INSTANCES_TABLE(EXPAND_AS_CAN_REDUCE)};
 	static constexpr std::array<bool (*)(const std::filesystem::path&, uscp::problem::instance&),
 	                            INSTANCES_TABLE_SIZE>
 	  instances_read_functions = {INSTANCES_TABLE(EXPAND_AS_READ_FUNCTION)};

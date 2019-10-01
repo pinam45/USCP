@@ -22,6 +22,7 @@
 	      cost_min,                                                                     \
 	      cost_max,                                                                     \
 	      BKS,                                                                          \
+	      false,                                                                        \
 	      &uscp::problem::sts::read)
 #define STS_INSTANCES_TABLE_SIZE 9
 #define STS_INSTANCES_TABLE(ENTRY)                                        \

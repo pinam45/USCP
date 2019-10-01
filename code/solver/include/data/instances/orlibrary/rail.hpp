@@ -22,6 +22,7 @@
 	      cost_min,                                                                                \
 	      cost_max,                                                                                \
 	      BKS,                                                                                     \
+	      true,                                                                                    \
 	      &uscp::problem::orlibrary::rail::read)
 #define ORLIBRARY_RAIL_INSTANCES_TABLE_SIZE 7
 #define ORLIBRARY_RAIL_INSTANCES_TABLE(ENTRY)                                                 \

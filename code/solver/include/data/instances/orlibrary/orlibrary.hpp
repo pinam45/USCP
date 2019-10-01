@@ -25,6 +25,7 @@
 	      cost_min,                                                     \
 	      cost_max,                                                     \
 	      BKS,                                                          \
+	      false,                                                        \
 	      &uscp::problem::orlibrary::orlibrary::read)
 #define ORLIBRARY_ORLIBRARY_INSTANCES_TABLE_SIZE 80
 #define ORLIBRARY_ORLIBRARY_INSTANCES_TABLE(ENTRY)                                             \
