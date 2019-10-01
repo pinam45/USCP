@@ -167,11 +167,11 @@ namespace
 		timer timer;
 		bool reduced = false;
 		dynamic_bitset<> remaining_subsets = ~(reduction.reduction_applied.subsets_dominated
-		                                       & reduction.reduction_applied.subsets_included);
+		                                       | reduction.reduction_applied.subsets_included);
 		remaining_subsets.iterate_bits_on([&](size_t current_subset_bit_on) {
 			dynamic_bitset<> extended_subset =
 			  (reduction.parent_instance->subsets_points[current_subset_bit_on]
-			   & reduction.reduction_applied.points_covered);
+			   | reduction.reduction_applied.points_covered);
 			remaining_subsets.iterate_bits_on([&](size_t other_subset_bit_on) {
 				if(reduction.parent_instance->subsets_points[other_subset_bit_on].is_subset_of(
 				     extended_subset))
@@ -194,7 +194,7 @@ namespace
 		timer timer;
 		bool reduced = false;
 		dynamic_bitset<> ignored_subsets = reduction.reduction_applied.subsets_dominated
-		                                   & reduction.reduction_applied.subsets_included;
+		                                   | reduction.reduction_applied.subsets_included;
 #pragma omp parallel for default(none) \
   shared(reduction, ignored_subsets, reduced) if(reduction.parent_instance->subsets_number > 128)
 		for(size_t i_current_subset = 0;
@@ -209,11 +209,15 @@ namespace
 			}
 			dynamic_bitset<> extended_subset =
 			  (reduction.parent_instance->subsets_points[i_current_subset]
-			   & reduction.reduction_applied.points_covered);
+			   | reduction.reduction_applied.points_covered);
 			for(size_t i_other_subset = 0;
 			    i_other_subset < reduction.parent_instance->subsets_number;
 			    ++i_other_subset)
 			{
+				if(i_other_subset == i_current_subset)
+				{
+					continue;
+				}
 				if(ignored_subsets[i_other_subset])
 				{
 					// possible concurrent access when a dominated subset is added
@@ -303,6 +307,12 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 		while(reduce_domination(reduction) && reduce_inclusion(points_subsets, reduction))
 			;
 	}
+	if((reduction.reduction_applied.subsets_included
+	    & reduction.reduction_applied.subsets_dominated)
+	     .any())
+	{
+		LOGGER->error("Reduction generated subset dominated and included at the same time");
+	}
 
 	// Apply reduction
 	instance reduced_instance(reduction);
@@ -314,34 +324,54 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 	                                  - reduction.reduction_applied.subsets_included.count();
 
 	dynamic_bitset<> removed_subsets =
-	  reduction.reduction_applied.subsets_dominated & reduction.reduction_applied.subsets_included;
+	  reduction.reduction_applied.subsets_dominated | reduction.reduction_applied.subsets_included;
 	reduced_instance.subsets_points.resize(reduced_instance.subsets_number);
 	size_t i_subset_full_instance = 0;
+	while(removed_subsets[i_subset_full_instance])
+	{
+		++i_subset_full_instance;
+	}
 	for(size_t i_subset = 0; i_subset < reduced_instance.subsets_number; ++i_subset)
 	{
-		while(removed_subsets[i_subset_full_instance])
-		{
-			++i_subset_full_instance;
-		}
 		reduced_instance.subsets_points[i_subset].resize(reduced_instance.points_number);
 		size_t i_point_full_instance = 0;
+		while(reduction.reduction_applied.points_covered[i_point_full_instance])
+		{
+			++i_point_full_instance;
+		}
 		for(size_t i_point = 0; i_point < reduced_instance.points_number; ++i_point)
 		{
-			while(reduction.reduction_applied.points_covered[i_point_full_instance])
-			{
-				++i_point_full_instance;
-			}
 			assert(i_point_full_instance < full_instance.points_number);
 			assert(i_subset_full_instance < full_instance.subsets_number);
 			reduced_instance.subsets_points[i_subset][i_point] =
 			  full_instance.subsets_points[i_subset_full_instance][i_point_full_instance];
-			++i_point_full_instance;
+			do
+			{
+				++i_point_full_instance;
+			} while(reduction.reduction_applied.points_covered[i_point_full_instance]);
 		}
 		assert(i_point_full_instance == full_instance.points_number);
-		++i_subset_full_instance;
+		if(i_point_full_instance != full_instance.points_number)
+		{
+			LOGGER->error("Solution reduction failed, only {}/{} points for subset {}",
+			              i_subset_full_instance,
+			              full_instance.subsets_number,
+			              i_subset_full_instance);
+		}
+		do
+		{
+			++i_subset_full_instance;
+		} while(removed_subsets[i_subset_full_instance]);
 	}
 	assert(i_subset_full_instance == full_instance.subsets_number);
+	if(i_subset_full_instance != full_instance.subsets_number)
+	{
+		LOGGER->error("Solution reduction failed, only {}/{} subsets",
+		              i_subset_full_instance,
+		              full_instance.subsets_number);
+	}
 
+	reduced_instance.name += " reduced";
 	LOGGER->info("({}) Reduced instance from {} subsets {} points to {} subsets {} points in {}s",
 	             full_instance.name,
 	             full_instance.subsets_number,
