@@ -44,6 +44,8 @@ namespace uscp
 	};
 	void to_json(nlohmann::json& j, const solution& solution);
 	std::ostream& operator<<(std::ostream& os, const solution& solution);
+
+	[[nodiscard]] solution expand(const solution& reduced_solution) noexcept;
 } // namespace uscp
 
 #endif //USCP_SOLUTION_HPP
