@@ -8,11 +8,9 @@
 #include "utils/logger.hpp"
 #include "utils/random.hpp"
 #include "data/instance.hpp"
-#include "algorithms/exhaustive.hpp"
 #include "algorithms/greedy.hpp"
 #include "algorithms/rwls.hpp"
 #include "data/instances.hpp"
-#include "utils/printer.hpp"
 #include "git_info.hpp"
 
 #include <cxxopts.hpp>
@@ -21,63 +19,11 @@
 #include <vector>
 #include <limits>
 #include <sstream>
+#include <fstream>
 
 namespace
 {
 	constexpr bool CHECK_INSTANCES = false;
-	constexpr bool GENERATE_PROBLEM = false;
-	constexpr const uscp::problem::instance_info& INSTANCE_INFO = uscp::problem::instances[2];
-
-	bool benchmark_greedy()
-	{
-		std::vector<uscp::problem::instance> instances;
-		printer printer;
-
-		//		uscp::random_engine g_problem(314159);
-		//		static constexpr uscp::problem::instance_info info{
-		//		  "", "generated-1", 32, 12, 0., 1, 100, 0};
-		//		uscp::problem::instance generated_instance = uscp::problem::generate(32, 12, g_problem);
-		//		generated_instance.info = &info;
-		//		instances.push_back(generated_instance);
-		//		printer.add_instance("Generated", generated_instance);
-		//		LOGGER->info("Generated problem: {}", generated_instance);
-
-		for(const uscp::problem::instance_info& instance_info: uscp::problem::instances)
-		{
-			if(instance_info.name.substr(0, 3) == "NRE")
-			{
-				break;
-			}
-			uscp::problem::instance instance;
-			if(!uscp::problem::read(instance_info, instance))
-			{
-				LOGGER->warn("Failed to read problem {}", instance_info);
-				return false;
-			}
-			instances.push_back(instance);
-			printer.add_instance("OR-Library", instance_info);
-			//break;
-		}
-
-		for(const uscp::problem::instance& instance: instances)
-		{
-			uscp::solution greedy_solution = uscp::greedy::solve(instance);
-			printer.add_solution("greedy", greedy_solution);
-			//LOGGER->info("Greedy solution to {}: {}", instance.name, greedy_solution);
-
-			uscp::random_engine g(314159);
-			uscp::rwls::stop stopping_criterion;
-			stopping_criterion.steps = 10000;
-			uscp::rwls::report rwls_report =
-			  uscp::rwls::improve_report(greedy_solution, g, stopping_criterion);
-			printer.add_solution("rwls", rwls_report.solution_final);
-			//LOGGER->info("RWLS solution to {}: {}", instance.name, rwls_solution);
-			nlohmann::json rwls_solution_json = rwls_report.serialize();
-			LOGGER->info("RWLS report: {}", rwls_solution_json.dump(4));
-		}
-		printer.generate_results();
-		return true;
-	}
 } // namespace
 
 int main(int argc, char* argv[])
@@ -191,7 +137,6 @@ int main(int argc, char* argv[])
 		{
 			LOGGER->info("Commit: {}", git_info::head_sha1);
 		}
-		uscp::random_engine generator(std::random_device{}());
 
 		// check instances
 		if constexpr(CHECK_INSTANCES)
@@ -199,8 +144,35 @@ int main(int argc, char* argv[])
 			uscp::problem::check_instances();
 		}
 
-		//benchmark_greedy();
+		/*for(const uscp::problem::instance_info& instance_info: uscp::problem::instances)
+		{
+			if(instance_info.name.substr(0, 3) != "STS")
+			{
+				continue;
+			}
+			uscp::problem::instance instance;
+			if(!uscp::problem::read(instance_info, instance))
+			{
+				LOGGER->error("Failed to read problem {}", instance_info);
+				continue;
+			}
+			uscp::problem::instance instance_reduced = uscp::problem::reduce(instance);
+			if(!uscp::problem::has_solution(instance_reduced))
+			{
+				LOGGER->error("Invalid reduced instance");
+			}
+			LOGGER->error("{}: ({}, {}) -> ({}, {}) {}",
+			              instance.name,
+			              instance.points_number,
+			              instance.subsets_number,
+			              instance_reduced.points_number,
+			              instance_reduced.subsets_number,
+			              instance_reduced.points_number != instance.points_number
+			                || instance_reduced.subsets_number != instance.subsets_number);
+		}
+		return EXIT_SUCCESS;*/
 
+		uscp::random_engine generator(std::random_device{}());
 		nlohmann::json data;
 		data["git"]["retrieved_state"] = git_info::retrieved_state;
 		data["git"]["head_sha1"] = git_info::head_sha1;
@@ -225,33 +197,97 @@ int main(int argc, char* argv[])
 			}
 			LOGGER->info("Current instance information: {}", *instance_it);
 
-			uscp::problem::instance instance;
-			if(!uscp::problem::read(*instance_it, instance))
+			uscp::problem::instance instance_base;
+			if(!uscp::problem::read(*instance_it, instance_base))
 			{
 				LOGGER->error("Failed to read problem {}", *instance_it);
 				continue;
 			}
-			nlohmann::json data_instance;
-			data_instance["instance"] = instance.serialize();
+			const bool reduced = instance_it->can_reduce;
+			uscp::problem::instance instance;
+			if(reduced)
+			{
+				instance = uscp::problem::reduce(instance_base);
+				if(!uscp::problem::has_solution(instance))
+				{
+					LOGGER->error("Invalid reduced instance");
+				}
+			}
+			else
+			{
+				instance = instance_base;
+			}
 
+			nlohmann::json data_instance;
+			data_instance["instance"] = instance_base.serialize();
 			if(greedy && !rwls)
 			{
 				uscp::greedy::report greedy_report = uscp::greedy::solve_report(instance);
-				data_instance["greedy"] = greedy_report.serialize();
+				if(reduced)
+				{
+					uscp::greedy::report expanded_greedy_report =
+					  uscp::greedy::expand(greedy_report);
+					if(!expanded_greedy_report.solution_final.cover_all_points)
+					{
+						LOGGER->error("Expanded greedy solution doesn't cover all points");
+						return EXIT_FAILURE;
+					}
+					LOGGER->info("({}) Expanded greedy solution to {} subsets", instance_base.name, expanded_greedy_report.solution_final.selected_subsets.count());
+					LOGGER->info("({}) Greedy found solution with {} subsets", instance_base.name, expanded_greedy_report.solution_final.selected_subsets.count());
+					data_instance["greedy"] = expanded_greedy_report.serialize();
+				}
+				else
+				{
+					LOGGER->info("({}) Greedy found solution with {} subsets", instance_base.name, greedy_report.solution_final.selected_subsets.count());
+					data_instance["greedy"] = greedy_report.serialize();
+				}
 			}
 			if(rwls)
 			{
 				uscp::greedy::report greedy_report = uscp::greedy::solve_report(instance);
 				if(greedy)
 				{
-					data_instance["greedy"] = greedy_report.serialize();
+					if(reduced)
+					{
+						uscp::greedy::report expanded_greedy_report =
+						  uscp::greedy::expand(greedy_report);
+						if(!expanded_greedy_report.solution_final.cover_all_points)
+						{
+							LOGGER->error("Expanded greedy solution doesn't cover all points");
+							return EXIT_FAILURE;
+						}
+						LOGGER->info("({}) Expanded greedy solution to {} subsets", instance_base.name, expanded_greedy_report.solution_final.selected_subsets.count());
+						LOGGER->info("({}) Greedy found solution with {} subsets", instance_base.name, expanded_greedy_report.solution_final.selected_subsets.count());
+						data_instance["greedy"] = expanded_greedy_report.serialize();
+					}
+					else
+					{
+						LOGGER->info("({}) Greedy found solution with {} subsets", instance_base.name, greedy_report.solution_final.selected_subsets.count());
+						data_instance["greedy"] = greedy_report.serialize();
+					}
 				}
 				std::vector<nlohmann::json> data_rwls;
 				for(size_t repetition = 0; repetition < repetitions; ++repetition)
 				{
 					uscp::rwls::report rwls_report = uscp::rwls::improve_report(
 					  greedy_report.solution_final, generator, rwls_stop);
-					data_rwls.emplace_back(rwls_report.serialize());
+					if(reduced)
+					{
+						uscp::rwls::report expanded_rwls_report = uscp::rwls::expand(rwls_report);
+						if(!expanded_rwls_report.solution_final.cover_all_points)
+						{
+							LOGGER->error("Expanded rwls solution doesn't cover all points");
+							return EXIT_FAILURE;
+						}
+						LOGGER->info("({}) Expanded rwls solution to {} subsets", instance_base.name, expanded_rwls_report.solution_final.selected_subsets.count());
+						LOGGER->info("({}) RWLS improved solution from {} subsets to {} subsets", instance_base.name, expanded_rwls_report.solution_initial.selected_subsets.count(), expanded_rwls_report.solution_final.selected_subsets.count());
+						data_instance["rwls"] = expanded_rwls_report.serialize();
+					}
+					else
+					{
+						LOGGER->info("({}) RWLS improved solution from {} subsets to {} subsets", instance_base.name, rwls_report.solution_initial.selected_subsets.count(), rwls_report.solution_final.selected_subsets.count());
+						data_instance["rwls"] = rwls_report.serialize();
+					}
 				}
 				data_instance["rwls"] = std::move(data_rwls);
 			}
