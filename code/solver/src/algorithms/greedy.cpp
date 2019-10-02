@@ -108,3 +108,16 @@ uscp::greedy::report uscp::greedy::solve_report(const uscp::problem::instance& p
 
 	return report;
 }
+
+uscp::greedy::report uscp::greedy::expand(const uscp::greedy::report& reduced_report) noexcept
+{
+	if(!reduced_report.solution_final.problem.reduction.has_value())
+	{
+		LOGGER->error("Tried to expand report of non-reduced instance");
+		return reduced_report;
+	}
+	report expanded_report(*reduced_report.solution_final.problem.reduction->parent_instance);
+	expanded_report.solution_final = expand(reduced_report.solution_final);
+	expanded_report.time = reduced_report.time;
+	return expanded_report;
+}
