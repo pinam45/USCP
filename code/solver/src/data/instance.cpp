@@ -393,6 +393,7 @@ void uscp::problem::to_json(nlohmann::json& j, const uscp::problem::instance_inf
 	json["cost_min"] = instance.cost_min;
 	json["cost_max"] = instance.cost_max;
 	json["bks"] = instance.bks;
+	json["can_reduce"] = instance.can_reduce;
 	j = std::move(json);
 }
 
