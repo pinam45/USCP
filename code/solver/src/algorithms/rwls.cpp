@@ -656,3 +656,17 @@ uscp::rwls::report uscp::rwls::improve_report(const uscp::solution& solution,
 	report.solution_final = improve_impl(solution, generator, stopping_criterion, report.found_at);
 	return report;
 }
+
+uscp::rwls::report uscp::rwls::expand(const uscp::rwls::report& reduced_report) noexcept
+{
+	if(!reduced_report.solution_final.problem.reduction.has_value())
+	{
+		LOGGER->error("Tried to expand report of non-reduced instance");
+		return reduced_report;
+	}
+	report expanded_report(*reduced_report.solution_final.problem.reduction->parent_instance);
+	expanded_report.solution_initial = expand(reduced_report.solution_initial);
+	expanded_report.solution_final = expand(reduced_report.solution_final);
+	expanded_report.found_at = reduced_report.found_at;
+	return expanded_report;
+}

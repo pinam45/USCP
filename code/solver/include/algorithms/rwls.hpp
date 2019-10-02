@@ -54,6 +54,8 @@ namespace uscp::rwls
 	[[nodiscard]] report improve_report(const uscp::solution& solution,
 	                                    random_engine& generator,
 	                                    stop stopping_criterion);
+
+	[[nodiscard]] report expand(const report& reduced_report) noexcept;
 } // namespace uscp::rwls
 
 #endif //USCP_RWLS_HPP
