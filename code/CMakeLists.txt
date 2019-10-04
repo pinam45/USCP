@@ -98,7 +98,7 @@ cmutils_target_enable_sanitizers(
 )
 
 # Enable debug logs
-cmutils_target_add_compile_definition(solver "SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG" RELWITHDEBINFO DEBUG)
+cmutils_target_add_compile_definition(solver "SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG" RELWITHDEBINFO DEBUG RELEASE)
 
 # Set target IDE folder
 cmutils_target_set_ide_folder(solver "solver")
