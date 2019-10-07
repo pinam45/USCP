@@ -578,9 +578,10 @@ namespace
 			++step;
 		}
 
-		LOGGER->info("({}) Optimised RWLS solution to {} subsets in {}s",
+		LOGGER->info("({}) Optimised RWLS solution to {} subsets in {} steps {}s",
 		             data.problem.name,
 		             data.best_solution.selected_subsets.count(),
+		             step,
 		             timer.elapsed());
 
 		return data.best_solution;
