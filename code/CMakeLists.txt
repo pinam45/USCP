@@ -36,6 +36,9 @@ include(cmake/cxxopts.cmake)
 # Generate git information target
 cmutils_generate_git_info_target(git_info ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Add common
+add_subdirectory(common)
+
 # Add solver
 add_subdirectory(solver)
 

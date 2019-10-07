@@ -19,6 +19,7 @@ target_include_directories(
 # Link dependencies
 target_link_libraries(
   solver PRIVATE
+  common
   dynamic_bitset
   spdlog_header_only
   nlohmann_json
@@ -73,7 +74,7 @@ cmutils_target_add_compile_definition(
 )
 
 # Set target IDE folder
-cmutils_target_set_ide_folder(solver "solver")
+cmutils_target_set_ide_folder(solver "USCP")
 
 # Group sources for IDEs
 cmutils_target_source_group(solver "${CMAKE_CURRENT_SOURCE_DIR}")
