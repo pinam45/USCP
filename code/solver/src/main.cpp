@@ -5,10 +5,10 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "data/instance.hpp"
-#include "algorithms/greedy.hpp"
-#include "algorithms/rwls.hpp"
-#include "data/instances.hpp"
+#include "solver/data/instance.hpp"
+#include "solver/algorithms/greedy.hpp"
+#include "solver/algorithms/rwls.hpp"
+#include "solver/data/instances.hpp"
 #include "git_info.hpp"
 
 #include <common/utils/logger.hpp>

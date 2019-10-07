@@ -5,7 +5,7 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "data/solution.hpp"
+#include "solver/data/solution.hpp"
 
 #include <common/utils/logger.hpp>
 

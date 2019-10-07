@@ -8,7 +8,7 @@
 #ifndef USCP_GREEDY_HPP
 #define USCP_GREEDY_HPP
 
-#include "data/solution.hpp"
+#include "solver/data/solution.hpp"
 
 namespace uscp::greedy
 {

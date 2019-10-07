@@ -8,8 +8,8 @@
 #ifndef USCP_RWLS_HPP
 #define USCP_RWLS_HPP
 
-#include "data/instance.hpp"
-#include "data/solution.hpp"
+#include "solver/data/instance.hpp"
+#include "solver/data/solution.hpp"
 
 #include <common/utils/random.hpp>
 

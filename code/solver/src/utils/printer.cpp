@@ -5,7 +5,7 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "utils/printer.hpp"
+#include "solver/utils/printer.hpp"
 
 #include <common/utils/logger.hpp>
 

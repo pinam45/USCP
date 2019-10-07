@@ -8,7 +8,7 @@
 #ifndef USCP_PRINTER_HPP
 #define USCP_PRINTER_HPP
 
-#include "data/solution.hpp"
+#include "solver/data/solution.hpp"
 
 #include <inja/inja.hpp>
 

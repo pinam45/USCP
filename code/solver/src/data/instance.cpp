@@ -5,7 +5,7 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "data/instance.hpp"
+#include "solver/data/instance.hpp"
 
 #include <common/utils/logger.hpp>
 #include <common/utils/ostream_config_guard.hpp>

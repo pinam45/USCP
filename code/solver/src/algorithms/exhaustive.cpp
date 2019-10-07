@@ -5,8 +5,8 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "algorithms/exhaustive.hpp"
-#include "utils/permutations.hpp"
+#include "solver/algorithms/exhaustive.hpp"
+#include "solver/utils/permutations.hpp"
 
 #include <common/utils/logger.hpp>
 #include <common/utils/timer.hpp>

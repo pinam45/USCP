@@ -8,8 +8,8 @@
 #ifndef USCP_EXHAUSTIVE_HPP
 #define USCP_EXHAUSTIVE_HPP
 
-#include "data/instance.hpp"
-#include "data/solution.hpp"
+#include "solver/data/instance.hpp"
+#include "solver/data/solution.hpp"
 
 namespace uscp::exhaustive
 {

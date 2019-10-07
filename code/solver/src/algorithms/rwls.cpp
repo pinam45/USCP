@@ -5,7 +5,7 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "algorithms/rwls.hpp"
+#include "solver/algorithms/rwls.hpp"
 
 #include <common/utils/logger.hpp>
 #include <common/utils/timer.hpp>

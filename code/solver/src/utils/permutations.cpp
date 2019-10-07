@@ -5,7 +5,7 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "utils/permutations.hpp"
+#include "solver/utils/permutations.hpp"
 
 std::vector<std::vector<dynamic_bitset<>>> generate_permutations(size_t bitsets_size)
 {
