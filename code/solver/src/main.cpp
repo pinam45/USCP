@@ -5,13 +5,14 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "utils/logger.hpp"
-#include "utils/random.hpp"
 #include "data/instance.hpp"
 #include "algorithms/greedy.hpp"
 #include "algorithms/rwls.hpp"
 #include "data/instances.hpp"
 #include "git_info.hpp"
+
+#include <common/utils/logger.hpp>
+#include <common/utils/random.hpp>
 
 #include <cxxopts.hpp>
 

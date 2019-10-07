@@ -6,7 +6,8 @@
 // https://opensource.org/licenses/MIT
 //
 #include "data/solution.hpp"
-#include "utils/logger.hpp"
+
+#include <common/utils/logger.hpp>
 
 #include <sstream>
 #include <vector>

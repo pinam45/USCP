@@ -10,7 +10,8 @@
 
 #include "data/instance.hpp"
 #include "data/solution.hpp"
-#include "utils/random.hpp"
+
+#include <common/utils/random.hpp>
 
 #include <nlohmann/json.hpp>
 

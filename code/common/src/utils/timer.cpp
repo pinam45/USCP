@@ -5,7 +5,7 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "utils/timer.hpp"
+#include "common/utils/timer.hpp"
 
 timer::timer() noexcept: start(std::chrono::system_clock::now())
 {

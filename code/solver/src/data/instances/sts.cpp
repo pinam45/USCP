@@ -6,8 +6,9 @@
 // https://opensource.org/licenses/MIT
 //
 #include "data/instances/sts.hpp"
-#include "utils/logger.hpp"
-#include "utils/timer.hpp"
+
+#include <common/utils/logger.hpp>
+#include <common/utils/timer.hpp>
 
 #include <fstream>
 

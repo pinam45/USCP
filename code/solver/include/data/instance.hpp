@@ -8,7 +8,7 @@
 #ifndef USCP_INSTANCE_HPP
 #define USCP_INSTANCE_HPP
 
-#include "utils/random.hpp"
+#include <common/utils/random.hpp>
 
 #include <dynamic_bitset.hpp>
 #include <spdlog/fmt/ostr.h> // for operator<<

@@ -6,7 +6,8 @@
 // https://opensource.org/licenses/MIT
 //
 #include "utils/printer.hpp"
-#include "utils/logger.hpp"
+
+#include <common/utils/logger.hpp>
 
 #include <nlohmann/json.hpp>
 

@@ -6,9 +6,10 @@
 // https://opensource.org/licenses/MIT
 //
 #include "algorithms/exhaustive.hpp"
-#include "utils/logger.hpp"
 #include "utils/permutations.hpp"
-#include "utils/timer.hpp"
+
+#include <common/utils/logger.hpp>
+#include <common/utils/timer.hpp>
 
 uscp::solution uscp::exhaustive::solve(const uscp::problem::instance& problem)
 {

@@ -8,10 +8,11 @@
 #include "data/instance.hpp"
 
 #include <utility>
-#include "utils/logger.hpp"
-#include "utils/ostream_config_guard.hpp"
-#include "utils/format.hpp"
-#include "utils/timer.hpp"
+
+#include <common/utils/logger.hpp>
+#include <common/utils/ostream_config_guard.hpp>
+#include <common/utils/format.hpp>
+#include <common/utils/timer.hpp>
 
 void uscp::problem::to_json(nlohmann::json& j, const uscp::problem::instance_serial& serial)
 {
