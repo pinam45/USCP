@@ -233,13 +233,19 @@ int main(int argc, char* argv[])
 						LOGGER->error("Expanded greedy solution doesn't cover all points");
 						return EXIT_FAILURE;
 					}
-					LOGGER->info("({}) Expanded greedy solution to {} subsets", instance_base.name, expanded_greedy_report.solution_final.selected_subsets.count());
-					LOGGER->info("({}) Greedy found solution with {} subsets", instance_base.name, expanded_greedy_report.solution_final.selected_subsets.count());
+					LOGGER->info("({}) Expanded greedy solution to {} subsets",
+					             instance_base.name,
+					             expanded_greedy_report.solution_final.selected_subsets.count());
+					LOGGER->info("({}) Greedy found solution with {} subsets",
+					             instance_base.name,
+					             expanded_greedy_report.solution_final.selected_subsets.count());
 					data_instance["greedy"] = expanded_greedy_report.serialize();
 				}
 				else
 				{
-					LOGGER->info("({}) Greedy found solution with {} subsets", instance_base.name, greedy_report.solution_final.selected_subsets.count());
+					LOGGER->info("({}) Greedy found solution with {} subsets",
+					             instance_base.name,
+					             greedy_report.solution_final.selected_subsets.count());
 					data_instance["greedy"] = greedy_report.serialize();
 				}
 			}
@@ -257,13 +263,21 @@ int main(int argc, char* argv[])
 							LOGGER->error("Expanded greedy solution doesn't cover all points");
 							return EXIT_FAILURE;
 						}
-						LOGGER->info("({}) Expanded greedy solution to {} subsets", instance_base.name, expanded_greedy_report.solution_final.selected_subsets.count());
-						LOGGER->info("({}) Greedy found solution with {} subsets", instance_base.name, expanded_greedy_report.solution_final.selected_subsets.count());
+						LOGGER->info(
+						  "({}) Expanded greedy solution to {} subsets",
+						  instance_base.name,
+						  expanded_greedy_report.solution_final.selected_subsets.count());
+						LOGGER->info(
+						  "({}) Greedy found solution with {} subsets",
+						  instance_base.name,
+						  expanded_greedy_report.solution_final.selected_subsets.count());
 						data_instance["greedy"] = expanded_greedy_report.serialize();
 					}
 					else
 					{
-						LOGGER->info("({}) Greedy found solution with {} subsets", instance_base.name, greedy_report.solution_final.selected_subsets.count());
+						LOGGER->info("({}) Greedy found solution with {} subsets",
+						             instance_base.name,
+						             greedy_report.solution_final.selected_subsets.count());
 						data_instance["greedy"] = greedy_report.serialize();
 					}
 				}
@@ -280,13 +294,21 @@ int main(int argc, char* argv[])
 							LOGGER->error("Expanded rwls solution doesn't cover all points");
 							return EXIT_FAILURE;
 						}
-						LOGGER->info("({}) Expanded rwls solution to {} subsets", instance_base.name, expanded_rwls_report.solution_final.selected_subsets.count());
-						LOGGER->info("({}) RWLS improved solution from {} subsets to {} subsets", instance_base.name, expanded_rwls_report.solution_initial.selected_subsets.count(), expanded_rwls_report.solution_final.selected_subsets.count());
+						LOGGER->info("({}) Expanded rwls solution to {} subsets",
+						             instance_base.name,
+						             expanded_rwls_report.solution_final.selected_subsets.count());
+						LOGGER->info("({}) RWLS improved solution from {} subsets to {} subsets",
+						             instance_base.name,
+						             expanded_rwls_report.solution_initial.selected_subsets.count(),
+						             expanded_rwls_report.solution_final.selected_subsets.count());
 						data_instance["rwls"] = expanded_rwls_report.serialize();
 					}
 					else
 					{
-						LOGGER->info("({}) RWLS improved solution from {} subsets to {} subsets", instance_base.name, rwls_report.solution_initial.selected_subsets.count(), rwls_report.solution_final.selected_subsets.count());
+						LOGGER->info("({}) RWLS improved solution from {} subsets to {} subsets",
+						             instance_base.name,
+						             rwls_report.solution_initial.selected_subsets.count(),
+						             rwls_report.solution_final.selected_subsets.count());
 						data_instance["rwls"] = rwls_report.serialize();
 					}
 				}

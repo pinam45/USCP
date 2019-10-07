@@ -121,15 +121,15 @@ namespace uscp::problem
 	                                       bool (*read_function_)(const std::filesystem::path&,
 	                                                              uscp::problem::instance&))
 	  : file(file_)
-	    , name(name_)
-	    , points(points_)
-	    , subsets(subsets_)
-	    , density(density_)
-	    , cost_min(cost_min_)
-	    , cost_max(cost_max_)
-	    , bks(bks_)
-	    , can_reduce(can_reduce_)
-	    , read_function(read_function_)
+	  , name(name_)
+	  , points(points_)
+	  , subsets(subsets_)
+	  , density(density_)
+	  , cost_min(cost_min_)
+	  , cost_max(cost_max_)
+	  , bks(bks_)
+	  , can_reduce(can_reduce_)
+	  , read_function(read_function_)
 	{
 	}
 } // namespace uscp::problem

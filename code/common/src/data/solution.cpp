@@ -28,9 +28,9 @@ void uscp::from_json(const nlohmann::json& j, uscp::solution_serial& solution_se
 
 uscp::solution::solution(const uscp::problem::instance& problem_)
   : problem(problem_)
-    , selected_subsets(problem_.subsets_number)
-    , covered_points(problem_.points_number)
-    , cover_all_points(false)
+  , selected_subsets(problem_.subsets_number)
+  , covered_points(problem_.points_number)
+  , cover_all_points(false)
 {
 }
 

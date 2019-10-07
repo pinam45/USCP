@@ -31,15 +31,15 @@ void uscp::problem::from_json(const nlohmann::json& j, uscp::problem::instance_s
 
 uscp::problem::reduction::reduction(size_t points_number, size_t subsets_number) noexcept
   : points_covered(points_number)
-    , subsets_dominated(subsets_number)
-    , subsets_included(subsets_number)
+  , subsets_dominated(subsets_number)
+  , subsets_included(subsets_number)
 {
 }
 
 uscp::problem::reduction_info::reduction_info(
   const uscp::problem::instance* parent_instance_) noexcept
   : parent_instance(parent_instance_)
-    , reduction_applied(parent_instance->points_number, parent_instance->subsets_number)
+  , reduction_applied(parent_instance->points_number, parent_instance->subsets_number)
 {
 }
 

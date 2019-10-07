@@ -79,7 +79,7 @@ namespace uscp::problem
 	static constexpr std::array<bool, INSTANCES_TABLE_SIZE> instances_can_reduce = {
 	  INSTANCES_TABLE(EXPAND_AS_CAN_REDUCE)};
 	static constexpr std::array<bool (*)(const std::filesystem::path&, uscp::problem::instance&),
-	  INSTANCES_TABLE_SIZE>
+	                            INSTANCES_TABLE_SIZE>
 	  instances_read_functions = {INSTANCES_TABLE(EXPAND_AS_READ_FUNCTION)};
 	static constexpr std::array<instance_info, INSTANCES_TABLE_SIZE> instances = {
 	  INSTANCES_TABLE(EXPAND_AS_INSTANCE_INFO)};
