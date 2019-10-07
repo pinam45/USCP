@@ -8,7 +8,7 @@
 #ifndef USCP_RAIL_HPP
 #define USCP_RAIL_HPP
 
-#include "data/instance.hpp"
+#include "common/data/instance.hpp"
 
 #include <filesystem>
 

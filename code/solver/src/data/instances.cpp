@@ -9,6 +9,8 @@
 
 #include <common/utils/logger.hpp>
 
+#include "data/instance.hpp"
+
 bool uscp::problem::read(const uscp::problem::instance_info& info,
                          uscp::problem::instance& instance) noexcept
 {

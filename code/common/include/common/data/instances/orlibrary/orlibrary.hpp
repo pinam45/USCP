@@ -8,7 +8,7 @@
 #ifndef USCP_ORLIBRARY_HPP
 #define USCP_ORLIBRARY_HPP
 
-#include "data/instance.hpp"
+#include "common/data/instance.hpp"
 
 #include <array>
 #include <string_view>

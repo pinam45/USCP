@@ -5,15 +5,15 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include "data/instances/orlibrary/rail.hpp"
+#include "common/data/instances/sts.hpp"
 
 #include <common/utils/logger.hpp>
 #include <common/utils/timer.hpp>
 
 #include <fstream>
 
-bool uscp::problem::orlibrary::rail::read(const std::filesystem::path& path,
-                                          uscp::problem::instance& instance_out) noexcept
+bool uscp::problem::sts::read(const std::filesystem::path& path,
+                              uscp::problem::instance& instance_out) noexcept
 {
 	const timer timer;
 
@@ -58,21 +58,6 @@ bool uscp::problem::orlibrary::rail::read(const std::filesystem::path& path,
 	LOGGER->info("Started to read problem instance from file {}", path);
 	uscp::problem::instance instance = instance_out;
 
-	// Read points number
-	size_t points_number = 0;
-	if(!instance_stream.good())
-	{
-		LOGGER->warn("Invalid file format");
-		return false;
-	}
-	instance_stream >> points_number;
-	if(points_number == 0)
-	{
-		LOGGER->warn("Invalid points number: {}", points_number);
-		return false;
-	}
-	instance.points_number = points_number;
-
 	// Read subsets number
 	size_t subsets_number = 0;
 	if(!instance_stream.good())
@@ -88,51 +73,50 @@ bool uscp::problem::orlibrary::rail::read(const std::filesystem::path& path,
 	}
 	instance.subsets_number = subsets_number;
 
-	// Read subsets information
+	// Read points number
+	size_t points_number = 0;
+	if(!instance_stream.good())
+	{
+		LOGGER->warn("Invalid file format");
+		return false;
+	}
+	instance_stream >> points_number;
+	if(points_number == 0)
+	{
+		LOGGER->warn("Invalid points number: {}", points_number);
+		return false;
+	}
+	instance.points_number = points_number;
+
+	// Read subsets covering points
 	instance.subsets_points.resize(subsets_number);
 	for(size_t i = 0; i < subsets_number; ++i)
 	{
 		instance.subsets_points[i].resize(points_number);
-
-		// cost
-		if(!instance_stream.good())
+	}
+	for(size_t i_point = 0; i_point < points_number; ++i_point)
+	{
+		for(size_t i_subset = 0; i_subset < 3; ++i_subset)
 		{
-			LOGGER->warn("Invalid file format");
-			return false;
-		}
-		size_t ignored_subset_cost;
-		instance_stream >> ignored_subset_cost;
-
-		// number of points
-		if(!instance_stream.good())
-		{
-			LOGGER->warn("Invalid file format");
-			return false;
-		}
-		size_t subset_points;
-		instance_stream >> subset_points;
-
-		for(size_t i_point = 0; i_point < subset_points; ++i_point)
-		{
+			size_t subset_number = 0;
 			if(!instance_stream.good())
 			{
 				LOGGER->warn("Invalid file format");
 				return false;
 			}
-			size_t point_number;
-			instance_stream >> point_number;
-			if(point_number == 0)
+			instance_stream >> subset_number;
+			if(subset_number == 0)
 			{
 				LOGGER->warn("Invalid value");
 				return false;
 			}
-			--point_number; // numbered from 1 in the file
-			if(point_number > points_number)
+			--subset_number; // numbered from 1 in the file
+			if(subset_number > subsets_number)
 			{
 				LOGGER->warn("Invalid value");
 				return false;
 			}
-			instance.subsets_points[i].set(point_number);
+			instance.subsets_points[subset_number][i_point] = true;
 		}
 	}
 
@@ -147,9 +131,9 @@ bool uscp::problem::orlibrary::rail::read(const std::filesystem::path& path,
 	return true;
 }
 
-bool uscp::problem::orlibrary::rail::write(const uscp::problem::instance& instance,
-                                           const std::filesystem::path& path,
-                                           bool override_file) noexcept
+bool uscp::problem::sts::write(const uscp::problem::instance& instance,
+                               const std::filesystem::path& path,
+                               bool override_file) noexcept
 {
 	(void)instance;
 	(void)path;

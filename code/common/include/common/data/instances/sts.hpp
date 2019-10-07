@@ -8,7 +8,7 @@
 #ifndef USCP_STS_HPP
 #define USCP_STS_HPP
 
-#include "data/instance.hpp"
+#include "common/data/instance.hpp"
 
 #include <filesystem>
 
