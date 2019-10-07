@@ -10,8 +10,6 @@
 
 #include "common/data/instance.hpp"
 
-#include <array>
-#include <string_view>
 #include <filesystem>
 
 #define ORLIBRARY_ORLIBRARY_INSTANCES_FOLDER "./resources/OR-Library/"

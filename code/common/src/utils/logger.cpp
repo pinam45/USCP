@@ -7,12 +7,13 @@
 //
 #include "common/utils/logger.hpp"
 
-#include <spdlog/spdlog.h>
 #include <spdlog/sinks/null_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 
+#include <utility>
 #include <iostream>
+#include <cassert>
 
 const std::shared_ptr<spdlog::logger> NULL_LOGGER =
   std::make_shared<spdlog::logger>("null", std::make_shared<spdlog::sinks::null_sink_mt>());

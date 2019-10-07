@@ -9,18 +9,26 @@
 #include "solver/algorithms/greedy.hpp"
 #include "solver/algorithms/rwls.hpp"
 #include "solver/data/instances.hpp"
+#include "common/utils/logger.hpp"
+#include "common/utils/random.hpp"
+#include "common/data/instance.hpp"
+#include "common/data/instances.hpp"
+#include "common/data/solution.hpp"
 #include "git_info.hpp"
 
-#include <common/utils/logger.hpp>
-#include <common/utils/random.hpp>
-
 #include <cxxopts.hpp>
+#include <nlohmann/json.hpp>
 
 #include <cstdlib>
 #include <vector>
 #include <limits>
 #include <sstream>
 #include <fstream>
+#include <iomanip>
+#include <ctime>
+#include <string>
+#include <string_view>
+#include <utility>
 
 namespace
 {

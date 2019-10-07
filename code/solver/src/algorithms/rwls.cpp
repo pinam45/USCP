@@ -6,12 +6,15 @@
 // https://opensource.org/licenses/MIT
 //
 #include "solver/algorithms/rwls.hpp"
-
-#include <common/utils/logger.hpp>
-#include <common/utils/timer.hpp>
+#include "solver/data/solution.hpp"
+#include "common/utils/logger.hpp"
+#include "common/utils/timer.hpp"
 
 #include <vector>
 #include <deque>
+#include <cassert>
+#include <algorithm>
+#include <utility>
 
 //#define NDEBUG_SCORE
 #if !defined(NDEBUG) && !defined(NDEBUG_SCORE)

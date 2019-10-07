@@ -8,7 +8,9 @@
 #ifndef USCP_GREEDY_HPP
 #define USCP_GREEDY_HPP
 
-#include "solver/data/solution.hpp"
+#include "common/data/solution.hpp"
+
+#include <nlohmann/json.hpp>
 
 namespace uscp::greedy
 {

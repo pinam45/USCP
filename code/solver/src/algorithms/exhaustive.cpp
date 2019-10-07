@@ -7,9 +7,11 @@
 //
 #include "solver/algorithms/exhaustive.hpp"
 #include "solver/utils/permutations.hpp"
+#include "common/utils/logger.hpp"
+#include "common/utils/timer.hpp"
 
-#include <common/utils/logger.hpp>
-#include <common/utils/timer.hpp>
+#include <cassert>
+#include <cstddef>
 
 uscp::solution uscp::exhaustive::solve(const uscp::problem::instance& problem)
 {

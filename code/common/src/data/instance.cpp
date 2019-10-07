@@ -7,11 +7,10 @@
 //
 #include "common/data/instance.hpp"
 #include "common/utils/logger.hpp"
-#include "common/utils/ostream_config_guard.hpp"
 #include "common/utils/format.hpp"
-#include "common/utils/timer.hpp"
 
 #include <utility>
+#include <cassert>
 
 void uscp::problem::to_json(nlohmann::json& j, const uscp::problem::instance_serial& serial)
 {

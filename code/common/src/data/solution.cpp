@@ -6,11 +6,10 @@
 // https://opensource.org/licenses/MIT
 //
 #include "common/data/solution.hpp"
-
-#include <common/utils/logger.hpp>
+#include "common/utils/logger.hpp"
 
 #include <sstream>
-#include <vector>
+#include <utility>
 
 void uscp::to_json(nlohmann::json& j, const uscp::solution_serial& solution_serial)
 {

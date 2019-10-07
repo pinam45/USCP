@@ -6,11 +6,11 @@
 // https://opensource.org/licenses/MIT
 //
 #include "common/data/instances/sts.hpp"
-
-#include <common/utils/logger.hpp>
-#include <common/utils/timer.hpp>
+#include "common/utils/logger.hpp"
+#include "common/utils/timer.hpp"
 
 #include <fstream>
+#include <cassert>
 
 bool uscp::problem::sts::read(const std::filesystem::path& path,
                               uscp::problem::instance& instance_out) noexcept

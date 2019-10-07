@@ -6,9 +6,12 @@
 // https://opensource.org/licenses/MIT
 //
 #include "solver/algorithms/greedy.hpp"
+#include "common/utils/logger.hpp"
+#include "common/utils/timer.hpp"
+#include "common/data/instance.hpp"
+#include "solver/data/solution.hpp"
 
-#include <common/utils/logger.hpp>
-#include <common/utils/timer.hpp>
+#include <dynamic_bitset.hpp>
 
 void uscp::greedy::to_json(nlohmann::json& j, const uscp::greedy::report_serial& serial)
 {

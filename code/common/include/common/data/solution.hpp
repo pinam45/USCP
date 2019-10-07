@@ -11,8 +11,11 @@
 #include "common/data/instance.hpp"
 
 #include <dynamic_bitset.hpp>
-#include <spdlog/fmt/ostr.h> // for operator<<
 #include <nlohmann/json.hpp>
+
+#include <cstddef>
+#include <vector>
+#include <ostream>
 
 namespace uscp
 {

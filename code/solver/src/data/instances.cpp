@@ -6,10 +6,8 @@
 // https://opensource.org/licenses/MIT
 //
 #include "solver/data/instances.hpp"
-
-#include <common/utils/logger.hpp>
-
 #include "solver/data/instance.hpp"
+#include "common/utils/logger.hpp"
 
 bool uscp::problem::read(const uscp::problem::instance_info& info,
                          uscp::problem::instance& instance) noexcept

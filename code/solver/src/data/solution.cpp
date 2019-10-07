@@ -6,10 +6,10 @@
 // https://opensource.org/licenses/MIT
 //
 #include "solver/data/solution.hpp"
+#include "common/utils/logger.hpp"
 
-#include <common/utils/logger.hpp>
-
-#include <vector>
+#include <cassert>
+#include <cstddef>
 
 uscp::solution uscp::expand(const uscp::solution& reduced_solution) noexcept
 {

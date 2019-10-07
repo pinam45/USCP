@@ -6,13 +6,11 @@
 // https://opensource.org/licenses/MIT
 //
 #include "solver/data/instance.hpp"
+#include "common/utils/logger.hpp"
+#include "common/utils/timer.hpp"
 
-#include <common/utils/logger.hpp>
-#include <common/utils/ostream_config_guard.hpp>
-#include <common/utils/format.hpp>
-#include <common/utils/timer.hpp>
-
-#include <utility>
+#include <cassert>
+#include <vector>
 
 uscp::problem::instance uscp::problem::generate(std::string_view name,
                                                 size_t points_number,

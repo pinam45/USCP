@@ -12,6 +12,9 @@
 #include <spdlog/fmt/ostr.h> // for operator<<
 
 #include <filesystem>
+#include <memory>
+#include <ostream>
+#include <string>
 
 extern const std::shared_ptr<spdlog::logger> LOGGER;
 extern const std::shared_ptr<spdlog::logger> NULL_LOGGER;

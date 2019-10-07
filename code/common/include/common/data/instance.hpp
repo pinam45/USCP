@@ -9,12 +9,15 @@
 #define USCP_COMMON_INSTANCE_HPP
 
 #include <dynamic_bitset.hpp>
-#include <spdlog/fmt/ostr.h> // for operator<<
 #include <nlohmann/json.hpp>
 
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <cstddef>
+#include <ostream>
+#include <string_view>
+#include <vector>
 
 namespace uscp::problem
 {

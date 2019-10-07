@@ -8,12 +8,14 @@
 #ifndef USCP_RWLS_HPP
 #define USCP_RWLS_HPP
 
-#include "solver/data/instance.hpp"
-#include "solver/data/solution.hpp"
-
-#include <common/utils/random.hpp>
+#include "common/data/instance.hpp"
+#include "common/data/solution.hpp"
+#include "common/utils/random.hpp"
 
 #include <nlohmann/json.hpp>
+
+#include <cstddef>
+#include <limits>
 
 namespace uscp::rwls
 {

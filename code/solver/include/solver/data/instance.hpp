@@ -8,10 +8,11 @@
 #ifndef USCP_INSTANCE_HPP
 #define USCP_INSTANCE_HPP
 
-#include <common/utils/random.hpp>
-#include <common/data/instance.hpp>
+#include "common/utils/random.hpp"
+#include "common/data/instance.hpp"
 
 #include <string_view>
+#include <cstddef>
 
 namespace uscp::problem
 {

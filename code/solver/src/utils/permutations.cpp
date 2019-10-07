@@ -7,6 +7,10 @@
 //
 #include "solver/utils/permutations.hpp"
 
+#include <cassert>
+#include <algorithm>
+#include <iterator>
+
 std::vector<std::vector<dynamic_bitset<>>> generate_permutations(size_t bitsets_size)
 {
 	// permutations[k] : list of bitset permutations with k bit to 1

@@ -8,9 +8,11 @@
 #ifndef USCP_PERMUTATIONS_HPP
 #define USCP_PERMUTATIONS_HPP
 
-#include <memory>
-
 #include <dynamic_bitset.hpp>
+
+#include <memory>
+#include <cstddef>
+#include <vector>
 
 std::vector<std::vector<dynamic_bitset<>>> generate_permutations(size_t bitsets_size);
 

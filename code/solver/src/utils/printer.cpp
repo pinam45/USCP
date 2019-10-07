@@ -6,14 +6,16 @@
 // https://opensource.org/licenses/MIT
 //
 #include "solver/utils/printer.hpp"
-
-#include <common/utils/logger.hpp>
+#include "common/utils/logger.hpp"
 
 #include <nlohmann/json.hpp>
 
 #include <filesystem>
 #include <ctime>
 #include <sstream>
+#include <cassert>
+#include <algorithm>
+#include <iterator>
 
 printer::printer() noexcept
 {
