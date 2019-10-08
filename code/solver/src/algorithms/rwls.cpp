@@ -101,8 +101,8 @@ namespace
 
 	[[nodiscard, gnu::hot]] uscp::solution improve_impl(const uscp::solution& solution,
 	                                                    uscp::random_engine& generator,
-	                                                    uscp::rwls::stop stopping_criterion,
-	                                                    uscp::rwls::stop& found_at);
+	                                                    uscp::rwls::position stopping_criterion,
+	                                                    uscp::rwls::position& found_at);
 
 	//=================================================================================================
 	// implementations
@@ -513,8 +513,8 @@ namespace
 
 	uscp::solution improve_impl(const uscp::solution& solution,
 	                            uscp::random_engine& generator,
-	                            uscp::rwls::stop stopping_criterion,
-	                            uscp::rwls::stop& found_at)
+	                            uscp::rwls::position stopping_criterion,
+	                            uscp::rwls::position& found_at)
 	{
 		LOGGER->info("({}) Start optimising by RWLS solution with {} subsets",
 		             solution.problem.name,
@@ -648,15 +648,15 @@ bool uscp::rwls::report::load(const uscp::rwls::report_serial& serial) noexcept
 
 uscp::solution uscp::rwls::improve(const uscp::solution& solution,
                                    random_engine& generator,
-                                   stop stopping_criterion)
+                                   position stopping_criterion)
 {
-	stop stopped_at;
+	position stopped_at;
 	return improve_impl(solution, generator, stopping_criterion, stopped_at);
 }
 
 uscp::rwls::report uscp::rwls::improve_report(const uscp::solution& solution,
                                               uscp::random_engine& generator,
-                                              stop stopping_criterion)
+                                              position stopping_criterion)
 {
 	report report(solution.problem);
 	report.solution_initial = solution;

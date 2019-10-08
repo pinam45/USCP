@@ -19,7 +19,7 @@
 
 namespace uscp::rwls
 {
-	struct stop final
+	struct position final
 	{
 		size_t steps = std::numeric_limits<size_t>::max();
 		double time = std::numeric_limits<double>::max();
@@ -39,7 +39,7 @@ namespace uscp::rwls
 	{
 		solution solution_initial;
 		solution solution_final;
-		stop found_at;
+		position found_at;
 
 		explicit report(const problem::instance& problem) noexcept;
 		report(const report&) = default;
@@ -53,10 +53,10 @@ namespace uscp::rwls
 
 	[[nodiscard, gnu::hot]] solution improve(const uscp::solution& solution,
 	                                         random_engine& generator,
-	                                         stop stopping_criterion);
+	                                         position stopping_criterion);
 	[[nodiscard, gnu::hot]] report improve_report(const uscp::solution& solution,
 	                                              random_engine& generator,
-	                                              stop stopping_criterion);
+	                                              position stopping_criterion);
 
 	[[nodiscard]] report expand(const report& reduced_report) noexcept;
 } // namespace uscp::rwls

@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 	size_t repetitions = 1;
 	bool greedy = false;
 	bool rwls = false;
-	uscp::rwls::stop rwls_stop;
+	uscp::rwls::position rwls_stop;
 	try
 	{
 		std::ostringstream help_txt;
