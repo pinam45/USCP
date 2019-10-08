@@ -51,12 +51,12 @@ namespace uscp::rwls
 		bool load(const report_serial& serial) noexcept;
 	};
 
-	[[nodiscard]] solution improve(const uscp::solution& solution,
-	                               random_engine& generator,
-	                               stop stopping_criterion);
-	[[nodiscard]] report improve_report(const uscp::solution& solution,
-	                                    random_engine& generator,
-	                                    stop stopping_criterion);
+	[[nodiscard, gnu::hot]] solution improve(const uscp::solution& solution,
+	                                         random_engine& generator,
+	                                         stop stopping_criterion);
+	[[nodiscard, gnu::hot]] report improve_report(const uscp::solution& solution,
+	                                              random_engine& generator,
+	                                              stop stopping_criterion);
 
 	[[nodiscard]] report expand(const report& reduced_report) noexcept;
 } // namespace uscp::rwls

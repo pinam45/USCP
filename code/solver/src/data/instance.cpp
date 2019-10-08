@@ -88,6 +88,13 @@ bool uscp::problem::has_solution(const uscp::problem::instance& instance) noexce
 
 namespace
 {
+	[[gnu::hot]] bool reduce_domination_iterate(uscp::problem::reduction_info& reduction);
+
+	[[gnu::hot]] bool reduce_domination(uscp::problem::reduction_info& reduction);
+
+	[[gnu::hot]] bool reduce_inclusion(const std::vector<dynamic_bitset<>>& points_subsets,
+	                                   uscp::problem::reduction_info& reduction);
+
 	bool reduce_domination_iterate(uscp::problem::reduction_info& reduction)
 	{
 		timer timer;

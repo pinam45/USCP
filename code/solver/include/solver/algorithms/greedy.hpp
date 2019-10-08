@@ -39,7 +39,7 @@ namespace uscp::greedy
 
 	[[nodiscard]] solution solve(const problem::instance& problem) noexcept;
 
-	[[nodiscard]] report solve_report(const problem::instance& problem) noexcept;
+	[[nodiscard, gnu::hot]] report solve_report(const problem::instance& problem) noexcept;
 
 	[[nodiscard]] report expand(const report& reduced_report) noexcept;
 } // namespace uscp::greedy

@@ -80,27 +80,29 @@ namespace
 	std::vector<size_t> compute_subset_neighbors(const uscp::problem::instance& problem,
 	                                             size_t subset_number) noexcept;
 
-	void rwls_compute_subsets_neighbors(rwls_data& data) noexcept;
+	[[gnu::hot]] void rwls_compute_subsets_neighbors(rwls_data& data) noexcept;
 
-	int rwls_compute_subset_score(const rwls_data& data, size_t subset_number) noexcept;
+	[[nodiscard, gnu::hot]] int rwls_compute_subset_score(const rwls_data& data,
+	                                                      size_t subset_number) noexcept;
 
-	void rwls_init(rwls_data& data, const uscp::solution& solution) noexcept;
+	[[gnu::hot]] void rwls_init(rwls_data& data, const uscp::solution& solution) noexcept;
 
-	void rwls_add_subset(rwls_data& data, size_t subset_number) noexcept;
-	void rwls_remove_subset(rwls_data& data, size_t subset_number) noexcept;
+	[[gnu::hot]] void rwls_add_subset(rwls_data& data, size_t subset_number) noexcept;
+	[[gnu::hot]] void rwls_remove_subset(rwls_data& data, size_t subset_number) noexcept;
 
 	void rwls_make_tabu(rwls_data& data, size_t subset_number) noexcept;
 	bool rwls_is_tabu(const rwls_data& data, size_t subset_number) noexcept;
 
-	size_t rwls_select_subset_no_timestamp(const rwls_data& data) noexcept;
-	size_t rwls_select_subset_to_remove(const rwls_data& data) noexcept;
-	size_t rwls_select_subset_to_add(const rwls_data& data, size_t point_to_cover) noexcept;
-	size_t rwls_select_uncovered_point(rwls_data& data) noexcept;
+	[[gnu::hot]] size_t rwls_select_subset_no_timestamp(const rwls_data& data) noexcept;
+	[[nodiscard, gnu::hot]] size_t rwls_select_subset_to_remove(const rwls_data& data) noexcept;
+	[[nodiscard, gnu::hot]] size_t rwls_select_subset_to_add(const rwls_data& data,
+	                                                         size_t point_to_cover) noexcept;
+	[[nodiscard, gnu::hot]] size_t rwls_select_uncovered_point(rwls_data& data) noexcept;
 
-	[[nodiscard]] uscp::solution improve_impl(const uscp::solution& solution,
-	                                          uscp::random_engine& generator,
-	                                          uscp::rwls::stop stopping_criterion,
-	                                          uscp::rwls::stop& found_at);
+	[[nodiscard, gnu::hot]] uscp::solution improve_impl(const uscp::solution& solution,
+	                                                    uscp::random_engine& generator,
+	                                                    uscp::rwls::stop stopping_criterion,
+	                                                    uscp::rwls::stop& found_at);
 
 	//=================================================================================================
 	// implementations
