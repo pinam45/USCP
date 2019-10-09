@@ -309,7 +309,7 @@ int main(int argc, char* argv[])
 						             instance_base.name,
 						             expanded_rwls_report.solution_initial.selected_subsets.count(),
 						             expanded_rwls_report.solution_final.selected_subsets.count());
-						data_instance["rwls"] = expanded_rwls_report.serialize();
+						data_rwls.emplace_back(expanded_rwls_report.serialize());
 					}
 					else
 					{
@@ -317,7 +317,7 @@ int main(int argc, char* argv[])
 						             instance_base.name,
 						             rwls_report.solution_initial.selected_subsets.count(),
 						             rwls_report.solution_final.selected_subsets.count());
-						data_instance["rwls"] = rwls_report.serialize();
+						data_rwls.emplace_back(rwls_report.serialize());
 					}
 				}
 				data_instance["rwls"] = std::move(data_rwls);
