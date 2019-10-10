@@ -95,29 +95,29 @@ rail4284
 rail4872
 "
 
-for file in $files_txt
+for file in ${files_txt}
 do
-	file_txt="$file.txt"
-	if ! [ -f $file_txt ]; then
+	file_txt="${file}.txt"
+	if ! [ -f ${file_txt} ]; then
 		# download
-		wget "$orlibrary_base_url$file_txt"
+		wget "${orlibrary_base_url}${file_txt}"
 	else
-		echo "$file_txt"
+		echo "${file_txt}"
 	fi
 done
 
-for file in $files_gz
+for file in ${files_gz}
 do
-	file_txt="$file.txt"
-	if ! [ -f $file_txt ]; then
-		file_gz="$file.gz"
+	file_txt="${file}.txt"
+	if ! [ -f ${file_txt} ]; then
+		file_gz="${file}.gz"
 		# download
-		wget "$orlibrary_base_url$file_gz"
+		wget "${orlibrary_base_url}${file_gz}"
 		# extract
-		gzip -d "$file_gz"
+		gzip -d "${file_gz}"
 		# rename
-		mv "$file" "$file_txt"
+		mv "${file}" "${file_txt}"
 	else
-		echo "$file_txt"
+		echo "${file_txt}"
 	fi
 done
