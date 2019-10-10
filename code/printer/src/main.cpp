@@ -9,9 +9,15 @@
 #include "git_info.hpp"
 
 #include <cxxopts.hpp>
+#include <nlohmann/json.hpp>
 
 #include <cstdlib>
 #include <iostream>
+#include <filesystem>
+#include <deque>
+#include <iterator>
+#include <fstream>
+#include <nlohmann/json.hpp>
 
 int main(int argc, char* argv[])
 {
@@ -89,7 +95,77 @@ int main(int argc, char* argv[])
 		{
 			LOGGER->info("Commit: {}", git_info::head_sha1);
 		}
-		//TODO
+
+		std::deque<std::string> paths(std::cbegin(input_folder_files),
+		                              std::cend(input_folder_files));
+		assert(!paths.empty());
+
+		while(!paths.empty())
+		{
+			const std::string path = paths.front();
+			paths.pop_front();
+
+			std::error_code error;
+			if(!std::filesystem::exists(path, error))
+			{
+				if(error)
+				{
+					SPDLOG_LOGGER_DEBUG(
+					  LOGGER, "std::filesystem::exists failed: {}", error.message());
+					LOGGER->error("Check if file/folder exist failed for {}", path);
+				}
+				else
+				{
+					LOGGER->error("Non-existing file/folder {}", path);
+				}
+				continue;
+			}
+
+			if(std::filesystem::is_directory(path, error))
+			{
+				std::filesystem::directory_iterator directory_iterator(path, error);
+				if(error)
+				{
+					SPDLOG_LOGGER_DEBUG(
+					  LOGGER, "Directory iterator creation failed: {}", error.message());
+					LOGGER->error("Failed to get content of folder {}", path);
+					continue;
+				}
+				for(const std::filesystem::directory_entry& entry: directory_iterator)
+				{
+					paths.push_back(entry.path().string());
+				}
+				continue;
+			}
+			if(error)
+			{
+				SPDLOG_LOGGER_DEBUG(
+				  LOGGER, "std::filesystem::is_directory failed: {}", error.message());
+				LOGGER->error("Check if path is a directory failed for {}", path);
+			}
+
+			if(std::filesystem::is_regular_file(path, error))
+			{
+				std::ifstream file_stream(path);
+				if(!file_stream)
+				{
+					SPDLOG_LOGGER_DEBUG(LOGGER, "std::ifstream constructor failed");
+					LOGGER->error("Failed to read file {}", path);
+					continue;
+				}
+				LOGGER->info("Started processing {}", path);
+				nlohmann::json data;
+				file_stream >> data;
+				//TODO: process data
+				continue;
+			}
+			if(error)
+			{
+				SPDLOG_LOGGER_DEBUG(
+				  LOGGER, "std::filesystem::is_regular_file failed: {}", error.message());
+				LOGGER->error("Check if path is a regular file failed for {}", path);
+			}
+		}
 	}
 	LOGGER->info("END");
 	return EXIT_SUCCESS;
