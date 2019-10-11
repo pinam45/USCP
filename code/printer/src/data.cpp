@@ -95,7 +95,42 @@ bool uscp::data::process(const nlohmann::json& data, printer& printer) noexcept
 			LOGGER->warn("data is missing git information");
 		}
 
-		//TODO
+		it = data.find("date");
+		if(it != data.end())
+		{
+			LOGGER->info("data generation date: {}", it->get<std::string>());
+		}
+		else
+		{
+			LOGGER->warn("data is missing date information");
+		}
+
+		it = data.find("instances");
+		if(it == data.end())
+		{
+			LOGGER->warn("data is missing instances information");
+			return false;
+		}
+		const nlohmann::json& instances_data = *it;
+
+		if(!instances_data.is_array())
+		{
+			LOGGER->warn("data have invalid instances information");
+			return false;
+		}
+		for(const nlohmann::json& instance_data: instances_data)
+		{
+			it = instance_data.find("instance");
+			if(it == instance_data.end())
+			{
+				LOGGER->warn("instance data is missing instance information");
+				continue;
+			}
+			const uscp::problem::instance_serial instance =
+			  it->get<uscp::problem::instance_serial>();
+			SPDLOG_LOGGER_DEBUG(LOGGER, "Started processing data for instance {}", instance.name);
+			//TODO
+		}
 	}
 	catch(const std::exception& e)
 	{
