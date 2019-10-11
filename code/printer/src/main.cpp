@@ -6,6 +6,8 @@
 // https://opensource.org/licenses/MIT
 //
 #include "common/utils/logger.hpp"
+#include "printer/printer.hpp"
+#include "printer/data.hpp"
 #include "git_info.hpp"
 
 #include <cxxopts.hpp>
@@ -96,10 +98,9 @@ int main(int argc, char* argv[])
 			LOGGER->info("Commit: {}", git_info::head_sha1);
 		}
 
+		printer printer;
 		std::deque<std::string> paths(std::cbegin(input_folder_files),
 		                              std::cend(input_folder_files));
-		assert(!paths.empty());
-
 		while(!paths.empty())
 		{
 			const std::string path = paths.front();
@@ -156,7 +157,7 @@ int main(int argc, char* argv[])
 				LOGGER->info("Started processing {}", path);
 				nlohmann::json data;
 				file_stream >> data;
-				//TODO: process data
+				uscp::data::process(data, printer);
 				continue;
 			}
 			if(error)
@@ -166,6 +167,8 @@ int main(int argc, char* argv[])
 				LOGGER->error("Check if path is a regular file failed for {}", path);
 			}
 		}
+
+		//TODO: printer
 	}
 	LOGGER->info("END");
 	return EXIT_SUCCESS;
