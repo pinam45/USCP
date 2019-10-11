@@ -9,19 +9,12 @@
 #define USCP_GREEDY_HPP
 
 #include "common/data/solution.hpp"
+#include "common/algorithms/greedy.hpp"
 
 #include <nlohmann/json.hpp>
 
 namespace uscp::greedy
 {
-	struct report_serial final
-	{
-		solution_serial solution_final;
-		double time = 0;
-	};
-	void to_json(nlohmann::json& j, const report_serial& serial);
-	void from_json(const nlohmann::json& j, report_serial& serial);
-
 	struct report final
 	{
 		solution solution_final;
