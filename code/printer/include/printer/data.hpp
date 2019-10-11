@@ -14,7 +14,7 @@
 
 namespace uscp::data
 {
-	bool process(const nlohmann::json& data, printer& printer) noexcept;
+	bool load(const nlohmann::json& data, printer& printer) noexcept;
 }
 
 #endif //USCP_DATA_HPP

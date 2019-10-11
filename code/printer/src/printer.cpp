@@ -41,3 +41,13 @@ std::string printer::generate_output_folder_name() const noexcept
 	output_folder_stream << config::partial::OUTPUT_FOLDER_POSTFIX;
 	return output_folder_stream.str();
 }
+
+void printer::add(const uscp::greedy::report_serial& report) noexcept
+{
+	//TODO
+}
+
+void printer::add(const uscp::rwls::report_serial& report) noexcept
+{
+	//TODO
+}

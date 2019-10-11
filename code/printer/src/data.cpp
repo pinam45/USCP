@@ -5,7 +5,9 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
+#include <common/algorithms/rwls.hpp>
 #include "printer/data.hpp"
+#include "common/algorithms/greedy.hpp"
 #include "common/utils/logger.hpp"
 #include "git_info.hpp"
 
@@ -81,7 +83,7 @@ namespace
 	}
 } // namespace
 
-bool uscp::data::process(const nlohmann::json& data, printer& printer) noexcept
+bool uscp::data::load(const nlohmann::json& data, printer& printer) noexcept
 {
 	try
 	{
@@ -111,8 +113,8 @@ bool uscp::data::process(const nlohmann::json& data, printer& printer) noexcept
 			LOGGER->warn("data is missing instances information");
 			return false;
 		}
-		const nlohmann::json& instances_data = *it;
 
+		const nlohmann::json& instances_data = *it;
 		if(!instances_data.is_array())
 		{
 			LOGGER->warn("data have invalid instances information");
@@ -128,18 +130,42 @@ bool uscp::data::process(const nlohmann::json& data, printer& printer) noexcept
 			}
 			const uscp::problem::instance_serial instance =
 			  it->get<uscp::problem::instance_serial>();
-			SPDLOG_LOGGER_DEBUG(LOGGER, "Started processing data for instance {}", instance.name);
-			//TODO
+			SPDLOG_LOGGER_DEBUG(LOGGER, "Started loading data for instance {}", instance.name);
+
+			it = instance_data.find("greedy");
+			if(it != instance_data.end())
+			{
+				const uscp::greedy::report_serial greedy = it->get<uscp::greedy::report_serial>();
+				SPDLOG_LOGGER_DEBUG(LOGGER, "Loaded greedy solution with {} subsets", greedy.solution_final.selected_subsets.size());
+				printer.add(greedy);
+			}
+
+			it = instance_data.find("rwls");
+			if(it != instance_data.end())
+			{
+				const nlohmann::json& rwls_reports_data = *it;
+				if(!rwls_reports_data.is_array())
+				{
+					LOGGER->warn("data have invalid rwls information for instance {}", instance.name);
+					continue;
+				}
+				for(const nlohmann::json& rwls_report_data: rwls_reports_data)
+				{
+					const uscp::rwls::report_serial rwls = rwls_report_data.get<uscp::rwls::report_serial>();
+					SPDLOG_LOGGER_DEBUG(LOGGER, "Loaded rwls solution with {} subsets", rwls.solution_final.selected_subsets.size());
+					printer.add(rwls);
+				}
+			}
 		}
 	}
 	catch(const std::exception& e)
 	{
-		LOGGER->error("error processing data: {}", e.what());
+		LOGGER->error("error loading data: {}", e.what());
 		return false;
 	}
 	catch(...)
 	{
-		LOGGER->error("unknown error processing data");
+		LOGGER->error("unknown error loading data");
 		return false;
 	}
 	return true;

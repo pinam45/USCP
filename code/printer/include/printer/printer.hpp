@@ -9,6 +9,8 @@
 #define USCP_PRINTER_HPP
 
 #include "common/data/solution.hpp"
+#include "common/algorithms/greedy.hpp"
+#include "common/algorithms/rwls.hpp"
 
 #include <inja/inja.hpp>
 
@@ -65,6 +67,10 @@ public:
 	printer(printer&&) noexcept = default;
 	printer& operator=(const printer&) = delete;
 	printer& operator=(printer&&) noexcept = default;
+
+	void add(const uscp::greedy::report_serial& report) noexcept;
+
+	void add(const uscp::rwls::report_serial& report) noexcept;
 
 private:
 	inja::Environment m_environment;

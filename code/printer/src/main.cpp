@@ -157,7 +157,10 @@ int main(int argc, char* argv[])
 				LOGGER->info("Started processing {}", path);
 				nlohmann::json data;
 				file_stream >> data;
-				uscp::data::process(data, printer);
+				if(!uscp::data::load(data, printer))
+				{
+					LOGGER->error("Failed to load data from {}", path);
+				}
 				continue;
 			}
 			if(error)
