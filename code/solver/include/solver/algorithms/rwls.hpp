@@ -11,6 +11,7 @@
 #include "common/data/instance.hpp"
 #include "common/data/solution.hpp"
 #include "common/utils/random.hpp"
+#include "common/algorithms/rwls.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -24,16 +25,6 @@ namespace uscp::rwls
 		size_t steps = std::numeric_limits<size_t>::max();
 		double time = std::numeric_limits<double>::max();
 	};
-
-	struct report_serial final
-	{
-		solution_serial solution_initial;
-		solution_serial solution_final;
-		size_t steps = 0;
-		double time = 0;
-	};
-	void to_json(nlohmann::json& j, const report_serial& serial);
-	void from_json(const nlohmann::json& j, report_serial& serial);
 
 	struct report final
 	{
