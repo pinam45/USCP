@@ -102,11 +102,10 @@
 \begin{document}
 	\maketitle{}
 	\section{Instances}
-		<* for instances_group in instances_groups *>
-		\input{./tables/<<instances_group/instances_table_path>>}
-		<* endfor *>
+		\input{./tables/orlibrary_instances_base}
+		\input{./tables/orlibrary_instances_cyc_clr}
+		\input{./tables/orlibrary_instances_rail}
+		\input{./tables/sts_instances}
 	\section{Results}
-		<* for instances_group in instances_groups *>
-		\input{./tables/<<instances_group/results_table_path>>}
-		<* endfor *>
+		\input{./tables/results}
 \end{document}
