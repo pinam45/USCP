@@ -1,22 +1,51 @@
 %!TEX root = ../main.tex
-\rowcolors{1}{gray!10}{white}
-\begin{longtable}{*{<<add(2, length(solutions_groups_names))>>}{c}}
-	\hiderowcolors
-	\caption{<<name>> instances results}
-	\label{table:<<name>>}\\
+%\rowcolors{1}{gray!10}{white}
+\begin{longtable}{@{\extracolsep{5pt}}cc{c}cc{c}cccc}
+	%\hiderowcolors
+	\caption{Results}\\
 	\toprule
-	Instance & BKS <* for solutions_group_name in solutions_groups_names*>& <<solutions_group_name>><* endfor *>\\
+	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{4}{l}{RWLS}\\
+	\cmidrule{4-5}\cmidrule{7-10}
+	 & && Value & Time && Best & Average & \#Best & Time\\
 	\midrule
 	\endfirsthead
-	\caption[]{<<name>> instances results (continued)}\\
+	\caption[]{Results (continued)}\\
 	\toprule
-	Instance & BKS <* for solutions_group_name in solutions_groups_names*>& <<solutions_group_name>><* endfor *>\\
+	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{4}{l}{RWLS}\\
+	\cmidrule{4-5}\cmidrule{7-10}
+	 & && Value & Time && Best & Average & \#Best & Time\\
 	\midrule
 	\endhead
 	\bottomrule
 	\endfoot
-	\showrowcolors
-<* for instance in instances *>
-	<<instance/info/name>> & <<instance/info/bks>><* for solutions_group_name in solutions_groups_names*><* for solutions_group in instance/solutions_groups*><* if solutions_group/name == solutions_group_name *>& <* for solution in solutions_group/solutions *><* if not loop/is_first *>, <* endif *><* if solution/selected_subsets_number <= instance/info/bks *>\textbf{<<solution/selected_subsets_number>>}<* else *><<solution/selected_subsets_number>><* endif *><* endfor *><* endif *><* endfor *><* endfor *>\\
-<* endfor *>
+	%\showrowcolors
+<*for result in results*>
+	<<result/name>> & <<result/bks>> && 
+	<*if result/greedy/exist*>
+		<*if result/greedy/value <= result/bks*>
+			\textbf{<<result/greedy/value>>}
+		<*else*>
+			<<result/greedy/value>>
+		<*endif*>
+		& <<round(result/greedy/time,2)>>
+	<*else*>
+		--- & ---
+	<*endif*>
+	 && 
+	<*if result/rwls/exist*>
+		<*if result/rwls/best < result/bks*>
+			\textbf{<<result/rwls/best>>*}
+		<*else*>
+			<*if result/rwls/best <= result/bks*>
+				\textbf{<<result/rwls/best>>}
+			<*else*>
+				<<result/rwls/best>>
+			<*endif*>
+		<*endif*>
+		&  <<round(result/rwls/average,1)>> &  <<result/rwls/best_number>>/<<result/rwls/total_number>> &  <<round(result/rwls/time,2)>>
+	<*else*>
+		--- & --- & --- & ---
+	<*endif*>
+	\\
+<*endfor*>
 \end{longtable}
