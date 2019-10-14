@@ -136,7 +136,9 @@ bool uscp::data::load(const nlohmann::json& data, printer& printer) noexcept
 			if(it != instance_data.end())
 			{
 				const uscp::greedy::report_serial greedy = it->get<uscp::greedy::report_serial>();
-				SPDLOG_LOGGER_DEBUG(LOGGER, "Loaded greedy solution with {} subsets", greedy.solution_final.selected_subsets.size());
+				SPDLOG_LOGGER_DEBUG(LOGGER,
+				                    "Loaded greedy solution with {} subsets",
+				                    greedy.solution_final.selected_subsets.size());
 				printer.add(greedy);
 			}
 
@@ -146,13 +148,17 @@ bool uscp::data::load(const nlohmann::json& data, printer& printer) noexcept
 				const nlohmann::json& rwls_reports_data = *it;
 				if(!rwls_reports_data.is_array())
 				{
-					LOGGER->warn("data have invalid rwls information for instance {}", instance.name);
+					LOGGER->warn("data have invalid rwls information for instance {}",
+					             instance.name);
 					continue;
 				}
 				for(const nlohmann::json& rwls_report_data: rwls_reports_data)
 				{
-					const uscp::rwls::report_serial rwls = rwls_report_data.get<uscp::rwls::report_serial>();
-					SPDLOG_LOGGER_DEBUG(LOGGER, "Loaded rwls solution with {} subsets", rwls.solution_final.selected_subsets.size());
+					const uscp::rwls::report_serial rwls =
+					  rwls_report_data.get<uscp::rwls::report_serial>();
+					SPDLOG_LOGGER_DEBUG(LOGGER,
+					                    "Loaded rwls solution with {} subsets",
+					                    rwls.solution_final.selected_subsets.size());
 					printer.add(rwls);
 				}
 			}

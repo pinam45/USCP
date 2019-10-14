@@ -171,7 +171,10 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		//TODO: printer
+		if(!printer.generate_document())
+		{
+			LOGGER->error("Failed to generate document");
+		}
 	}
 	LOGGER->info("END");
 	return EXIT_SUCCESS;

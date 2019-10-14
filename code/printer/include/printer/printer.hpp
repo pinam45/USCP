@@ -45,13 +45,13 @@ public:
 			static constexpr std::string_view TABLES_TEMPLATE_SUBFOLDER = "tables/";
 
 			static constexpr std::string_view DOCUMENT_TEMPLATE_FILE = "main.tex";
-			static constexpr std::string_view INSTANCES_TABLE_TEMPLATE_FILE = "instances.tex";
-			static constexpr std::string_view INSTANCES_TABLE_OUTPUT_FILE_PREFIX = "";
-			static constexpr std::string_view INSTANCES_TABLE_OUTPUT_FILE_POSTFIX =
-			  "_instances.tex";
 			static constexpr std::string_view RESULT_TABLE_TEMPLATE_FILE = "results.tex";
-			static constexpr std::string_view RESULT_TABLE_OUTPUT_FILE_PREFIX = "";
-			static constexpr std::string_view RESULT_TABLE_OUTPUT_FILE_POSTFIX = "_results.tex";
+
+			static constexpr std::array<std::string_view, 4> INSTANCES_TABLES_FILES = {
+			  "orlibrary_instances_base.tex",
+			  "orlibrary_instances_cyc_clr.tex",
+			  "orlibrary_instances_rail.tex",
+			  "sts_instances.tex"};
 		};
 
 		struct info
@@ -72,8 +72,23 @@ public:
 
 	void add(const uscp::rwls::report_serial& report) noexcept;
 
+	bool generate_document() noexcept;
+
 private:
+	const std::string output_folder;
+	const std::string tables_output_folder;
+	const std::string template_folder;
+	const std::string tables_template_folder;
+
 	inja::Environment m_environment;
+	std::vector<uscp::greedy::report_serial> m_greedy_reports;
+	std::vector<uscp::rwls::report_serial> m_rwls_reports;
+
+	bool create_output_folders() noexcept;
+
+	bool copy_instances_tables() noexcept;
+
+	bool generate_results_table() noexcept;
 
 	[[nodiscard]] std::string generate_output_folder_name() const noexcept;
 };
