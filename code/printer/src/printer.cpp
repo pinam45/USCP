@@ -114,8 +114,8 @@ namespace
 	const rwls_report_less_t rwls_report_less;
 } // namespace
 
-printer::printer() noexcept
-  : output_folder(generate_output_folder_name())
+printer::printer(std::string_view output_prefix) noexcept
+  : output_folder(generate_output_folder_name(output_prefix))
   , tables_output_folder(output_folder + std::string(config::partial::TABLES_TEMPLATE_SUBFOLDER))
   , template_folder(
       std::string(config::partial::RESOURCES_FOLDER).append(config::partial::TEMPLATE_SUBFOLDER))
@@ -314,10 +314,10 @@ bool printer::generate_results_table() noexcept
 	return true;
 }
 
-std::string printer::generate_output_folder_name() const noexcept
+std::string printer::generate_output_folder_name(std::string_view output_prefix) const noexcept
 {
 	std::ostringstream output_folder_stream;
-	output_folder_stream << config::partial::OUTPUT_FOLDER_PREFIX;
+	output_folder_stream << output_prefix;
 	std::time_t t = std::time(nullptr);
 	output_folder_stream << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S");
 	output_folder_stream << config::partial::OUTPUT_FOLDER_POSTFIX;

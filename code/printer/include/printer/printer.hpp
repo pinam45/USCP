@@ -62,7 +62,8 @@ public:
 		};
 	};
 
-	printer() noexcept;
+	explicit printer(
+	  std::string_view output_prefix = config::partial::OUTPUT_FOLDER_PREFIX) noexcept;
 	printer(const printer&) = delete;
 	printer(printer&&) noexcept = default;
 	printer& operator=(const printer&) = delete;
@@ -90,7 +91,8 @@ private:
 
 	bool generate_results_table() noexcept;
 
-	[[nodiscard]] std::string generate_output_folder_name() const noexcept;
+	[[nodiscard]] std::string generate_output_folder_name(std::string_view output_prefix) const
+	  noexcept;
 };
 
 #endif //USCP_PRINTER_HPP
