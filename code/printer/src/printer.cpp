@@ -319,7 +319,7 @@ std::string printer::generate_output_folder_name() const noexcept
 	std::ostringstream output_folder_stream;
 	output_folder_stream << config::partial::OUTPUT_FOLDER_PREFIX;
 	std::time_t t = std::time(nullptr);
-	output_folder_stream << std::put_time(std::localtime(&t), "-%Y-%m-%d--%H-%M-%S");
+	output_folder_stream << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S");
 	output_folder_stream << config::partial::OUTPUT_FOLDER_POSTFIX;
 	return output_folder_stream.str();
 }

@@ -38,7 +38,7 @@ public:
 		struct partial
 		{
 			static constexpr std::string_view RESOURCES_FOLDER = "./resources/";
-			static constexpr std::string_view OUTPUT_FOLDER_PREFIX = "./generated-";
+			static constexpr std::string_view OUTPUT_FOLDER_PREFIX = "./printer_out_";
 			static constexpr std::string_view OUTPUT_FOLDER_POSTFIX = "/";
 
 			static constexpr std::string_view TEMPLATE_SUBFOLDER = "templates/";
