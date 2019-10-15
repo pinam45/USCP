@@ -19,13 +19,14 @@
 #include <deque>
 #include <iterator>
 #include <fstream>
-#include <nlohmann/json.hpp>
+#include <regex>
 
 int main(int argc, char* argv[])
 {
 	std::vector<std::string> input_folder_files;
 	std::string output_prefix = "printer_out_";
-	std::string validation_regex = ".*\\.json";
+	std::string validation_regex_txt = ".*\\.json";
+	std::basic_regex<char> validation_regex;
 	try
 	{
 		std::ostringstream help_txt;
@@ -54,10 +55,11 @@ int main(int argc, char* argv[])
 		                  "PREFIX"));
 		options.add_option(
 		  "",
-		  cxxopts::Option("v,validation",
-		                  "Input files name validation regex",
-		                  cxxopts::value<std::string>(validation_regex)->default_value(".*\\.json"),
-		                  "REGEX"));
+		  cxxopts::Option(
+		    "v,validation",
+		    "Input files name validation regex",
+		    cxxopts::value<std::string>(validation_regex_txt)->default_value(".*\\.json"),
+		    "REGEX"));
 		cxxopts::ParseResult result = options.parse(argc, argv);
 
 		if(result.count("help"))
@@ -71,6 +73,8 @@ int main(int argc, char* argv[])
 			std::cout << "No folder or file specified, nothing to do" << std::endl;
 			return EXIT_SUCCESS;
 		}
+
+		validation_regex = validation_regex_txt;
 	}
 	catch(const std::exception& e)
 	{
@@ -147,6 +151,11 @@ int main(int argc, char* argv[])
 
 			if(std::filesystem::is_regular_file(path, error))
 			{
+				if(!std::regex_match(path, validation_regex))
+				{
+					SPDLOG_LOGGER_TRACE(LOGGER, "Ignored file {}", path);
+					continue;
+				}
 				std::ifstream file_stream(path);
 				if(!file_stream)
 				{
