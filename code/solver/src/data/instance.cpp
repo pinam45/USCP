@@ -245,6 +245,7 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 	     .any())
 	{
 		LOGGER->error("Reduction generated subset dominated and included at the same time");
+		abort();
 	}
 
 	// Apply reduction
@@ -266,6 +267,7 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 	}
 	for(size_t i_subset = 0; i_subset < reduced_instance.subsets_number; ++i_subset)
 	{
+		assert(i_subset_full_instance < full_instance.subsets_number);
 		reduced_instance.subsets_points[i_subset].resize(reduced_instance.points_number);
 		size_t i_point_full_instance = 0;
 		while(reduction.reduction_applied.points_covered[i_point_full_instance])
@@ -275,13 +277,12 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 		for(size_t i_point = 0; i_point < reduced_instance.points_number; ++i_point)
 		{
 			assert(i_point_full_instance < full_instance.points_number);
-			assert(i_subset_full_instance < full_instance.subsets_number);
 			reduced_instance.subsets_points[i_subset][i_point] =
 			  full_instance.subsets_points[i_subset_full_instance][i_point_full_instance];
 			do
 			{
 				++i_point_full_instance;
-			} while(reduction.reduction_applied.points_covered[i_point_full_instance]);
+			} while(i_point_full_instance < full_instance.points_number && reduction.reduction_applied.points_covered[i_point_full_instance]);
 		}
 		assert(i_point_full_instance == full_instance.points_number);
 		if(i_point_full_instance != full_instance.points_number)
@@ -290,11 +291,12 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 			              i_subset_full_instance,
 			              full_instance.subsets_number,
 			              i_subset_full_instance);
+			abort();
 		}
 		do
 		{
 			++i_subset_full_instance;
-		} while(removed_subsets[i_subset_full_instance]);
+		} while(i_subset_full_instance < full_instance.subsets_number && removed_subsets[i_subset_full_instance]);
 	}
 	assert(i_subset_full_instance == full_instance.subsets_number);
 	if(i_subset_full_instance != full_instance.subsets_number)
@@ -302,6 +304,7 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 		LOGGER->error("Solution reduction failed, only {}/{} subsets",
 		              i_subset_full_instance,
 		              full_instance.subsets_number);
+		abort();
 	}
 
 	reduced_instance.name += " reduced";

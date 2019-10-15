@@ -24,7 +24,7 @@ uscp::solution uscp::expand(const uscp::solution& reduced_solution) noexcept
 	   != reduced_solution.problem.reduction->parent_instance->subsets_number)
 	{
 		LOGGER->error("Tried to expand solution of an invalid reduced instance");
-		return reduced_solution;
+		abort();
 	}
 
 	solution expanded_solution(*reduced_solution.problem.reduction->parent_instance);
@@ -54,6 +54,10 @@ uscp::solution uscp::expand(const uscp::solution& reduced_solution) noexcept
 		do
 		{
 			++i_expanded;
+			if(i_expanded >= expanded_solution.problem.subsets_number)
+			{
+				break;
+			}
 			passed = false;
 			if(reduced_solution.problem.reduction->reduction_applied.subsets_included[i_expanded])
 			{
@@ -73,6 +77,7 @@ uscp::solution uscp::expand(const uscp::solution& reduced_solution) noexcept
 		LOGGER->error("Solution expansion failed, only {}/{} subsets",
 		              i_expanded,
 		              expanded_solution.problem.subsets_number);
+		abort();
 	}
 
 	expanded_solution.compute_cover();
