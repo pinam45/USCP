@@ -551,7 +551,7 @@ namespace
 				assert(data.current_solution.cover_all_points);
 				if(!data.current_solution.cover_all_points)
 				{
-					LOGGER->error("New best solution desn't cover all points");
+					LOGGER->error("New best solution doesn't cover all points");
 					abort();
 				}
 
@@ -561,9 +561,10 @@ namespace
 				found_at.steps = step;
 				found_at.time = timer.elapsed();
 				SPDLOG_LOGGER_DEBUG(LOGGER,
-				                    "({}) RWLS new best solution with {} subsets at {}s",
+				                    "({}) RWLS new best solution with {} subsets at step {} in {}s",
 				                    data.problem.name,
 				                    data.best_solution_subset_numbers,
+				                    step,
 				                    timer.elapsed());
 
 				const size_t selected_subset = rwls_select_subset_to_remove_no_timestamp(data);
