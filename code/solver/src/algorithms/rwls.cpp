@@ -433,6 +433,7 @@ namespace
 				selected_subset = bit_on;
 			}
 		});
+		ensure(data.current_solution.selected_subsets.test(selected_subset));
 		return selected_subset;
 	}
 
@@ -452,12 +453,14 @@ namespace
 				remove_subset = bit_on;
 			}
 		});
+		ensure(data.current_solution.selected_subsets.test(remove_subset));
 		return remove_subset;
 	}
 
 	size_t rwls_select_subset_to_add(const rwls_data& data, size_t point_to_cover) noexcept
 	{
 		assert(point_to_cover < data.problem.points_number);
+		assert(data.uncovered_points.test(point_to_cover));
 
 		const dynamic_bitset<> subsets_covering_not_selected =
 		  data.points_information[point_to_cover].subsets_covering
@@ -499,6 +502,7 @@ namespace
 		{
 			LOGGER->warn("Selected subset is tabu");
 		}
+		ensure(!data.current_solution.selected_subsets.test(add_subset));
 		return add_subset;
 	}
 
@@ -543,6 +547,14 @@ namespace
 		{
 			while(data.uncovered_points.none())
 			{
+				data.current_solution.compute_cover();
+				assert(data.current_solution.cover_all_points);
+				if(!data.current_solution.cover_all_points)
+				{
+					LOGGER->error("New best solution desn't cover all points");
+					abort();
+				}
+
 				data.best_solution = data.current_solution;
 				data.best_solution_subset_numbers = data.best_solution.selected_subsets.count();
 
