@@ -336,7 +336,7 @@ namespace
 		assert(data.subsets_information[subset_number].score <= 0);
 
 		// update points information
-		dynamic_bitset<> points_newly_ucovered(data.problem.points_number);
+		dynamic_bitset<> points_newly_uncovered(data.problem.points_number);
 		dynamic_bitset<> point_now_covered_once(data.problem.points_number);
 		data.problem.subsets_points[subset_number].iterate_bits_on([&](size_t bit_on) noexcept {
 			assert(data.points_information[bit_on].subsets_covering_in_solution > 0);
@@ -347,7 +347,7 @@ namespace
 			--data.points_information[bit_on].subsets_covering_in_solution;
 			if(data.points_information[bit_on].subsets_covering_in_solution == 0)
 			{
-				points_newly_ucovered.set(bit_on);
+				points_newly_uncovered.set(bit_on);
 			}
 			else if(data.points_information[bit_on].subsets_covering_in_solution == 1)
 			{
@@ -357,8 +357,8 @@ namespace
 
 		// remove subset from solution
 		data.current_solution.selected_subsets.reset(subset_number);
-		assert((data.uncovered_points & points_newly_ucovered).none());
-		data.uncovered_points |= points_newly_ucovered;
+		assert((data.uncovered_points & points_newly_uncovered).none());
+		data.uncovered_points |= points_newly_uncovered;
 
 		// update score
 		data.subsets_information[subset_number].score =
@@ -372,7 +372,7 @@ namespace
 #pragma omp parallel for default(none) \
   shared(data,                         \
          subset_number,                \
-         points_newly_ucovered,        \
+         points_newly_uncovered,       \
          point_now_covered_once) if(data.subsets_information[subset_number].neighbors.size() > 8)
 		//for(size_t i_neighbor: data.subsets_information[subset_number].neighbors)
 		for(size_t i = 0; i < data.subsets_information[subset_number].neighbors.size(); ++i)
@@ -391,7 +391,7 @@ namespace
 			else
 			{
 				// gain score because these points are now uncovered in the solution
-				(points_newly_ucovered & data.problem.subsets_points[i_neighbor])
+				(points_newly_uncovered & data.problem.subsets_points[i_neighbor])
 				  .iterate_bits_on([&](size_t bit_on) noexcept {
 					  data.subsets_information[i_neighbor].score +=
 					    data.points_information[bit_on].weight;
