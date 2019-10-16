@@ -26,7 +26,7 @@
 		}                                                                   \
 	} while(false)
 
-//#define NDEBUG_SCORE
+#define NDEBUG_SCORE
 #if !defined(NDEBUG) && !defined(NDEBUG_SCORE)
 #	define assert_score(expr) assert(expr)
 #else
