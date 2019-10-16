@@ -78,8 +78,7 @@ uscp::greedy::report uscp::greedy::solve_report(const uscp::problem::instance& p
 		if(max_subset_number == report.solution_final.selected_subsets.size())
 		{
 			LOGGER->error("The problem has no solution");
-			report.time = timer.elapsed();
-			return report;
+			abort();
 		}
 
 		// update solution (faster)
