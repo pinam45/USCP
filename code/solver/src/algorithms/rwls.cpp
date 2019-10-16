@@ -93,7 +93,7 @@ namespace
 	void rwls_make_tabu(rwls_data& data, size_t subset_number) noexcept;
 	bool rwls_is_tabu(const rwls_data& data, size_t subset_number) noexcept;
 
-	[[gnu::hot]] size_t rwls_select_subset_no_timestamp(const rwls_data& data) noexcept;
+	[[gnu::hot]] size_t rwls_select_subset_to_remove_no_timestamp(const rwls_data& data) noexcept;
 	[[nodiscard, gnu::hot]] size_t rwls_select_subset_to_remove(const rwls_data& data) noexcept;
 	[[nodiscard, gnu::hot]] size_t rwls_select_subset_to_add(const rwls_data& data,
 	                                                         size_t point_to_cover) noexcept;
@@ -411,7 +411,7 @@ namespace
 		       != std::cend(data.tabu_subsets);
 	}
 
-	size_t rwls_select_subset_no_timestamp(const rwls_data& data) noexcept
+	size_t rwls_select_subset_to_remove_no_timestamp(const rwls_data& data) noexcept
 	{
 		assert(data.current_solution.selected_subsets.any());
 		size_t selected_subset = data.current_solution.selected_subsets.find_first();
@@ -543,7 +543,7 @@ namespace
 				                    data.best_solution_subset_numbers,
 				                    timer.elapsed());
 
-				const size_t selected_subset = rwls_select_subset_no_timestamp(data);
+				const size_t selected_subset = rwls_select_subset_to_remove_no_timestamp(data);
 				rwls_remove_subset(data, selected_subset);
 			}
 
