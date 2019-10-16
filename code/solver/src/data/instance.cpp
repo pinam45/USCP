@@ -282,7 +282,8 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 			do
 			{
 				++i_point_full_instance;
-			} while(i_point_full_instance < full_instance.points_number && reduction.reduction_applied.points_covered[i_point_full_instance]);
+			} while(i_point_full_instance < full_instance.points_number
+			        && reduction.reduction_applied.points_covered[i_point_full_instance]);
 		}
 		assert(i_point_full_instance == full_instance.points_number);
 		if(i_point_full_instance != full_instance.points_number)
@@ -296,7 +297,8 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 		do
 		{
 			++i_subset_full_instance;
-		} while(i_subset_full_instance < full_instance.subsets_number && removed_subsets[i_subset_full_instance]);
+		} while(i_subset_full_instance < full_instance.subsets_number
+		        && removed_subsets[i_subset_full_instance]);
 	}
 	assert(i_subset_full_instance == full_instance.subsets_number);
 	if(i_subset_full_instance != full_instance.subsets_number)
