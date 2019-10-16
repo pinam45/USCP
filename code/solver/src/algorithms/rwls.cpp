@@ -220,7 +220,7 @@ namespace
 		data.current_solution = data.best_solution;
 
 		// points information
-#pragma omp parallel for default(none) shared(data) if(data.problem.subsets_number > 32)
+		// no parallel: writing (event different elements) in bitsets is not thread safe
 		for(size_t i = 0; i < data.problem.subsets_number; ++i)
 		{
 			data.problem.subsets_points[i].iterate_bits_on([&](size_t bit_on) noexcept {
