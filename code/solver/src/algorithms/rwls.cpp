@@ -16,6 +16,16 @@
 #include <algorithm>
 #include <utility>
 
+#define ensure(expr)                                                        \
+	do                                                                      \
+	{                                                                       \
+		if(!(expr))                                                         \
+		{                                                                   \
+			LOGGER->error("[{}:{}] failed: {}", __FILE__, __LINE__, #expr); \
+			abort();                                                        \
+		}                                                                   \
+	} while(false)
+
 //#define NDEBUG_SCORE
 #if !defined(NDEBUG) && !defined(NDEBUG_SCORE)
 #	define assert_score(expr) assert(expr)
@@ -501,13 +511,14 @@ namespace
 		const size_t selected_point_number = uncovered_point_dist(data.generator);
 		size_t current_point_number = 0;
 		data.uncovered_points.iterate_bits_on([&](size_t bit_on) noexcept {
-			if(++current_point_number > selected_point_number)
+			if(++current_point_number >= selected_point_number)
 			{
 				selected_point = bit_on;
 				return false;
 			}
 			return true;
 		});
+		ensure(data.uncovered_points.test(selected_point));
 		return selected_point;
 	}
 
