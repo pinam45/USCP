@@ -65,7 +65,7 @@ public:
 	explicit printer(
 	  std::string_view output_prefix = config::partial::OUTPUT_FOLDER_PREFIX) noexcept;
 	printer(const printer&) = delete;
-	printer(printer&&) noexcept = default;
+	printer(printer&&) = default;
 	printer& operator=(const printer&) = delete;
 	printer& operator=(printer&&) noexcept = default;
 
@@ -76,10 +76,10 @@ public:
 	bool generate_document() noexcept;
 
 private:
-	const std::string output_folder;
-	const std::string tables_output_folder;
-	const std::string template_folder;
-	const std::string tables_template_folder;
+	std::string output_folder;
+	std::string tables_output_folder;
+	std::string template_folder;
+	std::string tables_template_folder;
 
 	inja::Environment m_environment;
 	std::vector<uscp::greedy::report_serial> m_greedy_reports;
