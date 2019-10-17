@@ -160,7 +160,8 @@ namespace
 	{
 		SPDLOG_LOGGER_DEBUG(LOGGER, "({}) start building subsets neighbors", data.problem.name);
 		timer timer;
-#pragma omp parallel for default(none) shared(data) if(data.problem.subsets_number > 8)
+		dynamic_bitset<> tmp; // to minimize memory allocations
+#pragma omp parallel for default(none) shared(data) private(tmp) if(data.problem.subsets_number > 8)
 		for(size_t i_current_subset = 0; i_current_subset < data.problem.subsets_number;
 		    ++i_current_subset)
 		{
@@ -168,9 +169,9 @@ namespace
 			    i_other_subset < data.problem.subsets_number;
 			    ++i_other_subset)
 			{
-				if((data.problem.subsets_points[i_current_subset]
-				    & data.problem.subsets_points[i_other_subset])
-				     .any())
+				tmp = data.problem.subsets_points[i_current_subset];
+				tmp &= data.problem.subsets_points[i_other_subset];
+				if(tmp.any())
 				{
 #pragma omp critical
 					{
@@ -296,11 +297,10 @@ namespace
 		             == rwls_compute_subset_score(data, subset_number));
 
 		// update neighbors
-#pragma omp parallel for default(none) \
-  shared(data,                         \
-         subset_number,                \
-         point_now_covered_twice,      \
-         points_newly_covered) if(data.subsets_information[subset_number].neighbors.size() > 8)
+		dynamic_bitset<> tmp; // to minimize memory allocations
+#pragma omp parallel for default(none)                                                \
+  shared(data, subset_number, point_now_covered_twice, points_newly_covered) private( \
+    tmp) if(data.subsets_information[subset_number].neighbors.size() > 8)
 		for(size_t i = 0; i < data.subsets_information[subset_number].neighbors.size(); ++i)
 		//for(size_t i_neighbor: data.subsets_information[subset_number].neighbors)
 		{
@@ -309,20 +309,22 @@ namespace
 			if(data.current_solution.selected_subsets[i_neighbor])
 			{
 				// lost score because it is no longer the only one to cover these points
-				(point_now_covered_twice & data.problem.subsets_points[i_neighbor])
-				  .iterate_bits_on([&](size_t bit_on) noexcept {
-					  data.subsets_information[i_neighbor].score +=
-					    data.points_information[bit_on].weight;
-				  });
+				tmp = point_now_covered_twice;
+				tmp &= data.problem.subsets_points[i_neighbor];
+				tmp.iterate_bits_on([&](size_t bit_on) noexcept {
+					data.subsets_information[i_neighbor].score +=
+					  data.points_information[bit_on].weight;
+				});
 			}
 			else
 			{
 				// lost score because these points are now covered in the solution
-				(points_newly_covered & data.problem.subsets_points[i_neighbor])
-				  .iterate_bits_on([&](size_t bit_on) noexcept {
-					  data.subsets_information[i_neighbor].score -=
-					    data.points_information[bit_on].weight;
-				  });
+				tmp = points_newly_covered;
+				tmp &= data.problem.subsets_points[i_neighbor];
+				tmp.iterate_bits_on([&](size_t bit_on) noexcept {
+					data.subsets_information[i_neighbor].score -=
+					  data.points_information[bit_on].weight;
+				});
 			}
 			assert_score(data.subsets_information[i_neighbor].score
 			             == rwls_compute_subset_score(data, i_neighbor));
@@ -369,11 +371,10 @@ namespace
 		data.subsets_information[subset_number].canAddToSolution = false;
 
 		// update neighbors
-#pragma omp parallel for default(none) \
-  shared(data,                         \
-         subset_number,                \
-         points_newly_uncovered,       \
-         point_now_covered_once) if(data.subsets_information[subset_number].neighbors.size() > 8)
+		dynamic_bitset<> tmp; // to minimize memory allocations
+#pragma omp parallel for default(none)                                                 \
+  shared(data, subset_number, points_newly_uncovered, point_now_covered_once) private( \
+    tmp) if(data.subsets_information[subset_number].neighbors.size() > 8)
 		//for(size_t i_neighbor: data.subsets_information[subset_number].neighbors)
 		for(size_t i = 0; i < data.subsets_information[subset_number].neighbors.size(); ++i)
 		{
@@ -382,20 +383,22 @@ namespace
 			if(data.current_solution.selected_subsets[i_neighbor])
 			{
 				// gain score because it is no the only one to cover these points
-				(point_now_covered_once & data.problem.subsets_points[i_neighbor])
-				  .iterate_bits_on([&](size_t bit_on) noexcept {
-					  data.subsets_information[i_neighbor].score -=
-					    data.points_information[bit_on].weight;
-				  });
+				tmp = point_now_covered_once;
+				tmp &= data.problem.subsets_points[i_neighbor];
+				tmp.iterate_bits_on([&](size_t bit_on) noexcept {
+					data.subsets_information[i_neighbor].score -=
+					  data.points_information[bit_on].weight;
+				});
 			}
 			else
 			{
 				// gain score because these points are now uncovered in the solution
-				(points_newly_uncovered & data.problem.subsets_points[i_neighbor])
-				  .iterate_bits_on([&](size_t bit_on) noexcept {
-					  data.subsets_information[i_neighbor].score +=
-					    data.points_information[bit_on].weight;
-				  });
+				tmp = points_newly_uncovered;
+				tmp &= data.problem.subsets_points[i_neighbor];
+				tmp.iterate_bits_on([&](size_t bit_on) noexcept {
+					data.subsets_information[i_neighbor].score +=
+					  data.points_information[bit_on].weight;
+				});
 			}
 
 			assert_score(data.subsets_information[i_neighbor].score
