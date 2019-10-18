@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.10) # For CXX_STANDARD 17 property on Visual Studio
 
+# Options
+option(USCP_RWLS_LOW_MEMORY_FOOTPRINT "Enable RWLS low memory footprint (slower)" OFF)
+
 # Declare solver
 add_executable(solver)
 
@@ -27,6 +30,12 @@ target_link_libraries(
   cxxopts
   git_info
 )
+
+# Low memory footprint
+if(USCP_RWLS_LOW_MEMORY_FOOTPRINT)
+	cmutils_target_add_compile_definition(solver USCP_RWLS_LOW_MEMORY_FOOTPRINT)
+	message(STATUS "Enabled RWLS low memory footprint")
+endif()
 
 # Link OpenMP in Release if found
 find_package(OpenMP)
