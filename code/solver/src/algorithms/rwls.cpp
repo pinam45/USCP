@@ -16,6 +16,8 @@
 #include <algorithm>
 #include <utility>
 
+//#define USCP_RWLS_LOW_MEMORY_FOOTPRINT
+
 #define ensure(expr)                                                        \
 	do                                                                      \
 	{                                                                       \
@@ -57,7 +59,11 @@ namespace
 		int score = 0;
 		int timestamp = 1;
 		bool canAddToSolution = true;
+#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
+		dynamic_bitset<> neighbors;
+#else
 		std::vector<size_t> neighbors;
+#endif
 	};
 
 	struct rwls_data final
@@ -86,9 +92,6 @@ namespace
 	//=================================================================================================
 	// functions declarations
 	//=================================================================================================
-
-	std::vector<size_t> compute_subset_neighbors(const uscp::problem::instance& problem,
-	                                             size_t subset_number) noexcept;
 
 	[[gnu::hot]] void rwls_compute_subsets_neighbors(rwls_data& data) noexcept;
 
@@ -138,24 +141,6 @@ namespace
 		subsets_information.resize(problem.subsets_number);
 	}
 
-	std::vector<size_t> compute_subset_neighbors(const uscp::problem::instance& problem,
-	                                             size_t subset_number) noexcept
-	{
-		std::vector<size_t> subset_neighbors;
-		for(size_t i = 0; i < problem.subsets_number; ++i)
-		{
-			if(i == subset_number)
-			{
-				continue;
-			}
-			if((problem.subsets_points[subset_number] & problem.subsets_points[i]).any())
-			{
-				subset_neighbors.push_back(i);
-			}
-		}
-		return subset_neighbors;
-	}
-
 	void rwls_compute_subsets_neighbors(rwls_data& data) noexcept
 	{
 		SPDLOG_LOGGER_DEBUG(LOGGER, "({}) start building subsets neighbors", data.problem.name);
@@ -175,10 +160,15 @@ namespace
 				{
 #pragma omp critical
 					{
+#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
+						data.subsets_information[i_current_subset].neighbors.set(i_other_subset);
+						data.subsets_information[i_other_subset].neighbors.set(i_current_subset);
+#else
 						data.subsets_information[i_current_subset].neighbors.push_back(
 						  i_other_subset);
 						data.subsets_information[i_other_subset].neighbors.push_back(
 						  i_current_subset);
+#endif
 					}
 				}
 			}
@@ -254,7 +244,10 @@ namespace
 			assert(data.current_solution.selected_subsets[i]
 			         ? data.subsets_information[i].score <= 0
 			         : data.subsets_information[i].score >= 0);
-			//data.subsets_information[i].neighbors = compute_subset_neighbors(data.problem, i);
+
+#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
+			data.subsets_information[i].neighbors.resize(data.problem.subsets_number);
+#endif
 		}
 
 		// subset neighbors
@@ -298,13 +291,16 @@ namespace
 
 		// update neighbors
 		dynamic_bitset<> tmp; // to minimize memory allocations
-#pragma omp parallel for default(none)                                                \
-  shared(data, subset_number, point_now_covered_twice, points_newly_covered) private( \
-    tmp) if(data.subsets_information[subset_number].neighbors.size() > 8)
+#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
+		data.subsets_information[subset_number].neighbors.iterate_bits_on([&](size_t i_neighbor) {
+#else
+#	pragma omp parallel for default(none)                                                \
+	  shared(data, subset_number, point_now_covered_twice, points_newly_covered) private( \
+	    tmp) if(data.subsets_information[subset_number].neighbors.size() > 8)
 		for(size_t i = 0; i < data.subsets_information[subset_number].neighbors.size(); ++i)
-		//for(size_t i_neighbor: data.subsets_information[subset_number].neighbors)
 		{
 			const size_t i_neighbor = data.subsets_information[subset_number].neighbors[i];
+#endif
 			data.subsets_information[i_neighbor].canAddToSolution = true;
 			if(data.current_solution.selected_subsets[i_neighbor])
 			{
@@ -329,6 +325,9 @@ namespace
 			assert_score(data.subsets_information[i_neighbor].score
 			             == rwls_compute_subset_score(data, i_neighbor));
 		}
+#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
+		);
+#endif
 	}
 
 	void rwls_remove_subset(rwls_data& data, size_t subset_number) noexcept
@@ -372,13 +371,16 @@ namespace
 
 		// update neighbors
 		dynamic_bitset<> tmp; // to minimize memory allocations
-#pragma omp parallel for default(none)                                                 \
-  shared(data, subset_number, points_newly_uncovered, point_now_covered_once) private( \
-    tmp) if(data.subsets_information[subset_number].neighbors.size() > 8)
-		//for(size_t i_neighbor: data.subsets_information[subset_number].neighbors)
+#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
+		data.subsets_information[subset_number].neighbors.iterate_bits_on([&](size_t i_neighbor) {
+#else
+#	pragma omp parallel for default(none)                                                 \
+	  shared(data, subset_number, points_newly_uncovered, point_now_covered_once) private( \
+	    tmp) if(data.subsets_information[subset_number].neighbors.size() > 8)
 		for(size_t i = 0; i < data.subsets_information[subset_number].neighbors.size(); ++i)
 		{
 			const size_t i_neighbor = data.subsets_information[subset_number].neighbors[i];
+#endif
 			data.subsets_information[i_neighbor].canAddToSolution = true;
 			if(data.current_solution.selected_subsets[i_neighbor])
 			{
@@ -404,7 +406,10 @@ namespace
 			assert_score(data.subsets_information[i_neighbor].score
 			             == rwls_compute_subset_score(data, i_neighbor));
 		}
-	}
+#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
+		);
+#endif
+	} // namespace
 
 	void rwls_make_tabu(rwls_data& data, size_t subset_number) noexcept
 	{
