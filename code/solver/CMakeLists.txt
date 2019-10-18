@@ -40,7 +40,7 @@ endif()
 # Link OpenMP in Release if found
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
-	target_link_libraries(solver PRIVATE $<$<CONFIG:Release>:OpenMP::OpenMP_CXX>)
+	target_link_libraries(solver PRIVATE $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:OpenMP::OpenMP_CXX>)
 	message(STATUS "OpenMP found, it will be used")
 else()
 	message(WARNING "OpenMP not found, it will not be used")
@@ -67,13 +67,13 @@ cmutils_target_enable_warnings(solver)
 cmutils_target_set_standard(solver CXX 17)
 
 # Set static runtime
-cmutils_target_set_runtime(solver STATIC)
+#cmutils_target_set_runtime(solver STATIC)
 
 # Enable sanitizers in debug
 cmutils_target_enable_sanitizers(
   solver
   ADDRESS LEAK UNDEFINED MEMORY
-  DEBUG
+  RELWITHDEBINFO DEBUG
 )
 
 # Enable debug logs
@@ -121,6 +121,7 @@ if(COMPILER_GCC OR COMPILER_CLANG)
 	  "-fsplit-loops"
 	  "-funswitch-loops"
 	  "-floop-unroll-and-jam"
+	  "-flto"
 	)
 
 	foreach(flag ${flags})
