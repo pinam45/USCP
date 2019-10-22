@@ -267,11 +267,9 @@ bool printer::generate_results_table() noexcept
 	std::vector<instance_result> results;
 	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
 	{
-		instance_info instance_info;
-		instance_info.name = instance.name;
-		instance_info.bks = instance.bks;
 		instance_result result;
-		result.instance = instance_info;
+		result.instance.name = instance.name;
+		result.instance.bks = instance.bks;
 
 		const auto [greedy_begin, greedy_end] = std::equal_range(std::cbegin(m_greedy_reports),
 		                                                         std::cend(m_greedy_reports),
@@ -291,32 +289,29 @@ bool printer::generate_results_table() noexcept
 
 		const auto [rwls_begin, rwls_end] = std::equal_range(
 		  std::cbegin(m_rwls_reports), std::cend(m_rwls_reports), instance.name, rwls_report_less);
-		if(greedy_begin != greedy_end)
+		for(auto it = rwls_begin; it < rwls_end; ++it)
 		{
-			for(auto it = rwls_begin; it < rwls_end; ++it)
+			const uscp::rwls::report_serial& rwls = *it;
+
+			result.rwls.exist = true;
+			++result.rwls.total_number;
+			result.rwls.average +=
+			  (1.0 / result.rwls.total_number)
+			  * (static_cast<double>(rwls.solution_final.selected_subsets.size())
+			     - result.rwls.average);
+
+			if(result.rwls.best == 0
+			   || rwls.solution_final.selected_subsets.size() < result.rwls.best)
 			{
-				const uscp::rwls::report_serial& rwls = *it;
-
-				result.rwls.exist = true;
-				++result.rwls.total_number;
-				result.rwls.average +=
-				  (1.0 / result.rwls.total_number)
-				  * (static_cast<double>(rwls.solution_final.selected_subsets.size())
-				     - result.rwls.average);
-
-				if(result.rwls.best == 0
-				   || rwls.solution_final.selected_subsets.size() < result.rwls.best)
-				{
-					result.rwls.best = rwls.solution_final.selected_subsets.size();
-					result.rwls.best_number = 1;
-					result.rwls.time = rwls.time;
-				}
-				else if(rwls.solution_final.selected_subsets.size() == result.rwls.best)
-				{
-					++result.rwls.best_number;
-					result.rwls.time +=
-					  (1.0 / result.rwls.best_number) * (rwls.time - result.rwls.time);
-				}
+				result.rwls.best = rwls.solution_final.selected_subsets.size();
+				result.rwls.best_number = 1;
+				result.rwls.time = rwls.time;
+			}
+			else if(rwls.solution_final.selected_subsets.size() == result.rwls.best)
+			{
+				++result.rwls.best_number;
+				result.rwls.time +=
+				  (1.0 / result.rwls.best_number) * (rwls.time - result.rwls.time);
 			}
 		}
 
