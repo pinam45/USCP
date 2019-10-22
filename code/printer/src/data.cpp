@@ -5,8 +5,8 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#include <common/algorithms/rwls.hpp>
 #include "printer/data.hpp"
+#include "common/algorithms/rwls.hpp"
 #include "common/algorithms/greedy.hpp"
 #include "common/utils/logger.hpp"
 #include "git_info.hpp"

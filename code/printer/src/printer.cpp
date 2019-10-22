@@ -37,10 +37,16 @@ namespace
 	};
 	void to_json(nlohmann::json& j, const rwls_result& serial);
 
-	struct instance_result final
+	struct instance_info final
 	{
 		std::string name;
 		size_t bks = 0;
+	};
+	void to_json(nlohmann::json& j, const instance_info& serial);
+
+	struct instance_result final
+	{
+		instance_info instance;
 		greedy_result greedy;
 		rwls_result rwls;
 	};
@@ -67,11 +73,18 @@ namespace
 		};
 	}
 
-	void to_json(nlohmann::json& j, const instance_result& serial)
+	void to_json(nlohmann::json& j, const instance_info& serial)
 	{
 		j = nlohmann::json{
 		  {"name", serial.name},
 		  {"bks", serial.bks},
+		};
+	}
+
+	void to_json(nlohmann::json& j, const instance_result& serial)
+	{
+		j = nlohmann::json{
+		  {"instance", serial.instance},
 		  {"greedy", serial.greedy},
 		  {"rwls", serial.rwls},
 		};
@@ -254,9 +267,11 @@ bool printer::generate_results_table() noexcept
 	std::vector<instance_result> results;
 	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
 	{
+		instance_info instance_info;
+		instance_info.name = instance.name;
+		instance_info.bks = instance.bks;
 		instance_result result;
-		result.name = instance.name;
-		result.bks = instance.bks;
+		result.instance = instance_info;
 
 		const auto [greedy_begin, greedy_end] = std::equal_range(std::cbegin(m_greedy_reports),
 		                                                         std::cend(m_greedy_reports),
@@ -280,25 +295,27 @@ bool printer::generate_results_table() noexcept
 		{
 			for(auto it = rwls_begin; it < rwls_end; ++it)
 			{
+				const uscp::rwls::report_serial& rwls = *it;
+
 				result.rwls.exist = true;
 				++result.rwls.total_number;
 				result.rwls.average +=
 				  (1.0 / result.rwls.total_number)
-				  * (static_cast<double>(it->solution_final.selected_subsets.size())
+				  * (static_cast<double>(rwls.solution_final.selected_subsets.size())
 				     - result.rwls.average);
 
 				if(result.rwls.best == 0
-				   || it->solution_final.selected_subsets.size() < result.rwls.best)
+				   || rwls.solution_final.selected_subsets.size() < result.rwls.best)
 				{
-					result.rwls.best = it->solution_final.selected_subsets.size();
+					result.rwls.best = rwls.solution_final.selected_subsets.size();
 					result.rwls.best_number = 1;
-					result.rwls.time = it->time;
+					result.rwls.time = rwls.time;
 				}
-				else if(it->solution_final.selected_subsets.size() == result.rwls.best)
+				else if(rwls.solution_final.selected_subsets.size() == result.rwls.best)
 				{
 					++result.rwls.best_number;
 					result.rwls.time +=
-					  (1.0 / result.rwls.best_number) * (it->time - result.rwls.time);
+					  (1.0 / result.rwls.best_number) * (rwls.time - result.rwls.time);
 				}
 			}
 		}
