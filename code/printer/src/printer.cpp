@@ -174,9 +174,22 @@ bool printer::generate_document() noexcept
 	data["author"] = config::info::DOCUMENT_AUTHOR;
 
 	// generate document
-	m_environment.write(template_folder + std::string(config::partial::DOCUMENT_TEMPLATE_FILE),
-	                    data,
-	                    output_folder + std::string(config::partial::DOCUMENT_TEMPLATE_FILE));
+	try
+	{
+		m_environment.write(template_folder + std::string(config::partial::DOCUMENT_TEMPLATE_FILE),
+		                    data,
+		                    output_folder + std::string(config::partial::DOCUMENT_TEMPLATE_FILE));
+	}
+	catch(const std::exception& e)
+	{
+		std::cout << "error writing document: " << e.what() << std::endl;
+		return false;
+	}
+	catch(...)
+	{
+		std::cerr << "unknown error writing document" << std::endl;
+		return false;
+	}
 
 	// save data
 	const std::string file_data = output_folder + "main.json";
@@ -296,10 +309,23 @@ bool printer::generate_results_table() noexcept
 	data["results"] = std::move(results);
 
 	// generate table
-	m_environment.write(
-	  tables_template_folder + std::string(config::partial::RESULT_TABLE_TEMPLATE_FILE),
-	  data,
-	  tables_output_folder + std::string(config::partial::RESULT_TABLE_TEMPLATE_FILE));
+	try
+	{
+		m_environment.write(
+		  tables_template_folder + std::string(config::partial::RESULT_TABLE_TEMPLATE_FILE),
+		  data,
+		  tables_output_folder + std::string(config::partial::RESULT_TABLE_TEMPLATE_FILE));
+	}
+	catch(const std::exception& e)
+	{
+		std::cout << "error writing result table: " << e.what() << std::endl;
+		return false;
+	}
+	catch(...)
+	{
+		std::cerr << "unknown error writing result table" << std::endl;
+		return false;
+	}
 
 	// save data
 	const std::string file_data = tables_output_folder + "results.json";
