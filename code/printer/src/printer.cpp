@@ -119,7 +119,10 @@ namespace
 		  {"repetitions", serial.repetitions},
 		};
 	}
+} // namespace
 
+namespace
+{
 	struct greedy_report_less_t
 	{
 		bool operator()(const uscp::greedy::report_serial& a,
@@ -155,6 +158,33 @@ namespace
 		}
 	};
 	const rwls_report_less_t rwls_report_less;
+} // namespace
+
+namespace
+{
+	template<typename T>
+	size_t count_common_elements_sorted(const std::vector<T>& a, const std::vector<T>& b)
+	{
+		size_t i_a = 0;
+		size_t i_b = 0;
+		size_t count = 0;
+		while(i_a < a.size() && i_b < b.size())
+		{
+			if(a[i_a] < b[i_b])
+			{
+				++i_a;
+			}
+			else
+			{
+				if(b[i_b] == a[i_a])
+				{
+					++count;
+				}
+				++i_b;
+			}
+		}
+		return count;
+	}
 } // namespace
 
 printer::printer(std::string_view output_prefix) noexcept
@@ -467,27 +497,8 @@ bool printer::generate_rwls_stats_table() noexcept
 			          std::end(rwls.solution_initial.selected_subsets));
 			std::sort(std::begin(rwls.solution_final.selected_subsets),
 			          std::end(rwls.solution_final.selected_subsets));
-			size_t same_count = 0;
-			size_t i_initial = 0;
-			for(size_t i_final = 0; i_final < rwls.solution_final.selected_subsets.size();
-			    ++i_final)
-			{
-				while(i_initial < rwls.solution_initial.selected_subsets.size()
-				      && rwls.solution_initial.selected_subsets[i_initial]
-				           < rwls.solution_final.selected_subsets[i_final])
-				{
-					++i_initial;
-				}
-				if(i_initial >= rwls.solution_initial.selected_subsets.size())
-				{
-					break;
-				}
-				if(rwls.solution_initial.selected_subsets[i_initial]
-				   == rwls.solution_final.selected_subsets[i_final])
-				{
-					++same_count;
-				}
-			}
+			const size_t same_count = count_common_elements_sorted(
+			  rwls.solution_initial.selected_subsets, rwls.solution_final.selected_subsets);
 			stat.kept =
 			  static_cast<double>(same_count) / rwls.solution_final.selected_subsets.size();
 
