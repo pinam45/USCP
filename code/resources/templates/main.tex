@@ -24,6 +24,8 @@
 \usepackage{fancyhdr}
 \usepackage[table]{xcolor}
 \usepackage{float}
+\usepackage{datetime2}
+\usepackage{chngcntr}
 % Mathematics
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -49,19 +51,25 @@
 \usepackage{import}
 
 %----------------------------------------
+% Configuration
+%----------------------------------------
+
+\DTMsavetimestamp{generated}{<<date>>}
+
+%----------------------------------------
 % Informations
 %----------------------------------------
 
 % Cover infos
-\title{<<default(title,"")>>}
-\author{<<default(author,"")>>}
-\date{<<default(date,"\\today")>>}
+\title{<<title>>}
+\author{<<author>>}
+\date{\DTMusedate{generated} \DTMusetime{generated}}
 
 % Fancy style options
-\lhead{\small <<default(title,"")>>}
-\rhead{\small <<default(date,"\\today")>>}
+\lhead{\small <<title>>}
+\rhead{\small \DTMusedate{generated} \DTMusetime{generated}}
 \chead{}
-\lfoot{\url{https://github.com/pinam45/USCP}}
+\lfoot{<<author>>}
 \rfoot{\thepage}
 \cfoot{}
 \pagestyle{fancy}
@@ -74,6 +82,7 @@
 \newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
 \newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
+\counterwithin{table}{section}
 
 %----------------------------------------
 % Plots
@@ -101,15 +110,17 @@
 %----------------------------------------
 \begin{document}
 	\maketitle{}
-	\section{Instances}
+	\tableofcontents{}
+	\listoftables{}
+	\newpage\section{Instances}
 		\input{./tables/orlibrary_instances_base}
 		\input{./tables/orlibrary_instances_cyc_clr}
 		\input{./tables/orlibrary_instances_rail}
 		\input{./tables/sts_instances}
-	\section{Results}
+	\newpage\section{Results}
 		\input{./tables/results}
 <*if rwls_stats*>
-	\section{Stats}
+	\newpage\section{Stats}
 		\input{./tables/rwls_stats}
 <*endif*>
 \end{document}

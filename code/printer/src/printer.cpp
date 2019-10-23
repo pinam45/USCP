@@ -258,6 +258,10 @@ bool printer::generate_document() noexcept
 	nlohmann::json data;
 	data["title"] = config::info::DOCUMENT_TITLE;
 	data["author"] = config::info::DOCUMENT_AUTHOR;
+	std::ostringstream now_txt;
+	std::time_t t = std::time(nullptr);
+	now_txt << std::put_time(std::localtime(&t), "%FT%TZ");
+	data["date"] = now_txt.str();
 	data["rwls_stats"] = m_generate_rwls_stats;
 
 	// generate document
