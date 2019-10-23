@@ -195,12 +195,12 @@ bool printer::generate_document() noexcept
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "error writing document: " << e.what() << std::endl;
+		LOGGER->warn("error writing document: {}", e.what());
 		return false;
 	}
 	catch(...)
 	{
-		std::cerr << "unknown error writing document" << std::endl;
+		LOGGER->warn("unknown error writing document");
 		return false;
 	}
 
@@ -282,7 +282,7 @@ bool printer::generate_results_table() noexcept
 			result.greedy.time = greedy_begin->time;
 			if(std::distance(greedy_begin, greedy_end) > 1)
 			{
-				LOGGER->warn("Multiple greedy results for {}, only the first will be used",
+				LOGGER->info("Multiple greedy results for {}, only the first will be used",
 				             instance.name);
 			}
 		}
@@ -330,12 +330,12 @@ bool printer::generate_results_table() noexcept
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "error writing result table: " << e.what() << std::endl;
+		LOGGER->warn("error writing result table: {}", e.what());
 		return false;
 	}
 	catch(...)
 	{
-		std::cerr << "unknown error writing result table" << std::endl;
+		LOGGER->warn("unknown error writing result table");
 		return false;
 	}
 
