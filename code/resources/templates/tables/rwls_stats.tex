@@ -1,0 +1,27 @@
+%!TEX root = ../main.tex
+%\rowcolors{1}{gray!10}{white}
+\begin{longtable}{@{\extracolsep{5pt}}cccccccc}
+	%\hiderowcolors
+	\caption{RWLS stats}\\
+	\toprule
+	Inst. & Initial & Final & Kept (\%) & Prox. (\%) & Steps & Time (s) & Rep.\\
+	\midrule
+	\endfirsthead
+	\caption[]{RWLS stats (continued)}\\
+	\toprule
+	Inst. & Initial & Final & Kept (\%) & Prox. (\%) & Steps & Time (s) & Rep.\\
+	\midrule
+	\endhead
+	\bottomrule
+	\endfoot
+	%\showrowcolors
+<*for stat in stats*>
+	<<stat/instance/name>> &
+	<*if stat/exist*>
+		<<round(stat/initial)>> & <<round(stat/final,1)>> & <<percent(stat/kept,1)>> & <<percent(stat/proximity,1)>> & <<round(stat/steps)>> & <<round(stat/time,2)>> & <<stat/repetitions>>
+	<*else*>
+		--- & --- & --- & --- & --- & --- & ---
+	<*endif*>
+	\\
+<*endfor*>
+\end{longtable}

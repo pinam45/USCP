@@ -52,6 +52,20 @@ namespace
 	};
 	void to_json(nlohmann::json& j, const instance_result& serial);
 
+	struct rwls_stat final
+	{
+		instance_info instance;
+		bool exist = false;
+		double initial = 0;
+		double final = 0;
+		double kept = 0;
+		double proximity = 0;
+		double steps = 0;
+		double time = 0;
+		size_t repetitions = 0;
+	};
+	void to_json(nlohmann::json& j, const rwls_stat& serial);
+
 	void to_json(nlohmann::json& j, const greedy_result& serial)
 	{
 		j = nlohmann::json{
@@ -87,6 +101,21 @@ namespace
 		  {"instance", serial.instance},
 		  {"greedy", serial.greedy},
 		  {"rwls", serial.rwls},
+		};
+	}
+
+	void to_json(nlohmann::json& j, const rwls_stat& serial)
+	{
+		j = nlohmann::json{
+		  {"instance", serial.instance},
+		  {"exist", serial.exist},
+		  {"initial", serial.initial},
+		  {"final", serial.final},
+		  {"kept", serial.kept},
+		  {"proximity", serial.proximity},
+		  {"steps", serial.steps},
+		  {"time", serial.time},
+		  {"repetitions", serial.repetitions},
 		};
 	}
 
@@ -149,6 +178,27 @@ printer::printer(std::string_view output_prefix) noexcept
 	m_environment.add_callback("add", 2, [](inja::Arguments& args) {
 		return args.at(0)->get<int>() + args.at(1)->get<int>();
 	});
+
+	m_environment.add_callback(
+	  "round", 1, [](inja::Arguments& args) { return std::llround(args.at(0)->get<double>()); });
+
+	auto percent_callback = [](inja::Arguments& args) {
+		std::ostringstream txt;
+		txt << std::fixed;
+		if(args.size() > 1)
+		{
+			txt << std::setprecision(args.at(1)->get<size_t>());
+		}
+		else
+		{
+			txt << std::setprecision(2);
+		}
+		txt << (args.at(0)->get<double>() * 100);
+		return txt.str();
+	};
+
+	m_environment.add_callback("percent", 1, percent_callback);
+	m_environment.add_callback("percent", 2, percent_callback);
 }
 
 void printer::add(const uscp::greedy::report_serial& report) noexcept
@@ -178,6 +228,12 @@ bool printer::generate_document() noexcept
 	if(!generate_results_table())
 	{
 		LOGGER->warn("Failed to generate result table");
+		return false;
+	}
+
+	if(!generate_rwls_stats_table())
+	{
+		LOGGER->warn("Failed to rwls stats table");
 		return false;
 	}
 
@@ -341,6 +397,104 @@ bool printer::generate_results_table() noexcept
 
 	// save data
 	const std::string file_data = tables_output_folder + "results.json";
+	std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
+	if(!data_stream)
+	{
+		SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
+		LOGGER->warn("Failed to write file {}", file_data);
+		return false;
+	}
+	data_stream << data.dump(4);
+	return true;
+}
+
+bool printer::generate_rwls_stats_table() noexcept
+{
+	// generate data
+	std::sort(std::begin(m_greedy_reports), std::end(m_greedy_reports), greedy_report_less);
+	std::sort(std::begin(m_rwls_reports), std::end(m_rwls_reports), rwls_report_less);
+
+	std::vector<rwls_stat> stats;
+	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
+	{
+		rwls_stat stat;
+		stat.instance.name = instance.name;
+		stat.instance.bks = instance.bks;
+
+		const auto [rwls_begin, rwls_end] = std::equal_range(
+		  std::cbegin(m_rwls_reports), std::cend(m_rwls_reports), instance.name, rwls_report_less);
+		for(auto it = rwls_begin; it < rwls_end; ++it)
+		{
+			uscp::rwls::report_serial rwls = *it;
+
+			stat.exist = true;
+			++stat.repetitions;
+			stat.initial +=
+			  (1.0 / stat.repetitions)
+			  * (static_cast<double>(rwls.solution_initial.selected_subsets.size()) - stat.initial);
+			stat.final +=
+			  (1.0 / stat.repetitions)
+			  * (static_cast<double>(rwls.solution_final.selected_subsets.size()) - stat.final);
+			stat.steps += (1.0 / stat.repetitions) * (static_cast<double>(rwls.steps) - stat.steps);
+			stat.time += (1.0 / stat.repetitions) * (rwls.time - stat.time);
+
+			std::sort(std::begin(rwls.solution_initial.selected_subsets),
+			          std::end(rwls.solution_initial.selected_subsets));
+			std::sort(std::begin(rwls.solution_final.selected_subsets),
+			          std::end(rwls.solution_final.selected_subsets));
+			size_t same_count = 0;
+			size_t i_initial = 0;
+			for(size_t i_final = 0; i_final < rwls.solution_final.selected_subsets.size();
+			    ++i_final)
+			{
+				while(i_initial < rwls.solution_initial.selected_subsets.size()
+				      && rwls.solution_initial.selected_subsets[i_initial]
+				           < rwls.solution_final.selected_subsets[i_final])
+				{
+					++i_initial;
+				}
+				if(i_initial >= rwls.solution_initial.selected_subsets.size())
+				{
+					break;
+				}
+				if(rwls.solution_initial.selected_subsets[i_initial]
+				   == rwls.solution_final.selected_subsets[i_final])
+				{
+					++same_count;
+				}
+			}
+			stat.kept =
+			  static_cast<double>(same_count) / rwls.solution_final.selected_subsets.size();
+
+			//TODO: proximity
+		}
+
+		stats.push_back(std::move(stat));
+	}
+	nlohmann::json data;
+	data["stats"] = std::move(stats);
+
+	// generate table
+	try
+	{
+		m_environment.write(
+		  tables_template_folder + std::string(config::partial::RWLS_STATS_TABLE_TEMPLATE_FILE),
+		  data,
+		  tables_output_folder + std::string(config::partial::RWLS_STATS_TABLE_TEMPLATE_FILE));
+	}
+	catch(const std::exception& e)
+	{
+		LOGGER->warn("error writing rwls stats table: {}", e.what());
+		return false;
+	}
+	catch(...)
+	{
+		LOGGER->warn("unknown error writing rwls stats table");
+		return false;
+	}
+
+	// save data
+	const std::string file_data = tables_output_folder + "rwls_stats.json";
 	std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
 	if(!data_stream)
 	{

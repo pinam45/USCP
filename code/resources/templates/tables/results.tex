@@ -6,23 +6,23 @@
 	\toprule
 	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{4}{l}{RWLS}\\
 	\cmidrule{4-5}\cmidrule{7-10}
-	 & && Value & Time && Best & Average & \#Best & Time\\
+	 & && Value & Time (s) && Best & Average & \#Best & Time (s)\\
 	\midrule
 	\endfirsthead
 	\caption[]{Results (continued)}\\
 	\toprule
 	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{4}{l}{RWLS}\\
 	\cmidrule{4-5}\cmidrule{7-10}
-	 & && Value & Time && Best & Average & \#Best & Time\\
+	 & && Value & Time (s) && Best & Average & \#Best & Time (s)\\
 	\midrule
 	\endhead
 	\bottomrule
 	\endfoot
 	%\showrowcolors
 <*for result in results*>
-	<<result/name>> & <<result/bks>> && 
+	<<result/instance/name>> & <<result/instance/bks>> &&
 	<*if result/greedy/exist*>
-		<*if result/greedy/value <= result/bks*>
+		<*if result/greedy/value <= result/instance/bks*>
 			\textbf{<<result/greedy/value>>}
 		<*else*>
 			<<result/greedy/value>>
@@ -33,10 +33,10 @@
 	<*endif*>
 	 && 
 	<*if result/rwls/exist*>
-		<*if result/rwls/best < result/bks*>
+		<*if result/rwls/best < result/instance/bks*>
 			\textbf{<<result/rwls/best>>*}
 		<*else*>
-			<*if result/rwls/best <= result/bks*>
+			<*if result/rwls/best <= result/instance/bks*>
 				\textbf{<<result/rwls/best>>}
 			<*else*>
 				<<result/rwls/best>>

@@ -46,6 +46,7 @@ public:
 
 			static constexpr std::string_view DOCUMENT_TEMPLATE_FILE = "main.tex";
 			static constexpr std::string_view RESULT_TABLE_TEMPLATE_FILE = "results.tex";
+			static constexpr std::string_view RWLS_STATS_TABLE_TEMPLATE_FILE = "rwls_stats.tex";
 
 			static constexpr std::array<std::string_view, 4> INSTANCES_TABLES_FILES = {
 			  "orlibrary_instances_base.tex",
@@ -90,6 +91,8 @@ private:
 	bool copy_instances_tables() noexcept;
 
 	bool generate_results_table() noexcept;
+
+	bool generate_rwls_stats_table() noexcept;
 
 	[[nodiscard]] std::string generate_output_folder_name(std::string_view output_prefix) const
 	  noexcept;
