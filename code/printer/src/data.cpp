@@ -87,17 +87,7 @@ bool uscp::data::load(const nlohmann::json& data, printer& printer) noexcept
 {
 	try
 	{
-		nlohmann::json::const_iterator it = data.find("git");
-		if(it != data.end())
-		{
-			check_git(*it);
-		}
-		else
-		{
-			LOGGER->warn("data is missing git information");
-		}
-
-		it = data.find("date");
+		nlohmann::json::const_iterator it = data.find("date");
 		if(it != data.end())
 		{
 			LOGGER->info("data generation date: {}", it->get<std::string>());
@@ -105,6 +95,16 @@ bool uscp::data::load(const nlohmann::json& data, printer& printer) noexcept
 		else
 		{
 			LOGGER->warn("data is missing date information");
+		}
+
+		it = data.find("git");
+		if(it != data.end())
+		{
+			check_git(*it);
+		}
+		else
+		{
+			LOGGER->warn("data is missing git information");
 		}
 
 		it = data.find("instances");
