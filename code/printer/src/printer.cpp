@@ -8,6 +8,7 @@
 #include "printer/printer.hpp"
 #include "common/utils/logger.hpp"
 #include "common/data/instances.hpp"
+#include "common/utils/timer.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -163,6 +164,7 @@ printer::printer(std::string_view output_prefix) noexcept
       std::string(config::partial::RESOURCES_FOLDER).append(config::partial::TEMPLATE_SUBFOLDER))
   , tables_template_folder(template_folder
                            + std::string(config::partial::TABLES_TEMPLATE_SUBFOLDER))
+  , m_generate_rwls_stats(false)
 {
 	m_environment.set_statement(std::string(config::inja::STATEMENT_OPEN),
 	                            std::string(config::inja::STATEMENT_CLOSE));
@@ -211,36 +213,52 @@ void printer::add(const uscp::rwls::report_serial& report) noexcept
 	m_rwls_reports.push_back(report);
 }
 
+void printer::generate_rwls_stats(bool enable) noexcept
+{
+	m_generate_rwls_stats = enable;
+}
+
 bool printer::generate_document() noexcept
 {
+	LOGGER->info("Started generating document");
+	const timer timer;
+
 	if(!create_output_folders())
 	{
 		LOGGER->warn("Failed to create output folders");
 		return false;
 	}
+	LOGGER->info("Created output folders");
 
 	if(!copy_instances_tables())
 	{
 		LOGGER->warn("Failed to copy instances tables");
 		return false;
 	}
+	LOGGER->info("Copied instances tables");
 
 	if(!generate_results_table())
 	{
 		LOGGER->warn("Failed to generate result table");
 		return false;
 	}
+	LOGGER->info("Generated result table");
 
-	if(!generate_rwls_stats_table())
+	if(m_generate_rwls_stats)
 	{
-		LOGGER->warn("Failed to rwls stats table");
-		return false;
+		if(!generate_rwls_stats_table())
+		{
+			LOGGER->warn("Failed to rwls stats table");
+			return false;
+		}
+		LOGGER->info("Generated rwls stats table");
 	}
 
 	// generate data
 	nlohmann::json data;
 	data["title"] = config::info::DOCUMENT_TITLE;
 	data["author"] = config::info::DOCUMENT_AUTHOR;
+	data["rwls_stats"] = m_generate_rwls_stats;
 
 	// generate document
 	try
@@ -248,6 +266,7 @@ bool printer::generate_document() noexcept
 		m_environment.write(template_folder + std::string(config::partial::DOCUMENT_TEMPLATE_FILE),
 		                    data,
 		                    output_folder + std::string(config::partial::DOCUMENT_TEMPLATE_FILE));
+		LOGGER->info("Generated main document");
 	}
 	catch(const std::exception& e)
 	{
@@ -270,6 +289,8 @@ bool printer::generate_document() noexcept
 		return false;
 	}
 	data_stream << data.dump(4);
+
+	LOGGER->info("Generated full document in {}s", timer.elapsed());
 	return true;
 }
 

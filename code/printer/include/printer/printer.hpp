@@ -74,6 +74,8 @@ public:
 
 	void add(const uscp::rwls::report_serial& report) noexcept;
 
+	void generate_rwls_stats(bool enable) noexcept;
+
 	bool generate_document() noexcept;
 
 private:
@@ -85,6 +87,7 @@ private:
 	inja::Environment m_environment;
 	std::vector<uscp::greedy::report_serial> m_greedy_reports;
 	std::vector<uscp::rwls::report_serial> m_rwls_reports;
+	bool m_generate_rwls_stats;
 
 	bool create_output_folders() noexcept;
 

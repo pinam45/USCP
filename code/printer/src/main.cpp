@@ -27,6 +27,7 @@ int main(int argc, char* argv[])
 	std::string output_prefix = "printer_out_";
 	std::string validation_regex_txt = ".*\\.json";
 	std::basic_regex<char> validation_regex;
+	bool rwls_stats = false;
 	try
 	{
 		std::ostringstream help_txt;
@@ -60,6 +61,11 @@ int main(int argc, char* argv[])
 		    "Input files name validation regex",
 		    cxxopts::value<std::string>(validation_regex_txt)->default_value(".*\\.json"),
 		    "REGEX"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("rwls_stats",
+		                  "Generate RWLS stats table",
+		                  cxxopts::value<bool>(rwls_stats)->default_value("false")));
 		cxxopts::ParseResult result = options.parse(argc, argv);
 
 		if(result.count("help"))
@@ -103,6 +109,7 @@ int main(int argc, char* argv[])
 		}
 
 		printer printer;
+		printer.generate_rwls_stats(rwls_stats);
 		std::deque<std::string> paths(std::cbegin(input_folder_files),
 		                              std::cend(input_folder_files));
 		while(!paths.empty())
