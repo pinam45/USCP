@@ -18,7 +18,19 @@
 <*for stat in stats*>
 	<<stat/instance/name>> &
 	<*if stat/exist*>
-		<<round(stat/initial)>> & <<round(stat/final,1)>> & <<percent(stat/kept,1)>> & <<percent(stat/proximity,1)>> & <<round(stat/steps)>> & <<round(stat/time,2)>> & <<stat/repetitions>>
+		<<round(stat/initial)>> & <<round(stat/final,1)>> &
+		<*if stat/kept > 0.9*>
+			\textbf{<<percent(stat/kept,1)>>}
+		<*else*>
+			<<percent(stat/kept,1)>>
+		<*endif*>
+		&
+		<*if stat/proximity > 0.9*>
+			\textbf{<<percent(stat/proximity,1)>>}
+		<*else*>
+			<<percent(stat/proximity,1)>>
+		<*endif*>
+		& <<round(stat/steps)>> & <<round(stat/time,2)>> & <<stat/repetitions>>
 	<*else*>
 		--- & --- & --- & --- & --- & --- & ---
 	<*endif*>
