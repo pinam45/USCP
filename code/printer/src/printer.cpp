@@ -477,10 +477,17 @@ bool printer::generate_rwls_stats_table() noexcept
 		stat.instance.bks = instance.bks;
 
 		const auto [rwls_begin, rwls_end] = std::equal_range(
-		  std::cbegin(m_rwls_reports), std::cend(m_rwls_reports), instance.name, rwls_report_less);
+		  std::begin(m_rwls_reports), std::end(m_rwls_reports), instance.name, rwls_report_less);
 		for(auto it = rwls_begin; it < rwls_end; ++it)
 		{
-			uscp::rwls::report_serial rwls = *it;
+			std::sort(std::begin(it->solution_initial.selected_subsets),
+			          std::end(it->solution_initial.selected_subsets));
+			std::sort(std::begin(it->solution_final.selected_subsets),
+			          std::end(it->solution_final.selected_subsets));
+		}
+		for(auto it = rwls_begin; it < rwls_end; ++it)
+		{
+			const uscp::rwls::report_serial& rwls = *it;
 
 			stat.exist = true;
 			++stat.repetitions;
@@ -493,16 +500,29 @@ bool printer::generate_rwls_stats_table() noexcept
 			stat.steps += (1.0 / stat.repetitions) * (static_cast<double>(rwls.steps) - stat.steps);
 			stat.time += (1.0 / stat.repetitions) * (rwls.time - stat.time);
 
-			std::sort(std::begin(rwls.solution_initial.selected_subsets),
-			          std::end(rwls.solution_initial.selected_subsets));
-			std::sort(std::begin(rwls.solution_final.selected_subsets),
-			          std::end(rwls.solution_final.selected_subsets));
 			const size_t same_count = count_common_elements_sorted(
 			  rwls.solution_initial.selected_subsets, rwls.solution_final.selected_subsets);
 			stat.kept =
 			  static_cast<double>(same_count) / rwls.solution_final.selected_subsets.size();
 
-			//TODO: proximity
+			stat.proximity = 0;
+			double common_mean = 0;
+			size_t count_other = 0;
+			for(auto it_other = rwls_begin; it_other < rwls_end; ++it_other)
+			{
+				if(it_other == it)
+				{
+					continue;
+				}
+				const uscp::rwls::report_serial& rwls_other = *it_other;
+				++count_other;
+				common_mean += (1.0 / count_other)
+				               * (static_cast<double>(count_common_elements_sorted(
+				                    rwls.solution_final.selected_subsets,
+				                    rwls_other.solution_final.selected_subsets))
+				                  - common_mean);
+			}
+			stat.proximity = common_mean / rwls.solution_final.selected_subsets.size();
 		}
 
 		stats.push_back(std::move(stat));
