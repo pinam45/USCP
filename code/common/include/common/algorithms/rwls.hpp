@@ -16,6 +16,14 @@
 
 namespace uscp::rwls
 {
+	struct position_serial final
+	{
+		size_t steps = std::numeric_limits<size_t>::max();
+		double time = std::numeric_limits<double>::max();
+	};
+	void to_json(nlohmann::json& j, const position_serial& serial);
+	void from_json(const nlohmann::json& j, position_serial& serial);
+
 	struct report_serial final
 	{
 		solution_serial solution_initial;

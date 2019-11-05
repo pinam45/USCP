@@ -7,6 +7,20 @@
 //
 #include "common/algorithms/rwls.hpp"
 
+void uscp::rwls::to_json(nlohmann::json& j, const uscp::rwls::position_serial& serial)
+{
+	j = nlohmann::json{
+	  {"steps", serial.steps},
+	  {"time", serial.time},
+	};
+}
+
+void uscp::rwls::from_json(const nlohmann::json& j, uscp::rwls::position_serial& serial)
+{
+	j.at("steps").get_to(serial.steps);
+	j.at("time").get_to(serial.time);
+}
+
 void uscp::rwls::to_json(nlohmann::json& j, const uscp::rwls::report_serial& serial)
 {
 	j = nlohmann::json{

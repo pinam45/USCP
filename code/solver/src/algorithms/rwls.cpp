@@ -31,6 +31,21 @@
 #	define assert_score(expr) static_cast<void>(0)
 #endif
 
+uscp::rwls::position_serial uscp::rwls::position::serialize() const noexcept
+{
+	position_serial serial;
+	serial.steps = steps;
+	serial.time = time;
+	return serial;
+}
+
+bool uscp::rwls::position::load(const uscp::rwls::position_serial& serial) noexcept
+{
+	steps = serial.steps;
+	time = serial.time;
+	return true;
+}
+
 uscp::rwls::report::report(const problem::instance& problem) noexcept
   : solution_initial(problem), solution_final(problem), found_at()
 {
