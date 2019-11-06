@@ -34,7 +34,7 @@ void uscp::memetic::memetic<Crossover>::initialize() noexcept
 template<typename Crossover>
 uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
   uscp::random_engine& generator,
-  uscp::memetic::config config) noexcept
+  const uscp::memetic::config& config) noexcept
 {
 	if(!m_initialized)
 	{

@@ -67,8 +67,7 @@ namespace uscp::memetic
 		memetic& operator=(memetic&& other) noexcept = delete;
 
 		[[gnu::hot]] void initialize() noexcept;
-		[[gnu::hot]] report solve(random_engine& generator,
-		                          config config) noexcept; //TODO: const ref
+		[[gnu::hot]] report solve(random_engine& generator, const config& config) noexcept;
 
 	private:
 		template<size_t v>
