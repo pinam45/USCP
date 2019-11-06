@@ -12,6 +12,10 @@
 #include "common/data/solution.hpp"
 #include "common/utils/random.hpp"
 
+#include <dynamic_bitset.hpp>
+
+#include <string_view>
+
 namespace uscp::crossover
 {
 	struct merge final
@@ -32,7 +36,7 @@ namespace uscp::crossover
 			return solution;
 		}
 
-		std::string to_string() const noexcept
+		[[nodiscard]] static std::string_view to_string() noexcept
 		{
 			return "merge";
 		}
