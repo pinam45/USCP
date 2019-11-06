@@ -81,6 +81,8 @@ namespace uscp::memetic
 		uscp::rwls::rwls m_rwls;
 		bool m_initialized;
 	};
+
+	[[nodiscard]] report expand(const report& reduced_report) noexcept;
 } // namespace uscp::memetic
 
 #include "solver/algorithms/memetic.tpp"
