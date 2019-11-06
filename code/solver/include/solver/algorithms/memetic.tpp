@@ -96,9 +96,19 @@ uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
 			}
 		}
 
+		LOGGER->info("({}) Memetic generation {}: parent ({}, {})",
+		             m_problem.name,
+		             generation,
+		             population[0].selected_subsets.count(),
+		             population[1].selected_subsets.count());
 		const solution solution(population[0]);
 		population[0] = m_crossover(population[0], population[1], generator);
-		population[1] = m_crossover(solution, population[1], generator);
+		population[1] = m_crossover(population[1], solution, generator);
+		LOGGER->info("({}) Memetic generation {}: children ({}, {})",
+		             m_problem.name,
+		             generation,
+		             population[0].selected_subsets.count(),
+		             population[1].selected_subsets.count());
 
 		++generation;
 	}
