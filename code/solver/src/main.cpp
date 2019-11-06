@@ -8,6 +8,8 @@
 #include "solver/data/instance.hpp"
 #include "solver/algorithms/greedy.hpp"
 #include "solver/algorithms/rwls.hpp"
+#include "solver/algorithms/memetic.hpp"
+#include "solver/algorithms/crossovers/merge.hpp"
 #include "solver/data/instances.hpp"
 #include "common/utils/logger.hpp"
 #include "common/utils/random.hpp"
@@ -43,6 +45,9 @@ int main(int argc, char* argv[])
 	bool greedy = false;
 	bool rwls = false;
 	uscp::rwls::position rwls_stop;
+	bool memetic = false;
+	uscp::memetic::config memetic_config;
+	std::string memetic_crossover;
 	try
 	{
 		std::ostringstream help_txt;
@@ -73,11 +78,15 @@ int main(int argc, char* argv[])
 		                                   "Repetitions number",
 		                                   cxxopts::value<size_t>(repetitions)->default_value("1"),
 		                                   "N"));
+
+		// Greedy
 		options.add_option(
 		  "",
 		  cxxopts::Option("greedy",
 		                  "Solve with greedy algorithm (no repetition as it is determinist)",
 		                  cxxopts::value<bool>(greedy)->default_value("false")));
+
+		// RWLS
 		options.add_option("",
 		                   cxxopts::Option("rwls",
 		                                   "Improve with RWLS algorithm (start with a greedy)",
@@ -95,6 +104,62 @@ int main(int argc, char* argv[])
 		                  cxxopts::value<double>(rwls_stop.time)
 		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
 		                  "N"));
+
+		// Memetic
+		options.add_option("",
+		                   cxxopts::Option("memetic",
+		                                   "Solve with memetic algorithm",
+		                                   cxxopts::value<bool>(memetic)->default_value("false")));
+		options.add_option(
+		  "",
+		  cxxopts::Option("memetic_generations",
+		                  "Memetic generations number limit",
+		                  cxxopts::value<size_t>(memetic_config.stopping_criterion.generation)
+		                    ->default_value("100"),
+		                  "N"));
+		options.add_option(
+		  "",
+		  cxxopts::Option(
+		    "memetic_cumulative_rwls_steps",
+		    "Memetic cumulative RWLS steps limit",
+		    cxxopts::value<size_t>(memetic_config.stopping_criterion.rwls_cumulative_position.steps)
+		      ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
+		    "N"));
+		options.add_option(
+		  "",
+		  cxxopts::Option(
+		    "memetic_cumulative_rwls_time",
+		    "Memetic cumulative RWLS time (seconds) limit",
+		    cxxopts::value<double>(memetic_config.stopping_criterion.rwls_cumulative_position.time)
+		      ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
+		    "N"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("memetic_time",
+		                  "Memetic time limit",
+		                  cxxopts::value<double>(memetic_config.stopping_criterion.time)
+		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
+		                  "N"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("memetic_rwls_steps",
+		                  "Memetic RWLS steps limit",
+		                  cxxopts::value<size_t>(memetic_config.rwls_stopping_criterion.steps)
+		                    ->default_value("300000"),
+		                  "N"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("memetic_rwls_time",
+		                  "Memetic RWLS time (seconds) limit",
+		                  cxxopts::value<double>(memetic_config.rwls_stopping_criterion.time)
+		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
+		                  "N"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("memetic_crossover",
+		                  "Memetic crossover operator",
+		                  cxxopts::value<std::string>(memetic_crossover)->default_value("merge"),
+		                  "OPERATOR"));
 		cxxopts::ParseResult result = options.parse(argc, argv);
 
 		if(result.count("help"))
@@ -109,7 +174,7 @@ int main(int argc, char* argv[])
 			return EXIT_SUCCESS;
 		}
 
-		if(!greedy && !rwls)
+		if(!greedy && !rwls && !memetic)
 		{
 			std::cout << "No algorithm specified, nothing to do" << std::endl;
 			return EXIT_SUCCESS;
@@ -321,6 +386,59 @@ int main(int argc, char* argv[])
 					}
 				}
 				data_instance["rwls"] = std::move(data_rwls);
+			}
+			if(memetic)
+			{
+				auto process_memetic = [&](auto memetic_alg) -> bool {
+					std::vector<nlohmann::json> data_memetic;
+					memetic_alg.initialize();
+					for(size_t repetition = 0; repetition < repetitions; ++repetition)
+					{
+						uscp::memetic::report memetic_report =
+						  memetic_alg.solve(generator, memetic_config);
+						if(reduced)
+						{
+							uscp::memetic::report expanded_memetic_report =
+							  uscp::memetic::expand(memetic_report);
+							if(!expanded_memetic_report.solution_final.cover_all_points)
+							{
+								LOGGER->error("Expanded memetic solution doesn't cover all points");
+								return false;
+							}
+							LOGGER->info(
+							  "({}) Expanded memetic solution to {} subsets",
+							  instance_base.name,
+							  expanded_memetic_report.solution_final.selected_subsets.count());
+							LOGGER->info(
+							  "({}) Memetic found solution with {} subsets",
+							  instance_base.name,
+							  expanded_memetic_report.solution_final.selected_subsets.count());
+							data_memetic.emplace_back(expanded_memetic_report.serialize());
+						}
+						else
+						{
+							LOGGER->info("({}) Memetic found solution with {} subsets",
+							             instance_base.name,
+							             memetic_report.solution_final.selected_subsets.count());
+							data_memetic.emplace_back(memetic_report.serialize());
+						}
+					}
+					data_instance["memetic"] = std::move(data_memetic);
+					return true;
+				};
+				if(memetic_crossover == "merge")
+				{
+					uscp::memetic::memetic<uscp::crossover::merge> memetic_alg_(instance);
+					if(!process_memetic(memetic_alg_))
+					{
+						return EXIT_FAILURE;
+					}
+				}
+				else
+				{
+					LOGGER->error("No crossover operator named \"{}\" exist", memetic_crossover);
+					return EXIT_FAILURE;
+				}
 			}
 			data_instances.push_back(data_instance);
 		}
