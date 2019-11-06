@@ -63,8 +63,8 @@ uscp::greedy::report uscp::greedy::solve_report(const uscp::problem::instance& p
 				continue;
 			}
 
-			dynamic_bitset<> new_covered_points =
-			  report.solution_final.covered_points | problem.subsets_points[i];
+			dynamic_bitset<> new_covered_points = report.solution_final.covered_points;
+			new_covered_points |= problem.subsets_points[i];
 			const size_t new_covered_points_number = new_covered_points.count();
 			if(new_covered_points_number > covered_points_number_with_max_subset)
 			{
