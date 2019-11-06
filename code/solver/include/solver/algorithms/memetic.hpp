@@ -20,8 +20,6 @@
 
 namespace uscp::memetic
 {
-	constexpr size_t POPULATION_SIZE = 2;
-
 	struct position final
 	{
 		size_t generation = std::numeric_limits<size_t>::max();
@@ -57,6 +55,34 @@ namespace uscp::memetic
 		[[nodiscard]] report_serial serialize() const noexcept;
 		bool load(const report_serial& serial) noexcept;
 	};
+
+	template<typename Crossover>
+	class memetic final
+	{
+	public:
+		explicit memetic(const problem::instance& problem) noexcept;
+		memetic(const memetic&) = default;
+		memetic(memetic&&) noexcept = default;
+		memetic& operator=(const memetic& other) = delete;
+		memetic& operator=(memetic&& other) noexcept = delete;
+
+		[[gnu::hot]] void initialize() noexcept;
+		[[gnu::hot]] report solve(random_engine& generator,
+		                          config config) noexcept; //TODO: const ref
+
+	private:
+		template<size_t v>
+		struct dependent_false : public std::false_type
+		{
+		};
+
+		const uscp::problem::instance& m_problem;
+		Crossover m_crossover;
+		uscp::rwls::rwls m_rwls;
+		bool m_initialized;
+	};
 } // namespace uscp::memetic
+
+#include "solver/algorithms/memetic.tpp"
 
 #endif //USCP_MEMETIC_HPP
