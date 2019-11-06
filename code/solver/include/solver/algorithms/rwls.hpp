@@ -32,9 +32,13 @@ namespace uscp::rwls
 		size_t steps = std::numeric_limits<size_t>::max();
 		double time = std::numeric_limits<double>::max();
 
+		position& operator+=(const position& other) noexcept;
+
 		[[nodiscard]] position_serial serialize() const noexcept;
 		bool load(const position_serial& serial) noexcept;
 	};
+	position operator+(const position& lhs, const position& rhs) noexcept;
+	bool operator<(const position& lhs, const position& rhs) noexcept;
 
 	struct report final
 	{
