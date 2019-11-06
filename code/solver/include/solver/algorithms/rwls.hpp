@@ -12,6 +12,7 @@
 #include "common/data/solution.hpp"
 #include "common/utils/random.hpp"
 #include "common/algorithms/rwls.hpp"
+#include "common/utils/logger.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -59,7 +60,8 @@ namespace uscp::rwls
 	class rwls final
 	{
 	public:
-		explicit rwls(const problem::instance& problem) noexcept;
+		explicit rwls(const problem::instance& problem,
+		              std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
 		rwls(const rwls&) = default;
 		rwls(rwls&&) noexcept = default;
 		rwls& operator=(const rwls& other) = delete;
@@ -128,6 +130,7 @@ namespace uscp::rwls
 #endif
 		std::vector<dynamic_bitset<>> m_subsets_covering_points;
 		bool m_initialized;
+		const std::shared_ptr<spdlog::logger> m_logger;
 	};
 
 	[[nodiscard, gnu::hot]] solution improve(const uscp::solution& solution_initial,

@@ -20,7 +20,7 @@
 
 template<typename Crossover>
 uscp::memetic::memetic<Crossover>::memetic(const problem::instance& problem) noexcept
-  : m_problem(problem), m_crossover(problem), m_rwls(problem), m_initialized(false)
+  : m_problem(problem), m_crossover(problem), m_rwls(problem, NULL_LOGGER), m_initialized(false)
 {
 }
 

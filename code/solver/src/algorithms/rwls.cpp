@@ -7,7 +7,6 @@
 //
 #include "solver/algorithms/rwls.hpp"
 #include "solver/data/solution.hpp"
-#include "common/utils/logger.hpp"
 #include "common/utils/timer.hpp"
 
 #include <cassert>
@@ -101,8 +100,13 @@ bool uscp::rwls::report::load(const uscp::rwls::report_serial& serial) noexcept
 	return true;
 }
 
-uscp::rwls::rwls::rwls(const uscp::problem::instance& problem) noexcept
-  : m_problem(problem), m_subsets_neighbors(), m_subsets_covering_points(), m_initialized(false)
+uscp::rwls::rwls::rwls(const uscp::problem::instance& problem,
+                       std::shared_ptr<spdlog::logger> logger) noexcept
+  : m_problem(problem)
+  , m_subsets_neighbors()
+  , m_subsets_covering_points()
+  , m_initialized(false)
+  , m_logger(std::move(logger))
 {
 	m_subsets_neighbors.resize(m_problem.subsets_number);
 #ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
@@ -135,13 +139,13 @@ uscp::rwls::position uscp::rwls::rwls::improve(uscp::solution& solution,
 		initialize();
 	}
 
-	LOGGER->info("({}) Start optimising by RWLS solution with {} subsets",
-	             solution.problem.name,
-	             solution.selected_subsets.count());
+	m_logger->info("({}) Start optimising by RWLS solution with {} subsets",
+	               solution.problem.name,
+	               solution.selected_subsets.count());
 	timer timer;
 	resolution_data data(solution, generator);
 	init(data);
-	SPDLOG_LOGGER_DEBUG(LOGGER, "({}) RWLS inited in {}s", m_problem.name, timer.elapsed());
+	SPDLOG_LOGGER_DEBUG(m_logger, "({}) RWLS inited in {}s", m_problem.name, timer.elapsed());
 
 	timer.reset();
 	size_t step = 0;
@@ -156,14 +160,14 @@ uscp::rwls::position uscp::rwls::rwls::improve(uscp::solution& solution,
 			assert(data.current_solution.cover_all_points);
 			if(!data.current_solution.cover_all_points)
 			{
-				LOGGER->error("New best solution doesn't cover all points");
+				LOGGER->error("RWLS new best solution doesn't cover all points");
 				abort();
 			}
 
 			data.best_solution = data.current_solution;
 			found_at.steps = step;
 			found_at.time = timer.elapsed();
-			SPDLOG_LOGGER_DEBUG(LOGGER,
+			SPDLOG_LOGGER_DEBUG(m_logger,
 			                    "({}) RWLS new best solution with {} subsets at step {} in {}s",
 			                    m_problem.name,
 			                    data.best_solution.selected_subsets.count(),
@@ -211,18 +215,18 @@ uscp::rwls::position uscp::rwls::rwls::improve(uscp::solution& solution,
 		++step;
 	}
 
-	LOGGER->info("({}) Optimised RWLS solution to {} subsets in {} steps {}s",
-	             m_problem.name,
-	             data.best_solution.selected_subsets.count(),
-	             step,
-	             timer.elapsed());
+	m_logger->info("({}) Optimised RWLS solution to {} subsets in {} steps {}s",
+	               m_problem.name,
+	               data.best_solution.selected_subsets.count(),
+	               step,
+	               timer.elapsed());
 
 	return found_at;
 }
 
 void uscp::rwls::rwls::generate_subsets_neighbors() noexcept
 {
-	LOGGER->info("({}) start building subsets RWLS neighbors", m_problem.name);
+	m_logger->info("({}) start building subsets RWLS neighbors", m_problem.name);
 	timer timer;
 	dynamic_bitset<> tmp; // to minimize memory allocations
 #pragma omp parallel for default(none) \
@@ -250,7 +254,7 @@ void uscp::rwls::rwls::generate_subsets_neighbors() noexcept
 			}
 		}
 	}
-	LOGGER->info("({}) Built subsets neighbors in {}s", m_problem.name, timer.elapsed());
+	m_logger->info("({}) Built subsets neighbors in {}s", m_problem.name, timer.elapsed());
 }
 
 void uscp::rwls::rwls::generate_subsets_covering_points() noexcept
@@ -589,7 +593,7 @@ size_t uscp::rwls::rwls::select_subset_to_add(const uscp::rwls::rwls::resolution
 
 	if(is_tabu(data, add_subset))
 	{
-		LOGGER->warn("Selected subset is tabu");
+		m_logger->warn("Selected subset is tabu");
 	}
 	ensure(!data.current_solution.selected_subsets.test(add_subset));
 	return add_subset;
