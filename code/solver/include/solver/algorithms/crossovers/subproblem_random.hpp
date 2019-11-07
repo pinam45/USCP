@@ -48,15 +48,15 @@ namespace uscp::crossover
 		}
 
 		solution apply1(const solution& a, const solution& b, random_engine& generator) const
-		noexcept
+		  noexcept
 		{
-			return apply(a, b , generator);
+			return apply(a, b, generator);
 		}
 
 		solution apply2(const solution& a, const solution& b, random_engine& generator) const
-		noexcept
+		  noexcept
 		{
-			return apply(a, b , generator);
+			return apply(a, b, generator);
 		}
 
 		[[nodiscard]] static std::string_view to_string() noexcept
