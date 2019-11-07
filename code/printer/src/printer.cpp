@@ -416,13 +416,13 @@ bool printer::generate_results_table() noexcept
 			{
 				result.rwls.best = rwls.solution_final.selected_subsets.size();
 				result.rwls.best_number = 1;
-				result.rwls.time = rwls.time;
+				result.rwls.time = rwls.found_at.time;
 			}
 			else if(rwls.solution_final.selected_subsets.size() == result.rwls.best)
 			{
 				++result.rwls.best_number;
 				result.rwls.time +=
-				  (1.0 / result.rwls.best_number) * (rwls.time - result.rwls.time);
+				  (1.0 / result.rwls.best_number) * (rwls.found_at.time - result.rwls.time);
 			}
 		}
 
@@ -497,8 +497,9 @@ bool printer::generate_rwls_stats_table() noexcept
 			stat.final +=
 			  (1.0 / stat.repetitions)
 			  * (static_cast<double>(rwls.solution_final.selected_subsets.size()) - stat.final);
-			stat.steps += (1.0 / stat.repetitions) * (static_cast<double>(rwls.steps) - stat.steps);
-			stat.time += (1.0 / stat.repetitions) * (rwls.time - stat.time);
+			stat.steps +=
+			  (1.0 / stat.repetitions) * (static_cast<double>(rwls.found_at.steps) - stat.steps);
+			stat.time += (1.0 / stat.repetitions) * (rwls.found_at.time - stat.time);
 
 			const size_t same_count = count_common_elements_sorted(
 			  rwls.solution_initial.selected_subsets, rwls.solution_final.selected_subsets);

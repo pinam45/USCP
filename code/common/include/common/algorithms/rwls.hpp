@@ -28,8 +28,9 @@ namespace uscp::rwls
 	{
 		solution_serial solution_initial;
 		solution_serial solution_final;
-		size_t steps = 0;
-		double time = 0;
+		position_serial found_at;
+		position_serial ended_at;
+		position_serial stopping_criterion;
 	};
 	void to_json(nlohmann::json& j, const report_serial& serial);
 	void from_json(const nlohmann::json& j, report_serial& serial);

@@ -67,7 +67,7 @@ bool uscp::rwls::operator<(const uscp::rwls::position& lhs,
 }
 
 uscp::rwls::report::report(const problem::instance& problem) noexcept
-  : solution_initial(problem), solution_final(problem), found_at()
+  : solution_initial(problem), solution_final(problem), found_at(), ended_at(), stopping_criterion()
 {
 }
 
@@ -77,8 +77,9 @@ uscp::rwls::report_serial uscp::rwls::report::serialize() const noexcept
 	assert(solution_initial.problem.name == solution_final.problem.name);
 	serial.solution_initial = solution_initial.serialize();
 	serial.solution_final = solution_final.serialize();
-	serial.steps = found_at.steps;
-	serial.time = found_at.time;
+	serial.found_at = found_at.serialize();
+	serial.ended_at = ended_at.serialize();
+	serial.stopping_criterion = stopping_criterion.serialize();
 	return serial;
 }
 
@@ -94,8 +95,21 @@ bool uscp::rwls::report::load(const uscp::rwls::report_serial& serial) noexcept
 		LOGGER->warn("Failed to load final solution");
 		return false;
 	}
-	found_at.steps = serial.steps;
-	found_at.time = serial.time;
+	if(!found_at.load(serial.found_at))
+	{
+		LOGGER->warn("Failed to load found at position");
+		return false;
+	}
+	if(!ended_at.load(serial.ended_at))
+	{
+		LOGGER->warn("Failed to load ended at position");
+		return false;
+	}
+	if(!stopping_criterion.load(serial.stopping_criterion))
+	{
+		LOGGER->warn("Failed to load stopping criterion");
+		return false;
+	}
 
 	return true;
 }
@@ -130,9 +144,9 @@ void uscp::rwls::rwls::initialize() noexcept
 	m_initialized = true;
 }
 
-uscp::rwls::position uscp::rwls::rwls::improve(uscp::solution& solution,
-                                               uscp::random_engine& generator,
-                                               uscp::rwls::position stopping_criterion) noexcept
+uscp::rwls::report uscp::rwls::rwls::improve(const uscp::solution& solution,
+                                             uscp::random_engine& generator,
+                                             uscp::rwls::position stopping_criterion) noexcept
 {
 	if(!m_initialized)
 	{
@@ -142,16 +156,21 @@ uscp::rwls::position uscp::rwls::rwls::improve(uscp::solution& solution,
 	m_logger->info("({}) Start optimising by RWLS solution with {} subsets",
 	               solution.problem.name,
 	               solution.selected_subsets.count());
+
+	report report(m_problem);
+	report.solution_initial = solution;
+	report.solution_final = solution;
+	report.found_at = {0, 0};
+	report.ended_at = {0, 0};
+	report.stopping_criterion = stopping_criterion;
+
 	timer timer;
-	resolution_data data(solution, generator);
+	resolution_data data(report.solution_final, generator);
 	init(data);
 	SPDLOG_LOGGER_DEBUG(m_logger, "({}) RWLS inited in {}s", m_problem.name, timer.elapsed());
 
 	timer.reset();
 	size_t step = 0;
-	position found_at;
-	found_at.steps = 0;
-	found_at.time = 0;
 	while(step < stopping_criterion.steps && timer.elapsed() < stopping_criterion.time)
 	{
 		while(data.uncovered_points.none())
@@ -165,8 +184,8 @@ uscp::rwls::position uscp::rwls::rwls::improve(uscp::solution& solution,
 			}
 
 			data.best_solution = data.current_solution;
-			found_at.steps = step;
-			found_at.time = timer.elapsed();
+			report.found_at.steps = step;
+			report.found_at.time = timer.elapsed();
 			SPDLOG_LOGGER_DEBUG(m_logger,
 			                    "({}) RWLS new best solution with {} subsets at step {} in {}s",
 			                    m_problem.name,
@@ -214,6 +233,8 @@ uscp::rwls::position uscp::rwls::rwls::improve(uscp::solution& solution,
 
 		++step;
 	}
+	report.ended_at.steps = step;
+	report.ended_at.time = timer.elapsed();
 
 	m_logger->info("({}) Optimised RWLS solution to {} subsets in {} steps {}s",
 	               m_problem.name,
@@ -221,7 +242,7 @@ uscp::rwls::position uscp::rwls::rwls::improve(uscp::solution& solution,
 	               step,
 	               timer.elapsed());
 
-	return found_at;
+	return report;
 }
 
 void uscp::rwls::rwls::generate_subsets_neighbors() noexcept
@@ -624,9 +645,8 @@ uscp::solution uscp::rwls::improve(const uscp::solution& solution_initial,
 {
 	rwls rwls(solution_initial.problem);
 	rwls.initialize();
-	solution solution_final(solution_initial);
-	rwls.improve(solution_final, generator, stopping_criterion);
-	return solution_final;
+	report report = rwls.improve(solution_initial, generator, stopping_criterion);
+	return report.solution_final;
 }
 
 uscp::rwls::report uscp::rwls::improve_report(const uscp::solution& solution_initial,
@@ -635,10 +655,7 @@ uscp::rwls::report uscp::rwls::improve_report(const uscp::solution& solution_ini
 {
 	rwls rwls(solution_initial.problem);
 	rwls.initialize();
-	report report(solution_initial.problem);
-	report.solution_initial = solution_initial;
-	report.solution_final = solution_initial;
-	report.found_at = rwls.improve(report.solution_final, generator, stopping_criterion);
+	report report = rwls.improve(solution_initial, generator, stopping_criterion);
 	return report;
 }
 

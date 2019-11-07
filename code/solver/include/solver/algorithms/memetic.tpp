@@ -62,29 +62,33 @@ uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
 	rwls_cumulative_position.steps = 0;
 	rwls_cumulative_position.time = 0;
 	size_t best_solution_subsets_number = std::numeric_limits<size_t>::max();
+	std::array<uscp::rwls::report, 2> rwls_reports{uscp::rwls::report(m_problem),
+	                                               uscp::rwls::report(m_problem)};
 	while(generation < config.stopping_criterion.generation
 	      && rwls_cumulative_position < config.stopping_criterion.rwls_cumulative_position
 	      && timer.elapsed() < config.stopping_criterion.time)
 	{
-		for(solution& solution: population)
+		for(size_t i = 0; i < population.size(); ++i)
 		{
-			rwls_cumulative_position +=
-			  m_rwls.improve(solution, generator, config.rwls_stopping_criterion);
+			rwls_reports[i] =
+			  m_rwls.improve(population[i], generator, config.rwls_stopping_criterion);
 
-			const size_t solution_subsets_number = solution.selected_subsets.count();
+			const size_t solution_subsets_number =
+			  rwls_reports[i].solution_final.selected_subsets.count();
 			if(solution_subsets_number < best_solution_subsets_number)
 			{
-				solution.compute_cover();
-				assert(solution.cover_all_points);
-				if(!solution.cover_all_points)
+				rwls_reports[i].solution_final.compute_cover();
+				assert(rwls_reports[i].solution_final.cover_all_points);
+				if(!rwls_reports[i].solution_final.cover_all_points)
 				{
 					LOGGER->error("Memetic new best solution doesn't cover all points");
 					abort();
 				}
 
-				report.solution_final = solution;
+				report.solution_final = rwls_reports[i].solution_final;
 				report.found_at.generation = generation;
-				report.found_at.rwls_cumulative_position = rwls_cumulative_position;
+				report.found_at.rwls_cumulative_position =
+				  rwls_cumulative_position + rwls_reports[i].found_at;
 				report.found_at.time = timer.elapsed();
 				best_solution_subsets_number = solution_subsets_number;
 				LOGGER->info(
@@ -95,15 +99,20 @@ uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
 				  timer.elapsed());
 			}
 		}
+		for(size_t i = 0; i < rwls_reports.size(); ++i)
+		{
+			rwls_cumulative_position += rwls_reports[i].ended_at;
+		}
 
 		LOGGER->info("({}) Memetic generation {}: parent ({}, {})",
 		             m_problem.name,
 		             generation,
-		             population[0].selected_subsets.count(),
-		             population[1].selected_subsets.count());
-		const solution solution(population[0]);
-		population[0] = m_crossover.apply1(population[0], population[1], generator);
-		population[1] = m_crossover.apply2(solution, population[1], generator);
+		             rwls_reports[0].solution_final.selected_subsets.count(),
+		             rwls_reports[1].solution_final.selected_subsets.count());
+		population[0] = m_crossover.apply1(
+		  rwls_reports[0].solution_final, rwls_reports[1].solution_final, generator);
+		population[1] = m_crossover.apply2(
+		  rwls_reports[0].solution_final, rwls_reports[1].solution_final, generator);
 		LOGGER->info("({}) Memetic generation {}: children ({}, {})",
 		             m_problem.name,
 		             generation,

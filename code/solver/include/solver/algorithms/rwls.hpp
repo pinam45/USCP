@@ -46,6 +46,8 @@ namespace uscp::rwls
 		solution solution_initial;
 		solution solution_final;
 		position found_at;
+		position ended_at;
+		position stopping_criterion;
 
 		explicit report(const problem::instance& problem) noexcept;
 		report(const report&) = default;
@@ -68,9 +70,9 @@ namespace uscp::rwls
 		rwls& operator=(rwls&& other) noexcept = delete;
 
 		[[gnu::hot]] void initialize() noexcept;
-		[[gnu::hot]] position improve(uscp::solution& solution,
-		                              random_engine& generator,
-		                              position stopping_criterion) noexcept;
+		[[nodiscard, gnu::hot]] report improve(const uscp::solution& solution,
+		                                       random_engine& generator,
+		                                       position stopping_criterion) noexcept;
 
 	private:
 		[[gnu::hot]] void generate_subsets_neighbors() noexcept;
