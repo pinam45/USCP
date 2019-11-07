@@ -10,6 +10,7 @@
 #include "solver/algorithms/rwls.hpp"
 #include "solver/algorithms/memetic.hpp"
 #include "solver/algorithms/crossovers/merge.hpp"
+#include "solver/algorithms/crossovers/subproblem_random.hpp"
 #include "solver/data/instances.hpp"
 #include "common/utils/logger.hpp"
 #include "common/utils/random.hpp"
@@ -398,9 +399,18 @@ int main(int argc, char* argv[])
 					data_instance["memetic"] = std::move(data_memetic);
 					return true;
 				};
-				if(memetic_crossover == "merge")
+				if(memetic_crossover == uscp::crossover::merge::to_string())
 				{
 					uscp::memetic::memetic<uscp::crossover::merge> memetic_alg_(instance);
+					if(!process_memetic(memetic_alg_))
+					{
+						return EXIT_FAILURE;
+					}
+				}
+				else if(memetic_crossover == uscp::crossover::subproblem_random::to_string())
+				{
+					uscp::memetic::memetic<uscp::crossover::subproblem_random> memetic_alg_(
+					  instance);
 					if(!process_memetic(memetic_alg_))
 					{
 						return EXIT_FAILURE;
