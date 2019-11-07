@@ -218,34 +218,6 @@ int main(int argc, char* argv[])
 			uscp::problem::check_instances();
 		}
 
-		/*for(const uscp::problem::instance_info& instance_info: uscp::problem::instances)
-		{
-			if(instance_info.name.substr(0, 3) != "STS")
-			{
-				continue;
-			}
-			uscp::problem::instance instance;
-			if(!uscp::problem::read(instance_info, instance))
-			{
-				LOGGER->error("Failed to read problem {}", instance_info);
-				continue;
-			}
-			uscp::problem::instance instance_reduced = uscp::problem::reduce(instance);
-			if(!uscp::problem::has_solution(instance_reduced))
-			{
-				LOGGER->error("Invalid reduced instance");
-			}
-			LOGGER->error("{}: ({}, {}) -> ({}, {}) {}",
-			              instance.name,
-			              instance.points_number,
-			              instance.subsets_number,
-			              instance_reduced.points_number,
-			              instance_reduced.subsets_number,
-			              instance_reduced.points_number != instance.points_number
-			                || instance_reduced.subsets_number != instance.subsets_number);
-		}
-		return EXIT_SUCCESS;*/
-
 		uscp::random_engine generator(std::random_device{}());
 		nlohmann::json data;
 		data["git"]["retrieved_state"] = git_info::retrieved_state;
