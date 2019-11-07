@@ -5,8 +5,8 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#ifndef USCP_RANDOM_SUBPROBLEM_HPP
-#define USCP_RANDOM_SUBPROBLEM_HPP
+#ifndef USCP_SUBPROBLEM_RANDOM_HPP
+#define USCP_SUBPROBLEM_RANDOM_HPP
 
 #include "common/data/instance.hpp"
 #include "common/data/solution.hpp"
@@ -18,13 +18,13 @@
 
 namespace uscp::crossover
 {
-	struct random_subproblem final
+	struct subproblem_random final
 	{
-		explicit random_subproblem(const uscp::problem::instance& problem_): problem(problem_)
+		explicit subproblem_random(const uscp::problem::instance& problem_): problem(problem_)
 		{
 		}
 
-		solution operator()(const solution& a, const solution& b, random_engine& generator) const
+		solution apply(const solution& a, const solution& b, random_engine& generator) const
 		  noexcept
 		{
 			solution solution(problem);
@@ -47,13 +47,25 @@ namespace uscp::crossover
 			return solution;
 		}
 
+		solution apply1(const solution& a, const solution& b, random_engine& generator) const
+		noexcept
+		{
+			return apply(a, b , generator);
+		}
+
+		solution apply2(const solution& a, const solution& b, random_engine& generator) const
+		noexcept
+		{
+			return apply(a, b , generator);
+		}
+
 		[[nodiscard]] static std::string_view to_string() noexcept
 		{
-			return "random_subproblem";
+			return "subproblem_random";
 		}
 
 		const uscp::problem::instance& problem;
 	};
 } // namespace uscp::crossover
 
-#endif //USCP_RANDOM_SUBPROBLEM_HPP
+#endif //USCP_SUBPROBLEM_RANDOM_HPP

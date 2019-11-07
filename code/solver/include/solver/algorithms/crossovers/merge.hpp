@@ -24,7 +24,7 @@ namespace uscp::crossover
 		{
 		}
 
-		solution operator()(const solution& a,
+		solution apply(const solution& a,
 		                    const solution& b,
 		                    [[maybe_unused]] random_engine& generator) const noexcept
 		{
@@ -34,6 +34,18 @@ namespace uscp::crossover
 			solution.covered_points.set();
 			solution.cover_all_points = true;
 			return solution;
+		}
+
+		solution apply1(const solution& a, const solution& b, random_engine& generator) const
+		noexcept
+		{
+			return apply(a, b , generator);
+		}
+
+		solution apply2(const solution& a, const solution& b, random_engine& generator) const
+		noexcept
+		{
+			return apply(a, b , generator);
 		}
 
 		[[nodiscard]] static std::string_view to_string() noexcept
