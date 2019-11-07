@@ -11,6 +11,7 @@
 #include "solver/algorithms/memetic.hpp"
 #include "solver/algorithms/crossovers/merge.hpp"
 #include "solver/algorithms/crossovers/subproblem_random.hpp"
+#include "solver/algorithms/crossovers/subproblem_greedy.hpp"
 #include "solver/data/instances.hpp"
 #include "common/utils/logger.hpp"
 #include "common/utils/random.hpp"
@@ -410,6 +411,15 @@ int main(int argc, char* argv[])
 				else if(memetic_crossover == uscp::crossover::subproblem_random::to_string())
 				{
 					uscp::memetic::memetic<uscp::crossover::subproblem_random> memetic_alg_(
+					  instance);
+					if(!process_memetic(memetic_alg_))
+					{
+						return EXIT_FAILURE;
+					}
+				}
+				else if(memetic_crossover == uscp::crossover::subproblem_greedy::to_string())
+				{
+					uscp::memetic::memetic<uscp::crossover::subproblem_greedy> memetic_alg_(
 					  instance);
 					if(!process_memetic(memetic_alg_))
 					{
