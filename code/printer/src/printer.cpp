@@ -39,6 +39,19 @@ namespace
 	};
 	void to_json(nlohmann::json& j, const rwls_result& serial);
 
+	struct memetic_result final
+	{
+		bool exist = false;
+		size_t best = 0;
+		double average = 0;
+		size_t best_number = 0;
+		size_t total_number = 0;
+		double generations = 0;
+		double steps = 0;
+		double time = 0;
+	};
+	void to_json(nlohmann::json& j, const memetic_result& serial);
+
 	struct instance_info final
 	{
 		std::string name;
@@ -51,6 +64,7 @@ namespace
 		instance_info instance;
 		greedy_result greedy;
 		rwls_result rwls;
+		memetic_result memetic;
 	};
 	void to_json(nlohmann::json& j, const instance_result& serial);
 
@@ -90,6 +104,20 @@ namespace
 		};
 	}
 
+	void to_json(nlohmann::json& j, const memetic_result& serial)
+	{
+		j = nlohmann::json{
+		  {"exist", serial.exist},
+		  {"best", serial.best},
+		  {"average", serial.average},
+		  {"best_number", serial.best_number},
+		  {"total_number", serial.total_number},
+		  {"generations", serial.generations},
+		  {"steps", serial.steps},
+		  {"time", serial.time},
+		};
+	}
+
 	void to_json(nlohmann::json& j, const instance_info& serial)
 	{
 		j = nlohmann::json{
@@ -104,6 +132,7 @@ namespace
 		  {"instance", serial.instance},
 		  {"greedy", serial.greedy},
 		  {"rwls", serial.rwls},
+		  {"memetic", serial.memetic},
 		};
 	}
 
@@ -160,6 +189,24 @@ namespace
 		}
 	};
 	const rwls_report_less_t rwls_report_less;
+
+	struct memetic_report_less_t
+	{
+		bool operator()(const uscp::memetic::report_serial& a,
+		                const uscp::memetic::report_serial& b) const
+		{
+			return a.solution_final.problem.name < b.solution_final.problem.name;
+		}
+		bool operator()(const std::string_view& a, const uscp::memetic::report_serial& b) const
+		{
+			return a < b.solution_final.problem.name;
+		}
+		bool operator()(const uscp::memetic::report_serial& a, const std::string_view& b) const
+		{
+			return a.solution_final.problem.name < b;
+		}
+	};
+	const memetic_report_less_t memetic_report_less;
 } // namespace
 
 namespace
@@ -385,6 +432,7 @@ bool printer::generate_results_table() noexcept
 	// generate data
 	std::sort(std::begin(m_greedy_reports), std::end(m_greedy_reports), greedy_report_less);
 	std::sort(std::begin(m_rwls_reports), std::end(m_rwls_reports), rwls_report_less);
+	std::sort(std::begin(m_memetic_reports), std::end(m_memetic_reports), memetic_report_less);
 
 	std::vector<instance_result> results;
 	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
@@ -434,9 +482,50 @@ bool printer::generate_results_table() noexcept
 			{
 				++result.rwls.best_number;
 				result.rwls.steps +=
-				  (1.0 / result.rwls.best_number) * (static_cast<double>(rwls.found_at.steps) - result.rwls.steps);
+				  (1.0 / result.rwls.best_number)
+				  * (static_cast<double>(rwls.found_at.steps) - result.rwls.steps);
 				result.rwls.time +=
 				  (1.0 / result.rwls.best_number) * (rwls.found_at.time - result.rwls.time);
+			}
+		}
+
+		const auto [memetic_begin, memetic_end] = std::equal_range(std::cbegin(m_memetic_reports),
+		                                                           std::cend(m_memetic_reports),
+		                                                           instance.name,
+		                                                           memetic_report_less);
+		for(auto it = memetic_begin; it < memetic_end; ++it)
+		{
+			const uscp::memetic::report_serial& memetic = *it;
+
+			result.memetic.exist = true;
+			++result.memetic.total_number;
+			result.memetic.average +=
+			  (1.0 / result.memetic.total_number)
+			  * (static_cast<double>(memetic.solution_final.selected_subsets.size())
+			     - result.memetic.average);
+
+			if(result.memetic.best == 0
+			   || memetic.solution_final.selected_subsets.size() < result.memetic.best)
+			{
+				result.memetic.best = memetic.solution_final.selected_subsets.size();
+				result.memetic.best_number = 1;
+				result.memetic.generations = static_cast<double>(memetic.found_at.generation);
+				result.memetic.steps =
+				  static_cast<double>(memetic.found_at.rwls_cumulative_position.steps);
+				result.memetic.time = memetic.found_at.time;
+			}
+			else if(memetic.solution_final.selected_subsets.size() == result.memetic.best)
+			{
+				++result.memetic.best_number;
+				result.memetic.generations +=
+				  (1.0 / result.memetic.best_number)
+				  * (static_cast<double>(memetic.found_at.generation) - result.memetic.generations);
+				result.memetic.steps +=
+				  (1.0 / result.memetic.best_number)
+				  * (static_cast<double>(memetic.found_at.rwls_cumulative_position.steps)
+				     - result.memetic.steps);
+				result.memetic.time += (1.0 / result.memetic.best_number)
+				                       * (memetic.found_at.time - result.memetic.time);
 			}
 		}
 
