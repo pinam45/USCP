@@ -12,7 +12,7 @@
 uscp::solution uscp::random::solve(random_engine& generator,
                                    const problem::instance& problem) noexcept
 {
-	SPDLOG_LOGGER_DEBUG(LOGGER, "({}) Start building greedy solution", problem.name);
+	SPDLOG_LOGGER_DEBUG(LOGGER, "({}) Start building random solution", problem.name);
 	const timer timer;
 	solution solution(problem);
 
