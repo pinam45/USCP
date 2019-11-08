@@ -670,5 +670,7 @@ uscp::rwls::report uscp::rwls::expand(const uscp::rwls::report& reduced_report) 
 	expanded_report.solution_initial = expand(reduced_report.solution_initial);
 	expanded_report.solution_final = expand(reduced_report.solution_final);
 	expanded_report.found_at = reduced_report.found_at;
+	expanded_report.ended_at = reduced_report.ended_at;
+	expanded_report.stopping_criterion = reduced_report.stopping_criterion;
 	return expanded_report;
 }
