@@ -329,10 +329,12 @@ int main(int argc, char* argv[])
 					}
 				}
 				std::vector<nlohmann::json> data_rwls;
+				uscp::rwls::rwls rwls_manager(instance);
+				rwls_manager.initialize();
 				for(size_t repetition = 0; repetition < repetitions; ++repetition)
 				{
-					uscp::rwls::report rwls_report = uscp::rwls::improve_report(
-					  greedy_report.solution_final, generator, rwls_stop);
+					uscp::rwls::report rwls_report =
+					  rwls_manager.improve(greedy_report.solution_final, generator, rwls_stop);
 					if(reduced)
 					{
 						uscp::rwls::report expanded_rwls_report = uscp::rwls::expand(rwls_report);
