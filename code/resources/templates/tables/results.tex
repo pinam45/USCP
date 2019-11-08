@@ -1,19 +1,19 @@
 %!TEX root = ../main.tex
 %\rowcolors{1}{gray!10}{white}
-\begin{longtable}{@{\extracolsep{5pt}}cc{c}cc{c}cccc}
+\begin{longtable}{@{\extracolsep{5pt}}cc{c}cc{c}ccccc}
 	%\hiderowcolors
 	\caption{Results}\\
 	\toprule
-	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{4}{l}{RWLS}\\
-	\cmidrule{4-5}\cmidrule{7-10}
-	 & && Value & Time (s) && Best & Average & \#Best & Time (s)\\
+	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{5}{l}{RWLS}\\
+	\cmidrule{4-5}\cmidrule{7-11}
+	 & && Value & Time (s) && Best & Average & \#Best & Steps & Time (s)\\
 	\midrule
 	\endfirsthead
 	\caption[]{Results (continued)}\\
 	\toprule
-	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{4}{l}{RWLS}\\
-	\cmidrule{4-5}\cmidrule{7-10}
-	 & && Value & Time (s) && Best & Average & \#Best & Time (s)\\
+	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{5}{l}{RWLS}\\
+	\cmidrule{4-5}\cmidrule{7-11}
+	 & && Value & Time (s) && Best & Average & \#Best & Steps & Time (s)\\
 	\midrule
 	\endhead
 	\bottomrule
@@ -42,9 +42,9 @@
 				<<result/rwls/best>>
 			<*endif*>
 		<*endif*>
-		&  <<round(result/rwls/average,1)>> &  <<result/rwls/best_number>>/<<result/rwls/total_number>> &  <<round(result/rwls/time,2)>>
+		&  <<round(result/rwls/average,1)>> &  <<result/rwls/best_number>>/<<result/rwls/total_number>> &  <<round(result/rwls/steps)>> &  <<round(result/rwls/time,2)>>
 	<*else*>
-		--- & --- & --- & ---
+		--- & --- & --- & --- & ---
 	<*endif*>
 	\\
 <*endfor*>

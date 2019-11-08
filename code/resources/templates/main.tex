@@ -26,6 +26,7 @@
 \usepackage{float}
 \usepackage{datetime2}
 \usepackage{chngcntr}
+\usepackage{pdflscape}
 % Mathematics
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -117,8 +118,10 @@
 		\input{./tables/orlibrary_instances_cyc_clr}
 		\input{./tables/orlibrary_instances_rail}
 		\input{./tables/sts_instances}
-	\newpage\section{Results}
-		\input{./tables/results}
+	\begin{landscape}
+		\newpage\section{Results}
+			\input{./tables/results}
+	\end{landscape}
 <*if rwls_stats*>
 	\newpage\section{Stats}
 		\input{./tables/rwls_stats}

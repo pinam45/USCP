@@ -34,6 +34,7 @@ namespace
 		double average = 0;
 		size_t best_number = 0;
 		size_t total_number = 0;
+		double steps = 0;
 		double time = 0;
 	};
 	void to_json(nlohmann::json& j, const rwls_result& serial);
@@ -84,6 +85,7 @@ namespace
 		  {"average", serial.average},
 		  {"best_number", serial.best_number},
 		  {"total_number", serial.total_number},
+		  {"steps", serial.steps},
 		  {"time", serial.time},
 		};
 	}
@@ -425,11 +427,14 @@ bool printer::generate_results_table() noexcept
 			{
 				result.rwls.best = rwls.solution_final.selected_subsets.size();
 				result.rwls.best_number = 1;
+				result.rwls.steps = static_cast<double>(rwls.found_at.steps);
 				result.rwls.time = rwls.found_at.time;
 			}
 			else if(rwls.solution_final.selected_subsets.size() == result.rwls.best)
 			{
 				++result.rwls.best_number;
+				result.rwls.steps +=
+				  (1.0 / result.rwls.best_number) * (static_cast<double>(rwls.found_at.steps) - result.rwls.steps);
 				result.rwls.time +=
 				  (1.0 / result.rwls.best_number) * (rwls.found_at.time - result.rwls.time);
 			}
