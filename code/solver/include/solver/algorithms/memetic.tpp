@@ -68,6 +68,8 @@ uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
 	      && rwls_cumulative_position < config.stopping_criterion.rwls_cumulative_position
 	      && timer.elapsed() < config.stopping_criterion.time)
 	{
+		SPDLOG_LOGGER_DEBUG(
+		  LOGGER, "({}) Memetic generation {}: start", m_problem.name, generation);
 		for(size_t i = 0; i < population.size(); ++i)
 		{
 			rwls_reports[i] =
@@ -104,20 +106,26 @@ uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
 			rwls_cumulative_position += rwls_reports[i].ended_at;
 		}
 
-		LOGGER->info("({}) Memetic generation {}: parent ({}, {})",
+		LOGGER->info("({}) Memetic generation {}: parent ({}, {}){}",
 		             m_problem.name,
 		             generation,
 		             rwls_reports[0].solution_final.selected_subsets.count(),
-		             rwls_reports[1].solution_final.selected_subsets.count());
+		             rwls_reports[1].solution_final.selected_subsets.count(),
+		             rwls_reports[0].solution_final.selected_subsets
+		                 == rwls_reports[1].solution_final.selected_subsets
+		               ? " [same]"
+		               : "");
 		population[0] = m_crossover.apply1(
 		  rwls_reports[0].solution_final, rwls_reports[1].solution_final, generator);
 		population[1] = m_crossover.apply2(
 		  rwls_reports[0].solution_final, rwls_reports[1].solution_final, generator);
-		LOGGER->info("({}) Memetic generation {}: children ({}, {})",
+		LOGGER->info("({}) Memetic generation {}: children ({}, {}){}",
 		             m_problem.name,
 		             generation,
 		             population[0].selected_subsets.count(),
-		             population[1].selected_subsets.count());
+		             population[1].selected_subsets.count(),
+		             population[0].selected_subsets == population[1].selected_subsets ? " [same]"
+		                                                                              : "");
 
 		++generation;
 	}
