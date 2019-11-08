@@ -194,6 +194,10 @@ printer::printer(std::string_view output_prefix) noexcept
       std::string(config::partial::RESOURCES_FOLDER).append(config::partial::TEMPLATE_SUBFOLDER))
   , tables_template_folder(template_folder
                            + std::string(config::partial::TABLES_TEMPLATE_SUBFOLDER))
+  , m_environment()
+  , m_greedy_reports()
+  , m_rwls_reports()
+  , m_memetic_reports()
   , m_generate_rwls_stats(false)
 {
 	m_environment.set_statement(std::string(config::inja::STATEMENT_OPEN),
@@ -241,6 +245,11 @@ void printer::add(const uscp::greedy::report_serial& report) noexcept
 void printer::add(const uscp::rwls::report_serial& report) noexcept
 {
 	m_rwls_reports.push_back(report);
+}
+
+void printer::add(const uscp::memetic::report_serial& report) noexcept
+{
+	m_memetic_reports.push_back(report);
 }
 
 void printer::generate_rwls_stats(bool enable) noexcept

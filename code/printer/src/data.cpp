@@ -162,6 +162,27 @@ bool uscp::data::load(const nlohmann::json& data, printer& printer) noexcept
 					printer.add(rwls);
 				}
 			}
+
+			it = instance_data.find("memetic");
+			if(it != instance_data.end())
+			{
+				const nlohmann::json& memetic_reports_data = *it;
+				if(!memetic_reports_data.is_array())
+				{
+					LOGGER->warn("data have invalid memetic information for instance {}",
+					             instance.name);
+					continue;
+				}
+				for(const nlohmann::json& rwls_report_data: memetic_reports_data)
+				{
+					const uscp::memetic::report_serial memetic =
+					  rwls_report_data.get<uscp::memetic::report_serial>();
+					SPDLOG_LOGGER_DEBUG(LOGGER,
+					                    "Loaded memetic solution with {} subsets",
+					                    memetic.solution_final.selected_subsets.size());
+					printer.add(memetic);
+				}
+			}
 		}
 	}
 	catch(const std::exception& e)

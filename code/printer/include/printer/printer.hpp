@@ -11,6 +11,7 @@
 #include "common/data/solution.hpp"
 #include "common/algorithms/greedy.hpp"
 #include "common/algorithms/rwls.hpp"
+#include "common/algorithms/memetic.hpp"
 
 #include <inja/inja.hpp>
 
@@ -74,6 +75,8 @@ public:
 
 	void add(const uscp::rwls::report_serial& report) noexcept;
 
+	void add(const uscp::memetic::report_serial& report) noexcept;
+
 	void generate_rwls_stats(bool enable) noexcept;
 
 	bool generate_document() noexcept;
@@ -87,6 +90,7 @@ private:
 	inja::Environment m_environment;
 	std::vector<uscp::greedy::report_serial> m_greedy_reports;
 	std::vector<uscp::rwls::report_serial> m_rwls_reports;
+	std::vector<uscp::memetic::report_serial> m_memetic_reports;
 	bool m_generate_rwls_stats;
 
 	bool create_output_folders() noexcept;
