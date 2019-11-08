@@ -461,8 +461,6 @@ int main(int argc, char* argv[])
 		{
 			SPDLOG_LOGGER_DEBUG(
 			  LOGGER, "std::filesystem::create_directories failed: {}", error.message());
-			LOGGER->error("Failed to create directory {}", file_data.parent_path());
-			return EXIT_FAILURE;
 		}
 		std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
 		if(!data_stream)
