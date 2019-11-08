@@ -42,6 +42,7 @@ void uscp::memetic::to_json(nlohmann::json& j, const uscp::memetic::report_seria
 	j = nlohmann::json{
 	  {"solution_final", serial.solution_final},
 	  {"found_at", serial.found_at},
+	  {"ended_at", serial.ended_at},
 	  {"solve_config", serial.solve_config},
 	  {"crossover_operator", serial.crossover_operator},
 	};
@@ -51,6 +52,7 @@ void uscp::memetic::from_json(const nlohmann::json& j, uscp::memetic::report_ser
 {
 	j.at("solution_final").get_to(serial.solution_final);
 	j.at("found_at").get_to(serial.found_at);
+	j.at("ended_at").get_to(serial.ended_at);
 	j.at("solve_config").get_to(serial.solve_config);
 	j.at("crossover_operator").get_to(serial.crossover_operator);
 }
