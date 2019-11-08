@@ -1,24 +1,24 @@
 %!TEX root = ../main.tex
-%\rowcolors{1}{gray!10}{white}
-\begin{longtable}{@{\extracolsep{5pt}}cc{c}cc{c}ccccc}
-	%\hiderowcolors
+\rowcolors{1}{gray!10}{white}
+\begin{longtable}{@{\extracolsep{0pt}}cc{c}cc{c}ccccc{c}cccccc}
+	\hiderowcolors
 	\caption{Results}\\
 	\toprule
-	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{5}{l}{RWLS}\\
-	\cmidrule{4-5}\cmidrule{7-11}
-	 & && Value & Time (s) && Best & Average & \#Best & Steps & Time (s)\\
+	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{5}{l}{RWLS} && \multicolumn{5}{l}{Memetic(RWLS)}\\
+	\cmidrule{4-5}\cmidrule{7-11}\cmidrule{13-18}
+	 & && Value & Time(s) && Best & Av. & \#Best & Steps & Time(s) && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
 	\midrule
 	\endfirsthead
 	\caption[]{Results (continued)}\\
 	\toprule
-	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{5}{l}{RWLS}\\
-	\cmidrule{4-5}\cmidrule{7-11}
-	 & && Value & Time (s) && Best & Average & \#Best & Steps & Time (s)\\
+	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{5}{l}{RWLS} && \multicolumn{5}{l}{Memetic(RWLS)}\\
+	\cmidrule{4-5}\cmidrule{7-11}\cmidrule{13-18}
+	 & && Value & Time(s) && Best & Av. & \#Best & Steps & Time(s) && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
 	\midrule
 	\endhead
 	\bottomrule
 	\endfoot
-	%\showrowcolors
+	\showrowcolors
 <*for result in results*>
 	<<result/instance/name>> & <<result/instance/bks>> &&
 	<*if result/greedy/exist*>
@@ -31,7 +31,7 @@
 	<*else*>
 		--- & ---
 	<*endif*>
-	 && 
+	 &&
 	<*if result/rwls/exist*>
 		<*if result/rwls/best < result/instance/bks*>
 			\textbf{<<result/rwls/best>>*}
@@ -45,6 +45,21 @@
 		&  <<round(result/rwls/average,1)>> &  <<result/rwls/best_number>>/<<result/rwls/total_number>> &  <<round(result/rwls/steps)>> &  <<round(result/rwls/time,2)>>
 	<*else*>
 		--- & --- & --- & --- & ---
+	<*endif*>
+	 &&
+	<*if result/memetic/exist*>
+		<*if result/memetic/best < result/instance/bks*>
+			\textbf{<<result/memetic/best>>*}
+		<*else*>
+			<*if result/memetic/best <= result/instance/bks*>
+				\textbf{<<result/memetic/best>>}
+			<*else*>
+				<<result/memetic/best>>
+			<*endif*>
+		<*endif*>
+		&  <<round(result/memetic/average,1)>> &  <<result/memetic/best_number>>/<<result/memetic/total_number>> &  <<round(result/memetic/generations,1)>> &  <<round(result/memetic/steps)>> &  <<round(result/memetic/time,2)>>
+	<*else*>
+		--- & --- & --- & --- & --- & ---
 	<*endif*>
 	\\
 <*endfor*>
