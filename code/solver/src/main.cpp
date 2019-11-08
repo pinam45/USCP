@@ -454,7 +454,16 @@ int main(int argc, char* argv[])
 		file_data_stream << "_";
 		file_data_stream << generator();
 		file_data_stream << ".json";
-		const std::string file_data = file_data_stream.str();
+		const std::filesystem::path file_data = file_data_stream.str();
+		std::error_code error;
+		std::filesystem::create_directories(file_data.parent_path(), error);
+		if(error)
+		{
+			SPDLOG_LOGGER_DEBUG(
+			  LOGGER, "std::filesystem::create_directories failed: {}", error.message());
+			LOGGER->error("Failed to create directory {}", file_data.parent_path());
+			return EXIT_FAILURE;
+		}
 		std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
 		if(!data_stream)
 		{
