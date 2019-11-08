@@ -43,6 +43,7 @@ namespace uscp::memetic
 	{
 		solution solution_final;
 		position found_at;
+		position ended_at;
 		config solve_config;
 		std::string crossover_operator;
 

@@ -130,6 +130,10 @@ uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
 		++generation;
 	}
 
+	report.ended_at.generation = generation;
+	report.ended_at.rwls_cumulative_position = rwls_cumulative_position;
+	report.ended_at.time = timer.elapsed();
+
 	LOGGER->info("({}) Memetic found solution with {} subsets in {}s",
 	             m_problem.name,
 	             report.solution_final.selected_subsets.count(),

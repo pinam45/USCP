@@ -63,6 +63,7 @@ uscp::memetic::report_serial uscp::memetic::report::serialize() const noexcept
 	report_serial serial;
 	serial.solution_final = solution_final.serialize();
 	serial.found_at = found_at.serialize();
+	serial.ended_at = ended_at.serialize();
 	serial.solve_config = solve_config.serialize();
 	serial.crossover_operator = crossover_operator;
 	return serial;
@@ -77,7 +78,12 @@ bool uscp::memetic::report::load(const uscp::memetic::report_serial& serial) noe
 	}
 	if(!found_at.load(serial.found_at))
 	{
-		LOGGER->warn("Failed to load solution found position");
+		LOGGER->warn("Failed to load solution found at position");
+		return false;
+	}
+	if(!ended_at.load(serial.ended_at))
+	{
+		LOGGER->warn("Failed to load solution ended at position");
 		return false;
 	}
 	if(!solve_config.load(serial.solve_config))
@@ -99,6 +105,7 @@ uscp::memetic::report uscp::memetic::expand(const uscp::memetic::report& reduced
 	report expanded_report(*reduced_report.solution_final.problem.reduction->parent_instance);
 	expanded_report.solution_final = expand(reduced_report.solution_final);
 	expanded_report.found_at = reduced_report.found_at;
+	expanded_report.ended_at = reduced_report.ended_at;
 	expanded_report.solve_config = reduced_report.solve_config;
 	expanded_report.crossover_operator = reduced_report.crossover_operator;
 	return expanded_report;
