@@ -135,11 +135,25 @@ bool uscp::data::load(const nlohmann::json& data, printer& printer) noexcept
 			it = instance_data.find("greedy");
 			if(it != instance_data.end())
 			{
-				const uscp::greedy::report_serial greedy = it->get<uscp::greedy::report_serial>();
-				SPDLOG_LOGGER_DEBUG(LOGGER,
-				                    "Loaded greedy solution with {} subsets",
-				                    greedy.solution_final.selected_subsets.size());
-				printer.add(greedy);
+				try
+				{
+					const uscp::greedy::report_serial greedy =
+					  it->get<uscp::greedy::report_serial>();
+					SPDLOG_LOGGER_DEBUG(LOGGER,
+					                    "Loaded greedy solution with {} subsets",
+					                    greedy.solution_final.selected_subsets.size());
+					printer.add(greedy);
+				}
+				catch(const std::exception& e)
+				{
+					LOGGER->error("error loading greedy data: {}", e.what());
+					return false;
+				}
+				catch(...)
+				{
+					LOGGER->error("unknown error loading greedy data");
+					return false;
+				}
 			}
 
 			it = instance_data.find("rwls");
@@ -154,12 +168,26 @@ bool uscp::data::load(const nlohmann::json& data, printer& printer) noexcept
 				}
 				for(const nlohmann::json& rwls_report_data: rwls_reports_data)
 				{
-					const uscp::rwls::report_serial rwls =
-					  rwls_report_data.get<uscp::rwls::report_serial>();
-					SPDLOG_LOGGER_DEBUG(LOGGER,
-					                    "Loaded rwls solution with {} subsets",
-					                    rwls.solution_final.selected_subsets.size());
-					printer.add(rwls);
+					try
+					{
+						const uscp::rwls::report_serial rwls =
+						  rwls_report_data.get<uscp::rwls::report_serial>();
+						SPDLOG_LOGGER_DEBUG(LOGGER,
+						                    "Loaded rwls solution with {} subsets",
+						                    rwls.solution_final.selected_subsets.size());
+						printer.add(rwls);
+					}
+
+					catch(const std::exception& e)
+					{
+						LOGGER->error("error loading RWLS data: {}", e.what());
+						return false;
+					}
+					catch(...)
+					{
+						LOGGER->error("unknown error loading RWLS data");
+						return false;
+					}
 				}
 			}
 
@@ -175,12 +203,25 @@ bool uscp::data::load(const nlohmann::json& data, printer& printer) noexcept
 				}
 				for(const nlohmann::json& rwls_report_data: memetic_reports_data)
 				{
-					const uscp::memetic::report_serial memetic =
-					  rwls_report_data.get<uscp::memetic::report_serial>();
-					SPDLOG_LOGGER_DEBUG(LOGGER,
-					                    "Loaded memetic solution with {} subsets",
-					                    memetic.solution_final.selected_subsets.size());
-					printer.add(memetic);
+					try
+					{
+						const uscp::memetic::report_serial memetic =
+						  rwls_report_data.get<uscp::memetic::report_serial>();
+						SPDLOG_LOGGER_DEBUG(LOGGER,
+						                    "Loaded memetic solution with {} subsets",
+						                    memetic.solution_final.selected_subsets.size());
+						printer.add(memetic);
+					}
+					catch(const std::exception& e)
+					{
+						LOGGER->error("error loading memetic data: {}", e.what());
+						return false;
+					}
+					catch(...)
+					{
+						LOGGER->error("unknown error loading memetic data");
+						return false;
+					}
 				}
 			}
 		}
