@@ -148,7 +148,7 @@ int main(int argc, char* argv[])
 		  cxxopts::Option("memetic_rwls_steps",
 		                  "Memetic RWLS steps limit",
 		                  cxxopts::value<size_t>(memetic_config.rwls_stopping_criterion.steps)
-		                    ->default_value("300000"),
+		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
 		                  "N"));
 		options.add_option(
 		  "",
