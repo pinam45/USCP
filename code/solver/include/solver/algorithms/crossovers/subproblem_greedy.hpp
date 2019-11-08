@@ -63,7 +63,7 @@ namespace uscp::crossover
 					abort();
 				}
 
-				// update solution (faster)
+				// update solution
 				solution.selected_subsets[max_subset_number].set();
 				solution.covered_points = covered_points_with_max_subset;
 				solution.cover_all_points = solution.covered_points.all();

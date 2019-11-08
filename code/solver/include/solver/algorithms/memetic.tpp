@@ -68,8 +68,11 @@ uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
 	      && rwls_cumulative_position < config.stopping_criterion.rwls_cumulative_position
 	      && timer.elapsed() < config.stopping_criterion.time)
 	{
-		SPDLOG_LOGGER_DEBUG(
-		  LOGGER, "({}) Memetic generation {}: start", m_problem.name, generation);
+		SPDLOG_LOGGER_DEBUG(LOGGER,
+		                    "({}) Memetic generation {}: start at {}s",
+		                    m_problem.name,
+		                    generation,
+		                    timer.elapsed());
 		for(size_t i = 0; i < population.size(); ++i)
 		{
 			rwls_reports[i] =
