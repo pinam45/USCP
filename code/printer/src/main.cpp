@@ -28,6 +28,7 @@ int main(int argc, char* argv[])
 	std::string validation_regex_txt = ".*\\.json";
 	std::basic_regex<char> validation_regex;
 	bool rwls_stats = false;
+	bool memetic_comparisons = false;
 	try
 	{
 		std::ostringstream help_txt;
@@ -66,6 +67,11 @@ int main(int argc, char* argv[])
 		  cxxopts::Option("rwls_stats",
 		                  "Generate RWLS stats table",
 		                  cxxopts::value<bool>(rwls_stats)->default_value("false")));
+		options.add_option(
+		  "",
+		  cxxopts::Option("memetic_comparisons",
+		                  "Generate memetic comparison tables",
+		                  cxxopts::value<bool>(memetic_comparisons)->default_value("false")));
 		cxxopts::ParseResult result = options.parse(argc, argv);
 
 		if(result.count("help"))
@@ -110,6 +116,7 @@ int main(int argc, char* argv[])
 
 		printer printer;
 		printer.generate_rwls_stats(rwls_stats);
+		printer.generate_memetic_comparisons(memetic_comparisons);
 		std::deque<std::string> paths(std::cbegin(input_folder_files),
 		                              std::cend(input_folder_files));
 		while(!paths.empty())
