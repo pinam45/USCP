@@ -126,4 +126,14 @@
 	\newpage\section{Stats}
 		\input{./tables/rwls_stats}
 <*endif*>
+<*if rwls_stats*>
+	\newpage\section{Memetic config comparisons}
+<*for table in memetic_comparisons_tables_files*>
+	<*if loop/is_first*>
+		\input{./tables/memetic_comparisons/<<table>>}
+	<*else*>
+		\newpage\input{./tables/memetic_comparisons/<<table>>}
+	<*endif*>
+<*endfor*>
+<*endif*>
 \end{document}
