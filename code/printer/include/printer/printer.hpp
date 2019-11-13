@@ -44,10 +44,17 @@ public:
 
 			static constexpr std::string_view TEMPLATE_SUBFOLDER = "templates/";
 			static constexpr std::string_view TABLES_TEMPLATE_SUBFOLDER = "tables/";
+			static constexpr std::string_view MEMETIC_COMPARISONS_TABLES_TEMPLATE_SUBFOLDER =
+			  "memetic_comparisons/";
 
 			static constexpr std::string_view DOCUMENT_TEMPLATE_FILE = "main.tex";
 			static constexpr std::string_view RESULT_TABLE_TEMPLATE_FILE = "results.tex";
 			static constexpr std::string_view RWLS_STATS_TABLE_TEMPLATE_FILE = "rwls_stats.tex";
+			static constexpr std::string_view MEMETIC_COMPARISON_TABLE_TEMPLATE_FILE =
+			  "comparison.tex";
+			static constexpr std::string_view MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX =
+			  "comparison_";
+			static constexpr std::string_view MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_POSTFIX = ".tex";
 
 			static constexpr std::array<std::string_view, 4> INSTANCES_TABLES_FILES = {
 			  "orlibrary_instances_base.tex",
@@ -78,20 +85,24 @@ public:
 	void add(const uscp::memetic::report_serial& report) noexcept;
 
 	void generate_rwls_stats(bool enable) noexcept;
+	void generate_memetic_comparisons(bool enable) noexcept;
 
 	bool generate_document() noexcept;
 
 private:
 	std::string output_folder;
 	std::string tables_output_folder;
+	std::string memetic_comparisons_tables_output_folder;
 	std::string template_folder;
 	std::string tables_template_folder;
+	std::string memetic_comparisons_tables_template_folder;
 
 	inja::Environment m_environment;
 	std::vector<uscp::greedy::report_serial> m_greedy_reports;
 	std::vector<uscp::rwls::report_serial> m_rwls_reports;
 	std::vector<uscp::memetic::report_serial> m_memetic_reports;
 	bool m_generate_rwls_stats;
+	bool m_generate_memetic_comparisons;
 
 	bool create_output_folders() noexcept;
 
@@ -100,6 +111,9 @@ private:
 	bool generate_results_table() noexcept;
 
 	bool generate_rwls_stats_table() noexcept;
+
+	bool generate_memetic_comparisons_tables(
+	  std::vector<std::string>& generated_tables_files) noexcept;
 
 	[[nodiscard]] std::string generate_output_folder_name(std::string_view output_prefix) const
 	  noexcept;

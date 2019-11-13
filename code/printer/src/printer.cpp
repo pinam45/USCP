@@ -82,6 +82,22 @@ namespace
 	};
 	void to_json(nlohmann::json& j, const rwls_stat& serial);
 
+	struct memetic_config_result final
+	{
+		uscp::memetic::config_serial config;
+		std::string crossover_operator;
+		memetic_result result;
+	};
+	void to_json(nlohmann::json& j, const memetic_config_result& serial);
+
+	struct memetic_comparison final
+	{
+		instance_info instance;
+		bool exist = false;
+		std::vector<memetic_config_result> results;
+	};
+	void to_json(nlohmann::json& j, const memetic_comparison& serial);
+
 	void to_json(nlohmann::json& j, const greedy_result& serial)
 	{
 		j = nlohmann::json{
@@ -149,6 +165,34 @@ namespace
 		  {"time", serial.time},
 		  {"repetitions", serial.repetitions},
 		};
+	}
+
+	void to_json(nlohmann::json& j, const memetic_config_result& serial)
+	{
+		j = nlohmann::json{
+		  {"config", serial.config},
+		  {"crossover_operator", serial.crossover_operator},
+		  {"result", serial.result},
+		};
+	}
+
+	void to_json(nlohmann::json& j, const memetic_comparison& serial)
+	{
+		j = nlohmann::json{
+		  {"instance", serial.instance},
+		  {"exist", serial.exist},
+		  {"results", serial.results},
+		};
+	}
+
+	void replace(std::string& data, std::string_view search, std::string_view replace)
+	{
+		size_t pos = data.find(search);
+		while(pos != std::string::npos)
+		{
+			data.replace(pos, search.size(), replace);
+			pos = data.find(search, pos + replace.size());
+		}
 	}
 } // namespace
 
@@ -239,15 +283,22 @@ namespace
 printer::printer(std::string_view output_prefix) noexcept
   : output_folder(generate_output_folder_name(output_prefix))
   , tables_output_folder(output_folder + std::string(config::partial::TABLES_TEMPLATE_SUBFOLDER))
+  , memetic_comparisons_tables_output_folder(
+      tables_output_folder
+      + std::string(config::partial::MEMETIC_COMPARISONS_TABLES_TEMPLATE_SUBFOLDER))
   , template_folder(
       std::string(config::partial::RESOURCES_FOLDER).append(config::partial::TEMPLATE_SUBFOLDER))
   , tables_template_folder(template_folder
                            + std::string(config::partial::TABLES_TEMPLATE_SUBFOLDER))
+  , memetic_comparisons_tables_template_folder(
+      tables_template_folder
+      + std::string(config::partial::MEMETIC_COMPARISONS_TABLES_TEMPLATE_SUBFOLDER))
   , m_environment()
   , m_greedy_reports()
   , m_rwls_reports()
   , m_memetic_reports()
   , m_generate_rwls_stats(false)
+  , m_generate_memetic_comparisons(false)
 {
 	m_environment.set_statement(std::string(config::inja::STATEMENT_OPEN),
 	                            std::string(config::inja::STATEMENT_CLOSE));
@@ -306,6 +357,11 @@ void printer::generate_rwls_stats(bool enable) noexcept
 	m_generate_rwls_stats = enable;
 }
 
+void printer::generate_memetic_comparisons(bool enable) noexcept
+{
+	m_generate_memetic_comparisons = enable;
+}
+
 bool printer::generate_document() noexcept
 {
 	LOGGER->info("Started generating document");
@@ -336,10 +392,21 @@ bool printer::generate_document() noexcept
 	{
 		if(!generate_rwls_stats_table())
 		{
-			LOGGER->warn("Failed to rwls stats table");
+			LOGGER->warn("Failed to generate rwls stats table");
 			return false;
 		}
 		LOGGER->info("Generated rwls stats table");
+	}
+
+	std::vector<std::string> memetic_comparisons_tables_files;
+	if(m_generate_memetic_comparisons)
+	{
+		if(!generate_memetic_comparisons_tables(memetic_comparisons_tables_files))
+		{
+			LOGGER->warn("Failed to generate memetic comparison tables");
+			return false;
+		}
+		LOGGER->info("Generated memetic comparison tables");
 	}
 
 	// generate data
@@ -351,6 +418,8 @@ bool printer::generate_document() noexcept
 	now_txt << std::put_time(std::localtime(&t), "%FT%TZ");
 	data["date"] = now_txt.str();
 	data["rwls_stats"] = m_generate_rwls_stats;
+	data["memetic_comparisons"] = m_generate_memetic_comparisons;
+	data["memetic_comparisons_tables_files"] = memetic_comparisons_tables_files;
 
 	// generate document
 	try
@@ -403,6 +472,14 @@ bool printer::create_output_folders() noexcept
 		SPDLOG_LOGGER_DEBUG(
 		  LOGGER, "std::filesystem::create_directories failed: {}", error.message());
 		LOGGER->warn("Directory creation failed for: {}", tables_output_folder);
+		return false;
+	}
+	std::filesystem::create_directories(memetic_comparisons_tables_output_folder, error);
+	if(error)
+	{
+		SPDLOG_LOGGER_DEBUG(
+		  LOGGER, "std::filesystem::create_directories failed: {}", error.message());
+		LOGGER->warn("Directory creation failed for: {}", memetic_comparisons_tables_output_folder);
 		return false;
 	}
 	return true;
@@ -663,6 +740,147 @@ bool printer::generate_rwls_stats_table() noexcept
 		return false;
 	}
 	data_stream << data.dump(4);
+	return true;
+}
+
+bool printer::generate_memetic_comparisons_tables(
+  std::vector<std::string>& generated_tables_files) noexcept
+{
+	// generate data
+	std::sort(std::begin(m_memetic_reports), std::end(m_memetic_reports), memetic_report_less);
+
+	std::vector<memetic_comparison> comparisons;
+	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
+	{
+		memetic_comparison comparison;
+		comparison.instance.name = instance.name;
+		comparison.instance.bks = instance.bks;
+
+		const auto [memetic_begin, memetic_end] = std::equal_range(std::cbegin(m_memetic_reports),
+		                                                           std::cend(m_memetic_reports),
+		                                                           instance.name,
+		                                                           memetic_report_less);
+		for(auto it = memetic_begin; it < memetic_end; ++it)
+		{
+			const uscp::memetic::report_serial& memetic = *it;
+
+			comparison.exist = true;
+			auto result_it =
+			  std::find_if(std::begin(comparison.results),
+			               std::end(comparison.results),
+			               [&](const memetic_config_result& result) {
+				               return result.crossover_operator == memetic.crossover_operator
+				                      && result.config.stopping_criterion.generation
+				                           == memetic.solve_config.stopping_criterion.generation;
+			               });
+			memetic_config_result* result;
+			if(result_it != std::end(comparison.results))
+			{
+				result = result_it.base();
+			}
+			else
+			{
+				comparison.results.emplace_back();
+				result = &comparison.results.back();
+				result->config = memetic.solve_config;
+				result->crossover_operator = memetic.crossover_operator;
+				replace(result->crossover_operator, "_", "\\_");
+				result->result.exist = true;
+			}
+			++result->result.total_number;
+			result->result.average +=
+			  (1.0 / result->result.total_number)
+			  * (static_cast<double>(memetic.solution_final.selected_subsets.size())
+			     - result->result.average);
+
+			if(result->result.best == 0
+			   || memetic.solution_final.selected_subsets.size() < result->result.best)
+			{
+				result->result.best = memetic.solution_final.selected_subsets.size();
+				result->result.best_number = 1;
+				result->result.generations = static_cast<double>(memetic.found_at.generation);
+				result->result.steps =
+				  static_cast<double>(memetic.found_at.rwls_cumulative_position.steps);
+				result->result.time = memetic.found_at.time;
+			}
+			else if(memetic.solution_final.selected_subsets.size() == result->result.best)
+			{
+				++result->result.best_number;
+				result->result.generations +=
+				  (1.0 / result->result.best_number)
+				  * (static_cast<double>(memetic.found_at.generation) - result->result.generations);
+				result->result.steps +=
+				  (1.0 / result->result.best_number)
+				  * (static_cast<double>(memetic.found_at.rwls_cumulative_position.steps)
+				     - result->result.steps);
+				result->result.time += (1.0 / result->result.best_number)
+				                       * (memetic.found_at.time - result->result.time);
+			}
+		}
+
+		comparisons.push_back(std::move(comparison));
+	}
+
+	for(memetic_comparison& comparison: comparisons)
+	{
+		if(!comparison.exist)
+		{
+			continue;
+		}
+		std::sort(std::begin(comparison.results),
+		          std::end(comparison.results),
+		          [](const memetic_config_result& a, const memetic_config_result& b) {
+			          return std::make_tuple(a.crossover_operator,
+			                                 a.config.stopping_criterion.generation)
+			                 < std::make_tuple(b.crossover_operator,
+			                                   b.config.stopping_criterion.generation);
+		          });
+
+		const std::string template_file =
+		  memetic_comparisons_tables_template_folder
+		  + std::string(config::partial::MEMETIC_COMPARISON_TABLE_TEMPLATE_FILE);
+		const std::string output_file =
+		  std::string(config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX)
+		  + comparison.instance.name
+		  + std::string(config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_POSTFIX);
+		const std::string output_file_full = memetic_comparisons_tables_output_folder + output_file;
+
+		nlohmann::json data;
+		data["comparison"] = comparison;
+
+		// generate table
+		try
+		{
+			m_environment.write(template_file, data, output_file_full);
+		}
+		catch(const std::exception& e)
+		{
+			LOGGER->warn("error writing memetic comparison table table: {}", e.what());
+			return false;
+		}
+		catch(...)
+		{
+			LOGGER->warn("unknown error writing memetic comparison table table");
+			return false;
+		}
+
+		// save data
+		const std::string file_data =
+		  memetic_comparisons_tables_output_folder
+		  + std::string(config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX)
+		  + comparison.instance.name + ".json";
+		std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
+		if(!data_stream)
+		{
+			SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
+			LOGGER->warn("Failed to write file {}", file_data);
+			return false;
+		}
+		data_stream << data.dump(4);
+
+		generated_tables_files.push_back(output_file);
+	}
+
 	return true;
 }
 
