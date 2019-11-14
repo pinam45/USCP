@@ -784,7 +784,6 @@ bool printer::generate_memetic_comparisons_tables(
 				result = &comparison.results.back();
 				result->config = memetic.solve_config;
 				result->crossover_operator = memetic.crossover_operator;
-				replace(result->crossover_operator, "_", "\\_");
 				result->result.exist = true;
 			}
 			++result->result.total_number;
@@ -835,6 +834,10 @@ bool printer::generate_memetic_comparisons_tables(
 			                 < std::make_tuple(b.crossover_operator,
 			                                   b.config.stopping_criterion.generation);
 		          });
+		std::for_each(
+		  std::begin(comparison.results),
+		  std::end(comparison.results),
+		  [](memetic_config_result& result) { replace(result.crossover_operator, "_", "\\_"); });
 
 		const std::string template_file =
 		  memetic_comparisons_tables_template_folder
