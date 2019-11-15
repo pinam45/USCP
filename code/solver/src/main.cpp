@@ -98,7 +98,8 @@ int main(int argc, char* argv[])
 		  "",
 		  cxxopts::Option("rwls_steps",
 		                  "RWLS steps limit",
-		                  cxxopts::value<size_t>(rwls_stop.steps)->default_value("30000000"),
+		                  cxxopts::value<size_t>(rwls_stop.steps)
+		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
 		                  "N"));
 		options.add_option(
 		  "",
@@ -118,7 +119,7 @@ int main(int argc, char* argv[])
 		  cxxopts::Option("memetic_generations",
 		                  "Memetic generations number limit",
 		                  cxxopts::value<size_t>(memetic_config.stopping_criterion.generation)
-		                    ->default_value("100"),
+		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
 		                  "N"));
 		options.add_option(
 		  "",
@@ -161,7 +162,7 @@ int main(int argc, char* argv[])
 		  "",
 		  cxxopts::Option("memetic_crossover",
 		                  "Memetic crossover operator",
-		                  cxxopts::value<std::string>(memetic_crossover)->default_value("merge"),
+		                  cxxopts::value<std::string>(memetic_crossover)->default_value("default"),
 		                  "OPERATOR"));
 		cxxopts::ParseResult result = options.parse(argc, argv);
 
