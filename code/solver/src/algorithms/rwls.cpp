@@ -13,10 +13,18 @@
 #include <algorithm>
 #include <utility>
 
+#if defined(__GNUC__)
+#	define COND_LIKELY(expr) __builtin_expect(!!(expr), 1)
+#	define COND_UNLIKELY(expr) __builtin_expect(!!(expr), 0)
+#else
+#	define COND_LIKELY(expr) (!!(expr))
+#	define COND_UNLIKELY(expr) (!!(expr))
+#endif
+
 #define ensure(expr)                                                        \
 	do                                                                      \
 	{                                                                       \
-		if(!(expr))                                                         \
+		if(COND_UNLIKELY(!(expr)))                                          \
 		{                                                                   \
 			LOGGER->error("[{}:{}] failed: {}", __FILE__, __LINE__, #expr); \
 			abort();                                                        \
