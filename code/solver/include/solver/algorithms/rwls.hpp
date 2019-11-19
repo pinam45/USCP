@@ -44,7 +44,9 @@ namespace uscp::rwls
 	struct report final
 	{
 		solution solution_initial;
+		std::vector<ssize_t> initial_points_weights;
 		solution solution_final;
+		std::vector<ssize_t> final_points_weights;
 		position found_at;
 		position ended_at;
 		position stopping_criterion;
@@ -71,6 +73,11 @@ namespace uscp::rwls
 
 		[[gnu::hot]] void initialize() noexcept;
 		[[nodiscard, gnu::hot]] report improve(const uscp::solution& solution,
+		                                       random_engine& generator,
+		                                       position stopping_criterion) noexcept;
+
+		[[nodiscard, gnu::hot]] report improve(const uscp::solution& solution,
+		                                       const std::vector<ssize_t>& initial_points_weights,
 		                                       random_engine& generator,
 		                                       position stopping_criterion) noexcept;
 
@@ -106,7 +113,8 @@ namespace uscp::rwls
 
 		[[gnu::hot]] ssize_t compute_subset_score(const resolution_data& data,
 		                                          size_t subset_number) noexcept;
-		[[gnu::hot]] void init(resolution_data& data) noexcept;
+		[[gnu::hot]] void init(resolution_data& data,
+		                       const std::vector<ssize_t>& initial_points_weights) noexcept;
 
 		[[gnu::hot]] void add_subset(resolution_data& data, size_t subset_number) noexcept;
 		[[gnu::hot]] void remove_subset(resolution_data& data, size_t subset_number) noexcept;
