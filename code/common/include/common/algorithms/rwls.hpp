@@ -27,7 +27,9 @@ namespace uscp::rwls
 	struct report_serial final
 	{
 		solution_serial solution_initial;
+		std::vector<ssize_t> initial_points_weights;
 		solution_serial solution_final;
+		std::vector<ssize_t> final_points_weights;
 		position_serial found_at;
 		position_serial ended_at;
 		position_serial stopping_criterion;
