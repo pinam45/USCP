@@ -75,9 +75,6 @@ namespace uscp::rwls
 		                                       position stopping_criterion) noexcept;
 
 	private:
-		[[gnu::hot]] void generate_subsets_neighbors() noexcept;
-		[[gnu::hot]] void generate_subsets_covering_points() noexcept;
-
 		struct point_information final // row
 		{
 			int weight = 1;
@@ -100,6 +97,9 @@ namespace uscp::rwls
 			std::vector<point_information> points_information;
 			std::vector<subset_information> subsets_information;
 			std::deque<size_t> tabu_subsets;
+
+			dynamic_bitset<> points_tmp1;
+			dynamic_bitset<> points_tmp2;
 
 			explicit resolution_data(solution& solution, random_engine& generator) noexcept;
 		};
@@ -125,12 +125,8 @@ namespace uscp::rwls
 		  resolution_data& data) noexcept;
 
 		const uscp::problem::instance& m_problem;
-#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
-		std::vector<dynamic_bitset<>> m_subsets_neighbors;
-#else
-		std::vector<std::vector<size_t>> m_subsets_neighbors;
-#endif
-		std::vector<dynamic_bitset<>> m_subsets_covering_points;
+		std::vector<std::vector<size_t>> m_subsets_points;
+		std::vector<std::vector<size_t>> m_subsets_covering_points;
 		bool m_initialized;
 		const std::shared_ptr<spdlog::logger> m_logger;
 	};

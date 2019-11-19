@@ -8,6 +8,7 @@
 #include "solver/algorithms/rwls.hpp"
 #include "solver/data/solution.hpp"
 #include "common/utils/timer.hpp"
+#include "common/utils/utils.hpp"
 
 #include <cassert>
 #include <algorithm>
@@ -122,33 +123,28 @@ bool uscp::rwls::report::load(const uscp::rwls::report_serial& serial) noexcept
 	return true;
 }
 
-uscp::rwls::rwls::rwls(const uscp::problem::instance& problem,
+uscp::rwls::rwls::rwls(const problem::instance& problem,
                        std::shared_ptr<spdlog::logger> logger) noexcept
   : m_problem(problem)
-  , m_subsets_neighbors()
+  , m_subsets_points()
   , m_subsets_covering_points()
   , m_initialized(false)
   , m_logger(std::move(logger))
 {
-	m_subsets_neighbors.resize(m_problem.subsets_number);
-#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
-	for(dynamic_bitset<>& subset_neighbors: m_subsets_neighbors)
-	{
-		subset_neighbors.resize(m_problem.subsets_number);
-	}
-#endif
-
+	m_subsets_points.resize(m_problem.subsets_number);
 	m_subsets_covering_points.resize(m_problem.points_number);
-	for(dynamic_bitset<>& subsets_covering_point: m_subsets_covering_points)
-	{
-		subsets_covering_point.resize(m_problem.subsets_number);
-	}
 }
 
 void uscp::rwls::rwls::initialize() noexcept
 {
-	generate_subsets_neighbors();
-	generate_subsets_covering_points();
+	for(size_t i = 0; i < m_problem.subsets_number; ++i)
+	{
+		m_problem.subsets_points[i].iterate_bits_on([&](size_t bit_on) noexcept {
+			m_subsets_points[i].push_back(bit_on);
+			m_subsets_covering_points[bit_on].push_back(i);
+		});
+	}
+
 	m_initialized = true;
 }
 
@@ -227,10 +223,10 @@ uscp::rwls::report uscp::rwls::rwls::improve(const uscp::solution& solution,
 
 			// update subsets score depending on this point weight
 			// subset that can cover the point if added to solution
-			m_subsets_covering_points[uncovered_points_bit_on].iterate_bits_on([&](
-			  size_t subsets_covering_bit_on) noexcept {
-				++data.subsets_information[subsets_covering_bit_on].score;
-			});
+			for(size_t subset_covering_point: m_subsets_covering_points[uncovered_points_bit_on])
+			{
+				++data.subsets_information[subset_covering_point].score;
+			}
 		});
 #if !defined(NDEBUG) && !defined(NDEBUG_SCORE)
 		for(size_t i = 0; i < m_problem.subsets_number; ++i)
@@ -253,52 +249,8 @@ uscp::rwls::report uscp::rwls::rwls::improve(const uscp::solution& solution,
 	return report;
 }
 
-void uscp::rwls::rwls::generate_subsets_neighbors() noexcept
-{
-	m_logger->info("({}) start building subsets RWLS neighbors", m_problem.name);
-	timer timer;
-	dynamic_bitset<> tmp; // to minimize memory allocations
-#pragma omp parallel for default(none) \
-  shared(m_problem, m_subsets_neighbors) private(tmp) if(m_problem.subsets_number > 8)
-	for(size_t i_current_subset = 0; i_current_subset < m_problem.subsets_number;
-	    ++i_current_subset)
-	{
-		for(size_t i_other_subset = i_current_subset + 1; i_other_subset < m_problem.subsets_number;
-		    ++i_other_subset)
-		{
-			tmp = m_problem.subsets_points[i_current_subset];
-			tmp &= m_problem.subsets_points[i_other_subset];
-			if(tmp.any())
-			{
-#pragma omp critical
-				{
-#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
-					m_subsets_neighbors[i_current_subset].set(i_other_subset);
-					m_subsets_neighbors[i_other_subset].set(i_current_subset);
-#else
-					m_subsets_neighbors[i_current_subset].push_back(i_other_subset);
-					m_subsets_neighbors[i_other_subset].push_back(i_current_subset);
-#endif
-				}
-			}
-		}
-	}
-	m_logger->info("({}) Built subsets neighbors in {}s", m_problem.name, timer.elapsed());
-}
-
-void uscp::rwls::rwls::generate_subsets_covering_points() noexcept
-{
-	// no parallel: writing (event different elements) in bitsets is not thread safe
-	for(size_t i = 0; i < m_problem.subsets_number; ++i)
-	{
-		m_problem.subsets_points[i].iterate_bits_on([&](size_t bit_on) noexcept {
-			m_subsets_covering_points[bit_on].set(i);
-		});
-	}
-}
-
-uscp::rwls::rwls::resolution_data::resolution_data(solution& solution,
-                                                   random_engine& generator_) noexcept
+uscp::rwls::rwls::resolution_data::resolution_data(uscp::solution& solution,
+                                                   uscp::random_engine& generator_) noexcept
   : generator(generator_)
   , best_solution(solution)
   , current_solution(solution)
@@ -306,12 +258,14 @@ uscp::rwls::rwls::resolution_data::resolution_data(solution& solution,
   , points_information()
   , subsets_information()
   , tabu_subsets()
+  , points_tmp1(solution.problem.points_number)
+  , points_tmp2(solution.problem.points_number)
 {
 	points_information.resize(solution.problem.points_number);
 	subsets_information.resize(solution.problem.subsets_number);
 }
 
-int uscp::rwls::rwls::compute_subset_score(const resolution_data& data,
+int uscp::rwls::rwls::compute_subset_score(const uscp::rwls::rwls::resolution_data& data,
                                            size_t subset_number) noexcept
 {
 	assert(subset_number < m_problem.subsets_number);
@@ -356,9 +310,14 @@ void uscp::rwls::rwls::init(uscp::rwls::rwls::resolution_data& data) noexcept
 #pragma omp parallel for default(none) shared(data) private(tmp)
 	for(size_t i = 0; i < m_problem.points_number; ++i)
 	{
-		tmp = m_subsets_covering_points[i];
-		tmp &= data.current_solution.selected_subsets;
-		data.points_information[i].subsets_covering_in_solution = tmp.count();
+		data.points_information[i].subsets_covering_in_solution = 0;
+		for(size_t subset_covering_point: m_subsets_covering_points[i])
+		{
+			if(data.current_solution.selected_subsets.test(subset_covering_point))
+			{
+				++data.points_information[i].subsets_covering_in_solution;
+			}
+		}
 	}
 
 	// subset scores
@@ -379,22 +338,22 @@ void uscp::rwls::rwls::add_subset(uscp::rwls::rwls::resolution_data& data,
 	assert(data.subsets_information[subset_number].score >= 0);
 
 	// update points information
-	dynamic_bitset<> points_newly_covered(m_problem.points_number);
-	dynamic_bitset<> point_now_covered_twice(m_problem.points_number);
-	m_problem.subsets_points[subset_number].iterate_bits_on([&](size_t bit_on) noexcept {
-		assert(
-		  data.points_information[bit_on].subsets_covering_in_solution
-		  == (m_subsets_covering_points[bit_on] & data.current_solution.selected_subsets).count());
-		++data.points_information[bit_on].subsets_covering_in_solution;
-		if(data.points_information[bit_on].subsets_covering_in_solution == 1)
+	dynamic_bitset<>& points_newly_covered = data.points_tmp1;
+	dynamic_bitset<>& points_now_covered_twice = data.points_tmp2;
+	points_newly_covered.reset();
+	points_now_covered_twice.reset();
+	for(size_t subset_point: m_subsets_points[subset_number])
+	{
+		++data.points_information[subset_point].subsets_covering_in_solution;
+		if(data.points_information[subset_point].subsets_covering_in_solution == 1)
 		{
-			points_newly_covered.set(bit_on);
+			points_newly_covered.set(subset_point);
 		}
-		else if(data.points_information[bit_on].subsets_covering_in_solution == 2)
+		else if(data.points_information[subset_point].subsets_covering_in_solution == 2)
 		{
-			point_now_covered_twice.set(bit_on);
+			points_now_covered_twice.set(subset_point);
 		}
-	});
+	}
 
 	// add subset to solution
 	data.current_solution.selected_subsets.set(subset_number);
@@ -406,42 +365,41 @@ void uscp::rwls::rwls::add_subset(uscp::rwls::rwls::resolution_data& data,
 	             == compute_subset_score(data, subset_number));
 
 	// update neighbors
-	dynamic_bitset<> tmp; // to minimize memory allocations
-#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
-	m_subsets_neighbors[subset_number].iterate_bits_on([&](size_t i_neighbor) {
-#else
-#	pragma omp parallel for default(none) \
-	  shared(data, subset_number, point_now_covered_twice, points_newly_covered) private(tmp)
-	for(size_t i = 0; i < m_subsets_neighbors[subset_number].size(); ++i)
+	for(size_t subsets_point: m_subsets_points[subset_number])
 	{
-		const size_t i_neighbor = m_subsets_neighbors[subset_number][i];
-#endif
-		data.subsets_information[i_neighbor].canAddToSolution = true;
-		if(data.current_solution.selected_subsets[i_neighbor])
+		for(size_t neighbor: m_subsets_covering_points[subsets_point])
 		{
-			// lost score because it is no longer the only one to cover these points
-			tmp = point_now_covered_twice;
-			tmp &= m_problem.subsets_points[i_neighbor];
-			tmp.iterate_bits_on([&](size_t bit_on) noexcept {
-				data.subsets_information[i_neighbor].score +=
-				  data.points_information[bit_on].weight;
-			});
+			if(neighbor == subset_number)
+			{
+				continue;
+			}
+			data.subsets_information[neighbor].canAddToSolution = true;
+			if(data.current_solution.selected_subsets.test(neighbor))
+			{
+				if(points_now_covered_twice.test(subsets_point))
+				{
+					// lost score because it is no longer the only one to cover this point
+					data.subsets_information[neighbor].score +=
+					  data.points_information[subsets_point].weight;
+				}
+			}
+			else
+			{
+				if(points_newly_covered.test(subsets_point))
+				{
+					// lost score because this point is now covered in the solution
+					data.subsets_information[neighbor].score -=
+					  data.points_information[subsets_point].weight;
+				}
+			}
 		}
-		else
-		{
-			// lost score because these points are now covered in the solution
-			tmp = points_newly_covered;
-			tmp &= m_problem.subsets_points[i_neighbor];
-			tmp.iterate_bits_on([&](size_t bit_on) noexcept {
-				data.subsets_information[i_neighbor].score -=
-				  data.points_information[bit_on].weight;
-			});
-		}
-		assert_score(data.subsets_information[i_neighbor].score
-		             == compute_subset_score(data, i_neighbor));
 	}
-#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
-	);
+
+#if !defined(NDEBUG) && !defined(NDEBUG_SCORE)
+	for(size_t i = 0; i < m_problem.subsets_number; ++i)
+	{
+		assert(data.subsets_information[i].score == compute_subset_score(data, i));
+	}
 #endif
 }
 
@@ -453,23 +411,22 @@ void uscp::rwls::rwls::remove_subset(uscp::rwls::rwls::resolution_data& data,
 	assert(data.subsets_information[subset_number].score <= 0);
 
 	// update points information
-	dynamic_bitset<> points_newly_uncovered(m_problem.points_number);
-	dynamic_bitset<> point_now_covered_once(m_problem.points_number);
-	m_problem.subsets_points[subset_number].iterate_bits_on([&](size_t bit_on) noexcept {
-		assert(data.points_information[bit_on].subsets_covering_in_solution > 0);
-		assert(
-		  data.points_information[bit_on].subsets_covering_in_solution
-		  == (m_subsets_covering_points[bit_on] & data.current_solution.selected_subsets).count());
-		--data.points_information[bit_on].subsets_covering_in_solution;
-		if(data.points_information[bit_on].subsets_covering_in_solution == 0)
+	dynamic_bitset<>& points_newly_uncovered = data.points_tmp1;
+	dynamic_bitset<>& points_now_covered_once = data.points_tmp2;
+	points_newly_uncovered.reset();
+	points_now_covered_once.reset();
+	for(size_t subset_point: m_subsets_points[subset_number])
+	{
+		--data.points_information[subset_point].subsets_covering_in_solution;
+		if(data.points_information[subset_point].subsets_covering_in_solution == 0)
 		{
-			points_newly_uncovered.set(bit_on);
+			points_newly_uncovered.set(subset_point);
 		}
-		else if(data.points_information[bit_on].subsets_covering_in_solution == 1)
+		else if(data.points_information[subset_point].subsets_covering_in_solution == 1)
 		{
-			point_now_covered_once.set(bit_on);
+			points_now_covered_once.set(subset_point);
 		}
-	});
+	}
 
 	// remove subset from solution
 	data.current_solution.selected_subsets.reset(subset_number);
@@ -484,43 +441,43 @@ void uscp::rwls::rwls::remove_subset(uscp::rwls::rwls::resolution_data& data,
 	data.subsets_information[subset_number].canAddToSolution = false;
 
 	// update neighbors
-	dynamic_bitset<> tmp; // to minimize memory allocations
-#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
-	m_subsets_neighbors[subset_number].iterate_bits_on([&](size_t i_neighbor) {
-#else
-#	pragma omp parallel for default(none) \
-	  shared(data, subset_number, points_newly_uncovered, point_now_covered_once) private(tmp)
-	for(size_t i = 0; i < m_subsets_neighbors[subset_number].size(); ++i)
+	/*#	pragma omp parallel for default(none) \
+	  shared(data, subset_number, points_newly_uncovered, points_now_covered_once)*/
+	for(size_t subsets_point: m_subsets_points[subset_number])
 	{
-		const size_t i_neighbor = m_subsets_neighbors[subset_number][i];
-#endif
-		data.subsets_information[i_neighbor].canAddToSolution = true;
-		if(data.current_solution.selected_subsets[i_neighbor])
+		for(size_t neighbor: m_subsets_covering_points[subsets_point])
 		{
-			// gain score because it is no the only one to cover these points
-			tmp = point_now_covered_once;
-			tmp &= m_problem.subsets_points[i_neighbor];
-			tmp.iterate_bits_on([&](size_t bit_on) noexcept {
-				data.subsets_information[i_neighbor].score -=
-				  data.points_information[bit_on].weight;
-			});
+			if(neighbor == subset_number)
+			{
+				continue;
+			}
+			data.subsets_information[neighbor].canAddToSolution = true;
+			if(data.current_solution.selected_subsets.test(neighbor))
+			{
+				if(points_now_covered_once.test(subsets_point))
+				{
+					// gain score because it is now the only one to cover this point
+					data.subsets_information[neighbor].score -=
+					  data.points_information[subsets_point].weight;
+				}
+			}
+			else
+			{
+				if(points_newly_uncovered.test(subsets_point))
+				{
+					// gain score because this point is now uncovered in the solution
+					data.subsets_information[neighbor].score +=
+					  data.points_information[subsets_point].weight;
+				}
+			}
 		}
-		else
-		{
-			// gain score because these points are now uncovered in the solution
-			tmp = points_newly_uncovered;
-			tmp &= m_problem.subsets_points[i_neighbor];
-			tmp.iterate_bits_on([&](size_t bit_on) noexcept {
-				data.subsets_information[i_neighbor].score +=
-				  data.points_information[bit_on].weight;
-			});
-		}
-
-		assert_score(data.subsets_information[i_neighbor].score
-		             == compute_subset_score(data, i_neighbor));
 	}
-#ifdef USCP_RWLS_LOW_MEMORY_FOOTPRINT
-	);
+
+#if !defined(NDEBUG) && !defined(NDEBUG_SCORE)
+	for(size_t i = 0; i < m_problem.subsets_number; ++i)
+	{
+		assert(data.subsets_information[i].score == compute_subset_score(data, i));
+	}
 #endif
 }
 
@@ -529,7 +486,7 @@ void uscp::rwls::rwls::make_tabu(uscp::rwls::rwls::resolution_data& data,
 {
 	assert(subset_number < m_problem.subsets_number);
 	data.tabu_subsets.push_back(subset_number);
-	if(data.tabu_subsets.size() > TABU_LIST_LENGTH)
+	if(COND_LIKELY(data.tabu_subsets.size() > TABU_LIST_LENGTH))
 	{
 		data.tabu_subsets.pop_front();
 	}
@@ -587,38 +544,41 @@ size_t uscp::rwls::rwls::select_subset_to_add(const uscp::rwls::rwls::resolution
 	assert(point_to_cover < m_problem.points_number);
 	assert(data.uncovered_points.test(point_to_cover));
 
-	const dynamic_bitset<> subsets_covering_not_selected =
-	  m_subsets_covering_points[point_to_cover] & ~data.current_solution.selected_subsets;
-	assert(subsets_covering_not_selected.any());
-	if(subsets_covering_not_selected.none())
+	size_t add_subset = 0;
+	bool add_subset_is_tabu = true;
+	std::pair<int, int> best_score_minus_timestamp(std::numeric_limits<int>::min(),
+	                                               std::numeric_limits<int>::max());
+	bool found = false;
+	for(size_t subset_covering: m_subsets_covering_points[point_to_cover])
 	{
-		LOGGER->error("No subset not selected cover this point, problem not preprocessed?");
-		abort();
-	}
-	size_t add_subset = subsets_covering_not_selected.find_first();
-	bool add_subset_is_tabu = is_tabu(data, add_subset);
-	std::pair<int, int> best_score_minus_timestamp(data.subsets_information[add_subset].score,
-	                                               -data.subsets_information[add_subset].timestamp);
-	subsets_covering_not_selected.iterate_bits_on([&](size_t bit_on) noexcept {
-		if(!data.subsets_information[bit_on].canAddToSolution)
+		if(data.current_solution.selected_subsets.test(subset_covering))
 		{
-			return;
+			continue;
 		}
+		if(!data.subsets_information[subset_covering].canAddToSolution)
+		{
+			continue;
+		}
+
 		const std::pair<int, int> current_score_minus_timestamp(
-		  data.subsets_information[bit_on].score, -data.subsets_information[bit_on].timestamp);
+		  data.subsets_information[subset_covering].score,
+		  -data.subsets_information[subset_covering].timestamp);
 		if(add_subset_is_tabu)
 		{
 			best_score_minus_timestamp = current_score_minus_timestamp;
-			add_subset = bit_on;
+			add_subset = subset_covering;
 			add_subset_is_tabu = is_tabu(data, add_subset);
-			return;
+			found = true;
+			continue;
 		}
-		if(current_score_minus_timestamp > best_score_minus_timestamp && !is_tabu(data, bit_on))
+		if(current_score_minus_timestamp > best_score_minus_timestamp
+		   && !is_tabu(data, subset_covering))
 		{
 			best_score_minus_timestamp = current_score_minus_timestamp;
-			add_subset = bit_on;
+			add_subset = subset_covering;
 		}
-	});
+	}
+	ensure(found);
 
 	if(is_tabu(data, add_subset))
 	{
