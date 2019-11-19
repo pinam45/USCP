@@ -204,14 +204,14 @@ uscp::rwls::report uscp::rwls::rwls::improve(const uscp::solution& solution,
 		// remove subset
 		const size_t subset_to_remove = select_subset_to_remove(data);
 		remove_subset(data, subset_to_remove);
-		data.subsets_information[subset_to_remove].timestamp = static_cast<int>(step);
+		data.subsets_information[subset_to_remove].timestamp = static_cast<ssize_t>(step);
 
 		// add subset
 		const size_t selected_point = select_uncovered_point(data);
 		const size_t subset_to_add = select_subset_to_add(data, selected_point);
 		add_subset(data, subset_to_add);
 
-		data.subsets_information[subset_to_add].timestamp = static_cast<int>(step);
+		data.subsets_information[subset_to_add].timestamp = static_cast<ssize_t>(step);
 		make_tabu(data, subset_to_add);
 
 		// update points weights
@@ -265,12 +265,12 @@ uscp::rwls::rwls::resolution_data::resolution_data(uscp::solution& solution,
 	subsets_information.resize(solution.problem.subsets_number);
 }
 
-int uscp::rwls::rwls::compute_subset_score(const uscp::rwls::rwls::resolution_data& data,
-                                           size_t subset_number) noexcept
+ssize_t uscp::rwls::rwls::compute_subset_score(const uscp::rwls::rwls::resolution_data& data,
+                                               size_t subset_number) noexcept
 {
 	assert(subset_number < m_problem.subsets_number);
 
-	int subset_score = 0;
+	ssize_t subset_score = 0;
 	if(data.current_solution.selected_subsets[subset_number])
 	{
 		// if in solution, gain score for points covered only by the subset
@@ -505,7 +505,7 @@ size_t uscp::rwls::rwls::select_subset_to_remove_no_timestamp(
 {
 	assert(data.current_solution.selected_subsets.any());
 	size_t selected_subset = data.current_solution.selected_subsets.find_first();
-	int best_score = data.subsets_information[selected_subset].score;
+	ssize_t best_score = data.subsets_information[selected_subset].score;
 	data.current_solution.selected_subsets.iterate_bits_on([&](size_t bit_on) noexcept {
 		if(data.subsets_information[bit_on].score > best_score)
 		{
@@ -522,11 +522,11 @@ size_t uscp::rwls::rwls::select_subset_to_remove(
 {
 	assert(data.current_solution.selected_subsets.any());
 	size_t remove_subset = data.current_solution.selected_subsets.find_first();
-	std::pair<int, int> best_score_minus_timestamp(
+	std::pair<ssize_t, ssize_t> best_score_minus_timestamp(
 	  data.subsets_information[remove_subset].score,
 	  -data.subsets_information[remove_subset].timestamp);
 	data.current_solution.selected_subsets.iterate_bits_on([&](size_t bit_on) noexcept {
-		const std::pair<int, int> current_score_timestamp(
+		const std::pair<ssize_t, ssize_t> current_score_timestamp(
 		  data.subsets_information[bit_on].score, -data.subsets_information[bit_on].timestamp);
 		if(current_score_timestamp > best_score_minus_timestamp && !is_tabu(data, bit_on))
 		{
@@ -546,8 +546,8 @@ size_t uscp::rwls::rwls::select_subset_to_add(const uscp::rwls::rwls::resolution
 
 	size_t add_subset = 0;
 	bool add_subset_is_tabu = true;
-	std::pair<int, int> best_score_minus_timestamp(std::numeric_limits<int>::min(),
-	                                               std::numeric_limits<int>::max());
+	std::pair<ssize_t, ssize_t> best_score_minus_timestamp(std::numeric_limits<ssize_t>::min(),
+	                                                       std::numeric_limits<ssize_t>::max());
 	bool found = false;
 	for(size_t subset_covering: m_subsets_covering_points[point_to_cover])
 	{
@@ -560,7 +560,7 @@ size_t uscp::rwls::rwls::select_subset_to_add(const uscp::rwls::rwls::resolution
 			continue;
 		}
 
-		const std::pair<int, int> current_score_minus_timestamp(
+		const std::pair<ssize_t, ssize_t> current_score_minus_timestamp(
 		  data.subsets_information[subset_covering].score,
 		  -data.subsets_information[subset_covering].timestamp);
 		if(add_subset_is_tabu)

@@ -77,14 +77,14 @@ namespace uscp::rwls
 	private:
 		struct point_information final // row
 		{
-			int weight = 1;
+			ssize_t weight = 1;
 			size_t subsets_covering_in_solution = 0;
 		};
 
 		struct subset_information final // column
 		{
-			int score = 0;
-			int timestamp = 1;
+			ssize_t score = 0;
+			ssize_t timestamp = 1;
 			bool canAddToSolution = true;
 		};
 
@@ -104,8 +104,8 @@ namespace uscp::rwls
 			explicit resolution_data(solution& solution, random_engine& generator) noexcept;
 		};
 
-		[[gnu::hot]] int compute_subset_score(const resolution_data& data,
-		                                      size_t subset_number) noexcept;
+		[[gnu::hot]] ssize_t compute_subset_score(const resolution_data& data,
+		                                          size_t subset_number) noexcept;
 		[[gnu::hot]] void init(resolution_data& data) noexcept;
 
 		[[gnu::hot]] void add_subset(resolution_data& data, size_t subset_number) noexcept;
