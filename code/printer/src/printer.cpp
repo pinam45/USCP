@@ -9,6 +9,7 @@
 #include "common/utils/logger.hpp"
 #include "common/data/instances.hpp"
 #include "common/utils/timer.hpp"
+#include "common/utils/utils.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -251,33 +252,6 @@ namespace
 		}
 	};
 	const memetic_report_less_t memetic_report_less;
-} // namespace
-
-namespace
-{
-	template<typename T>
-	size_t count_common_elements_sorted(const std::vector<T>& a, const std::vector<T>& b)
-	{
-		size_t i_a = 0;
-		size_t i_b = 0;
-		size_t count = 0;
-		while(i_a < a.size() && i_b < b.size())
-		{
-			if(a[i_a] < b[i_b])
-			{
-				++i_a;
-			}
-			else
-			{
-				if(b[i_b] == a[i_a])
-				{
-					++count;
-				}
-				++i_b;
-			}
-		}
-		return count;
-	}
 } // namespace
 
 printer::printer(std::string_view output_prefix) noexcept
