@@ -13,6 +13,7 @@
 #include "solver/algorithms/crossovers/subproblem_random.hpp"
 #include "solver/algorithms/crossovers/subproblem_greedy.hpp"
 #include "solver/algorithms/crossovers/greedy_merge.hpp"
+#include "solver/algorithms/wcrossover/reset.hpp"
 #include "solver/data/instances.hpp"
 #include "common/utils/logger.hpp"
 #include "common/utils/random.hpp"
@@ -406,7 +407,8 @@ int main(int argc, char* argv[])
 				};
 				if(memetic_crossover == uscp::crossover::merge::to_string())
 				{
-					uscp::memetic::memetic<uscp::crossover::merge> memetic_alg_(instance);
+					uscp::memetic::memetic<uscp::crossover::merge, uscp::wcrossover::reset>
+					  memetic_alg_(instance);
 					if(!process_memetic(memetic_alg_))
 					{
 						return EXIT_FAILURE;
@@ -414,8 +416,9 @@ int main(int argc, char* argv[])
 				}
 				else if(memetic_crossover == uscp::crossover::subproblem_random::to_string())
 				{
-					uscp::memetic::memetic<uscp::crossover::subproblem_random> memetic_alg_(
-					  instance);
+					uscp::memetic::memetic<uscp::crossover::subproblem_random,
+					                       uscp::wcrossover::reset>
+					  memetic_alg_(instance);
 					if(!process_memetic(memetic_alg_))
 					{
 						return EXIT_FAILURE;
@@ -423,8 +426,9 @@ int main(int argc, char* argv[])
 				}
 				else if(memetic_crossover == uscp::crossover::subproblem_greedy::to_string())
 				{
-					uscp::memetic::memetic<uscp::crossover::subproblem_greedy> memetic_alg_(
-					  instance);
+					uscp::memetic::memetic<uscp::crossover::subproblem_greedy,
+					                       uscp::wcrossover::reset>
+					  memetic_alg_(instance);
 					if(!process_memetic(memetic_alg_))
 					{
 						return EXIT_FAILURE;
@@ -432,7 +436,8 @@ int main(int argc, char* argv[])
 				}
 				else if(memetic_crossover == uscp::crossover::greedy_merge::to_string())
 				{
-					uscp::memetic::memetic<uscp::crossover::greedy_merge> memetic_alg_(instance);
+					uscp::memetic::memetic<uscp::crossover::greedy_merge, uscp::wcrossover::reset>
+					  memetic_alg_(instance);
 					if(!process_memetic(memetic_alg_))
 					{
 						return EXIT_FAILURE;

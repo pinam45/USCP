@@ -57,7 +57,7 @@ namespace uscp::memetic
 		bool load(const report_serial& serial) noexcept;
 	};
 
-	template<typename Crossover>
+	template<typename Crossover, typename WeightsCrossover>
 	class memetic final
 	{
 	public:
@@ -78,6 +78,7 @@ namespace uscp::memetic
 
 		const uscp::problem::instance& m_problem;
 		Crossover m_crossover;
+		WeightsCrossover m_weights_crossover;
 		uscp::rwls::rwls m_rwls;
 		bool m_initialized;
 	};

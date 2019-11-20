@@ -18,21 +18,26 @@
 
 #include <array>
 
-template<typename Crossover>
-uscp::memetic::memetic<Crossover>::memetic(const problem::instance& problem) noexcept
-  : m_problem(problem), m_crossover(problem), m_rwls(problem, NULL_LOGGER), m_initialized(false)
+template<typename Crossover, typename WeightsCrossover>
+uscp::memetic::memetic<Crossover, WeightsCrossover>::memetic(
+  const problem::instance& problem) noexcept
+  : m_problem(problem)
+  , m_crossover(problem)
+  , m_weights_crossover(problem)
+  , m_rwls(problem, NULL_LOGGER)
+  , m_initialized(false)
 {
 }
 
-template<typename Crossover>
-void uscp::memetic::memetic<Crossover>::initialize() noexcept
+template<typename Crossover, typename WeightsCrossover>
+void uscp::memetic::memetic<Crossover, WeightsCrossover>::initialize() noexcept
 {
 	m_rwls.initialize();
 	m_initialized = true;
 }
 
-template<typename Crossover>
-uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
+template<typename Crossover, typename WeightsCrossover>
+uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve(
   uscp::random_engine& generator,
   const uscp::memetic::config& config) noexcept
 {
@@ -49,6 +54,11 @@ uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
 
 	timer timer;
 	std::array<solution, 2> population{solution(m_problem), solution(m_problem)};
+	std::array<std::vector<ssize_t>, 2> population_weights;
+	for(std::vector<ssize_t>& weights: population_weights)
+	{
+		weights.resize(m_problem.points_number, 1);
+	}
 
 	for(solution& solution: population)
 	{
@@ -73,11 +83,15 @@ uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
 		                    m_problem.name,
 		                    generation,
 		                    timer.elapsed());
+#pragma omp parallel for default(none) \
+  shared(population, population_weights, rwls_reports, config, generator)
 		for(size_t i = 0; i < population.size(); ++i)
 		{
-			rwls_reports[i] =
-			  m_rwls.improve(population[i], generator, config.rwls_stopping_criterion);
-
+			rwls_reports[i] = m_rwls.improve(
+			  population[i], population_weights[i], generator, config.rwls_stopping_criterion);
+		}
+		for(size_t i = 0; i < rwls_reports.size(); ++i)
+		{
 			const size_t solution_subsets_number =
 			  rwls_reports[i].solution_final.selected_subsets.count();
 			if(solution_subsets_number < best_solution_subsets_number)
@@ -118,10 +132,19 @@ uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
 		                 == rwls_reports[1].solution_final.selected_subsets
 		               ? " [same]"
 		               : "");
-		population[0] = m_crossover.apply1(
-		  rwls_reports[0].solution_final, rwls_reports[1].solution_final, generator);
-		population[1] = m_crossover.apply2(
-		  rwls_reports[0].solution_final, rwls_reports[1].solution_final, generator);
+#pragma omp parallel sections
+		{
+#pragma omp section
+			{
+				population[0] = m_crossover.apply1(
+				  rwls_reports[0].solution_final, rwls_reports[1].solution_final, generator);
+			}
+#pragma omp section
+			{
+				population[1] = m_crossover.apply2(
+				  rwls_reports[0].solution_final, rwls_reports[1].solution_final, generator);
+			}
+		}
 		LOGGER->info("({}) Memetic generation {}: children ({}, {}){}",
 		             m_problem.name,
 		             generation,
@@ -129,6 +152,24 @@ uscp::memetic::report uscp::memetic::memetic<Crossover>::solve(
 		             population[1].selected_subsets.count(),
 		             population[0].selected_subsets == population[1].selected_subsets ? " [same]"
 		                                                                              : "");
+
+#pragma omp parallel sections
+		{
+#pragma omp section
+			{
+				population_weights[0] =
+				  m_weights_crossover.apply1(rwls_reports[0].final_points_weights,
+				                             rwls_reports[0].final_points_weights,
+				                             generator);
+			}
+#pragma omp section
+			{
+				population_weights[1] =
+				  m_weights_crossover.apply2(rwls_reports[0].final_points_weights,
+				                             rwls_reports[0].final_points_weights,
+				                             generator);
+			}
+		}
 
 		++generation;
 	}

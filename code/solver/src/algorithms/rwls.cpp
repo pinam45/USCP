@@ -336,7 +336,7 @@ void uscp::rwls::rwls::init(uscp::rwls::rwls::resolution_data& data,
 
 	// points information
 	dynamic_bitset<> tmp;
-	#pragma omp parallel for default(none) shared(data, initial_points_weights) private(tmp)
+#pragma omp parallel for default(none) shared(data, initial_points_weights) private(tmp)
 	for(size_t i = 0; i < m_problem.points_number; ++i)
 	{
 		data.points_information[i].weight = initial_points_weights[i];
@@ -350,8 +350,8 @@ void uscp::rwls::rwls::init(uscp::rwls::rwls::resolution_data& data,
 		}
 	}
 
-	// subset scores
-	#pragma omp parallel for default(none) shared(data)
+// subset scores
+#pragma omp parallel for default(none) shared(data)
 	for(size_t i = 0; i < m_problem.subsets_number; ++i)
 	{
 		data.subsets_information[i].score = compute_subset_score(data, i);
