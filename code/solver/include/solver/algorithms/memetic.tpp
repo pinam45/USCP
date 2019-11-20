@@ -23,7 +23,7 @@ uscp::memetic::memetic<Crossover, WeightsCrossover>::memetic(
   const problem::instance& problem) noexcept
   : m_problem(problem)
   , m_crossover(problem)
-  , m_weights_crossover(problem)
+  , m_wcrossover(problem)
   , m_rwls(problem, NULL_LOGGER)
   , m_initialized(false)
 {
@@ -51,6 +51,7 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 	report report(m_problem);
 	report.solve_config = config;
 	report.crossover_operator = m_crossover.to_string();
+	report.wcrossover_operator = m_wcrossover.to_string();
 
 	timer timer;
 	std::array<solution, 2> population{solution(m_problem), solution(m_problem)};
@@ -158,17 +159,15 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 		{
 #pragma omp section
 			{
-				population_weights[0] =
-				  m_weights_crossover.apply1(rwls_reports[0].points_weights_final,
-				                             rwls_reports[0].points_weights_final,
-				                             generator);
+				population_weights[0] = m_wcrossover.apply1(rwls_reports[0].points_weights_final,
+				                                            rwls_reports[0].points_weights_final,
+				                                            generator);
 			}
 #pragma omp section
 			{
-				population_weights[1] =
-				  m_weights_crossover.apply2(rwls_reports[0].points_weights_final,
-				                             rwls_reports[0].points_weights_final,
-				                             generator);
+				population_weights[1] = m_wcrossover.apply2(rwls_reports[0].points_weights_final,
+				                                            rwls_reports[0].points_weights_final,
+				                                            generator);
 			}
 		}
 

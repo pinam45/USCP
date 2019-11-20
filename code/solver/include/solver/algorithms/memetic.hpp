@@ -80,7 +80,7 @@ namespace uscp::memetic
 
 		const uscp::problem::instance& m_problem;
 		Crossover m_crossover;
-		WeightsCrossover m_weights_crossover;
+		WeightsCrossover m_wcrossover;
 		uscp::rwls::rwls m_rwls;
 		bool m_initialized;
 	};
