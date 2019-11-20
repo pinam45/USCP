@@ -158,15 +158,15 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 #pragma omp section
 			{
 				population_weights[0] =
-				  m_weights_crossover.apply1(rwls_reports[0].final_points_weights,
-				                             rwls_reports[0].final_points_weights,
+				  m_weights_crossover.apply1(rwls_reports[0].points_weights_final,
+				                             rwls_reports[0].points_weights_final,
 				                             generator);
 			}
 #pragma omp section
 			{
 				population_weights[1] =
-				  m_weights_crossover.apply2(rwls_reports[0].final_points_weights,
-				                             rwls_reports[0].final_points_weights,
+				  m_weights_crossover.apply2(rwls_reports[0].points_weights_final,
+				                             rwls_reports[0].points_weights_final,
 				                             generator);
 			}
 		}

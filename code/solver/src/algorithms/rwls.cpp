@@ -77,9 +77,9 @@ bool uscp::rwls::operator<(const uscp::rwls::position& lhs,
 
 uscp::rwls::report::report(const problem::instance& problem) noexcept
   : solution_initial(problem)
-  , initial_points_weights(problem.points_number, 0)
+  , points_weights_initial(problem.points_number, 0)
   , solution_final(problem)
-  , final_points_weights(problem.points_number, 0)
+  , points_weights_final(problem.points_number, 0)
   , found_at()
   , ended_at()
   , stopping_criterion()
@@ -91,9 +91,9 @@ uscp::rwls::report_serial uscp::rwls::report::serialize() const noexcept
 	report_serial serial;
 	assert(solution_initial.problem.name == solution_final.problem.name);
 	serial.solution_initial = solution_initial.serialize();
-	serial.initial_points_weights = initial_points_weights;
+	serial.points_weights_initial = points_weights_initial;
 	serial.solution_final = solution_final.serialize();
-	serial.final_points_weights = final_points_weights;
+	serial.points_weights_final = points_weights_final;
 	serial.found_at = found_at.serialize();
 	serial.ended_at = ended_at.serialize();
 	serial.stopping_criterion = stopping_criterion.serialize();
@@ -107,13 +107,13 @@ bool uscp::rwls::report::load(const uscp::rwls::report_serial& serial) noexcept
 		LOGGER->warn("Failed to load initial solution");
 		return false;
 	}
-	initial_points_weights = serial.initial_points_weights;
+	points_weights_initial = serial.points_weights_initial;
 	if(!solution_final.load(serial.solution_final))
 	{
 		LOGGER->warn("Failed to load final solution");
 		return false;
 	}
-	final_points_weights = serial.final_points_weights;
+	points_weights_final = serial.points_weights_final;
 	if(!found_at.load(serial.found_at))
 	{
 		LOGGER->warn("Failed to load found at position");
@@ -167,11 +167,11 @@ uscp::rwls::report uscp::rwls::rwls::improve(const uscp::solution& solution,
 }
 
 uscp::rwls::report uscp::rwls::rwls::improve(const uscp::solution& solution,
-                                             const std::vector<ssize_t>& initial_points_weights,
+                                             const std::vector<ssize_t>& points_weights_initial,
                                              uscp::random_engine& generator,
                                              uscp::rwls::position stopping_criterion) noexcept
 {
-	assert(initial_points_weights.size() == m_problem.points_number);
+	assert(points_weights_initial.size() == m_problem.points_number);
 
 	if(!m_initialized)
 	{
@@ -188,11 +188,11 @@ uscp::rwls::report uscp::rwls::rwls::improve(const uscp::solution& solution,
 	report.found_at = {0, 0};
 	report.ended_at = {0, 0};
 	report.stopping_criterion = stopping_criterion;
-	report.initial_points_weights = initial_points_weights;
+	report.points_weights_initial = points_weights_initial;
 
 	timer timer;
 	resolution_data data(report.solution_final, generator);
-	init(data, initial_points_weights);
+	init(data, points_weights_initial);
 	SPDLOG_LOGGER_DEBUG(m_logger, "({}) RWLS inited in {}s", m_problem.name, timer.elapsed());
 
 	timer.reset();
@@ -214,7 +214,7 @@ uscp::rwls::report uscp::rwls::rwls::improve(const uscp::solution& solution,
 			report.found_at.time = timer.elapsed();
 			for(size_t i = 0; i < m_problem.points_number; ++i)
 			{
-				report.final_points_weights[i] = data.points_information[i].weight;
+				report.points_weights_final[i] = data.points_information[i].weight;
 			}
 			SPDLOG_LOGGER_DEBUG(m_logger,
 			                    "({}) RWLS new best solution with {} subsets at step {} in {}s",
@@ -330,16 +330,16 @@ ssize_t uscp::rwls::rwls::compute_subset_score(const uscp::rwls::rwls::resolutio
 }
 
 void uscp::rwls::rwls::init(uscp::rwls::rwls::resolution_data& data,
-                            const std::vector<ssize_t>& initial_points_weights) noexcept
+                            const std::vector<ssize_t>& points_weights_initial) noexcept
 {
-	assert(initial_points_weights.size() == m_problem.points_number);
+	assert(points_weights_initial.size() == m_problem.points_number);
 
 	// points information
 	dynamic_bitset<> tmp;
-#pragma omp parallel for default(none) shared(data, initial_points_weights) private(tmp)
+#pragma omp parallel for default(none) shared(data, points_weights_initial) private(tmp)
 	for(size_t i = 0; i < m_problem.points_number; ++i)
 	{
-		data.points_information[i].weight = initial_points_weights[i];
+		data.points_information[i].weight = points_weights_initial[i];
 		data.points_information[i].subsets_covering_in_solution = 0;
 		for(size_t subset_covering_point: m_subsets_covering_points[i])
 		{

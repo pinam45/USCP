@@ -25,9 +25,9 @@ void uscp::rwls::to_json(nlohmann::json& j, const uscp::rwls::report_serial& ser
 {
 	j = nlohmann::json{
 	  {"solution_initial", serial.solution_initial},
-	  {"initial_points_weights", serial.initial_points_weights},
+	  {"points_weights_initial", serial.points_weights_initial},
 	  {"solution_final", serial.solution_final},
-	  {"final_points_weights", serial.final_points_weights},
+	  {"points_weights_final", serial.points_weights_final},
 	  {"found_at", serial.found_at},
 	  {"ended_at", serial.ended_at},
 	  {"stopping_criterion", serial.stopping_criterion},
@@ -49,6 +49,6 @@ void uscp::rwls::from_json(const nlohmann::json& j, uscp::rwls::report_serial& s
 	serial.stopping_criterion = j.value<position_serial>("stopping_criterion", {0, 0});
 
 	// support for versions after 3a02851fe586fd37329ebd5309e9d92ba5d76dfc
-	serial.initial_points_weights = j.value<std::vector<ssize_t>>("initial_points_weights", {});
-	serial.final_points_weights = j.value<std::vector<ssize_t>>("final_points_weights", {});
+	serial.points_weights_initial = j.value<std::vector<ssize_t>>("points_weights_initial", {});
+	serial.points_weights_final = j.value<std::vector<ssize_t>>("points_weights_final", {});
 }
