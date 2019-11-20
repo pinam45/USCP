@@ -15,6 +15,9 @@
 #include "solver/algorithms/crossovers/greedy_merge.hpp"
 #include "solver/algorithms/crossovers/identity.hpp"
 #include "solver/algorithms/wcrossover/reset.hpp"
+#include "solver/algorithms/wcrossover/keep.hpp"
+#include "solver/algorithms/wcrossover/average.hpp"
+#include "solver/algorithms/wcrossover/mix_random.hpp"
 #include "solver/data/instances.hpp"
 #include "common/utils/logger.hpp"
 #include "common/utils/random.hpp"
@@ -40,6 +43,80 @@
 namespace
 {
 	constexpr bool CHECK_INSTANCES = false;
+
+	template<typename... Crossovers>
+	struct crossovers
+	{
+	};
+
+	template<typename... WCrossovers>
+	struct wcrossovers
+	{
+	};
+
+	template<typename Crossover>
+	struct crossover
+	{
+		typedef Crossover type;
+	};
+
+	template<typename WCrossover>
+	struct wcrossover
+	{
+		typedef WCrossover type;
+	};
+
+	template<typename Lambda, typename Crossover, typename WCrossover>
+	bool foreach_crossover_wcrossover(Lambda&& lambda,
+	                                  crossovers<Crossover>,
+	                                  wcrossovers<WCrossover>) noexcept
+	{
+		return lambda(crossover<Crossover>{}, wcrossover<WCrossover>{});
+	}
+
+	template<typename Lambda, typename Crossover, typename WCrossover, typename... WCrossovers>
+	bool foreach_crossover_wcrossover(Lambda&& lambda,
+	                                  crossovers<Crossover>,
+	                                  wcrossovers<WCrossover, WCrossovers...>) noexcept
+	{
+		if(foreach_crossover_wcrossover(
+		     std::forward<Lambda>(lambda), crossovers<Crossover>{}, wcrossovers<WCrossover>{}))
+		{
+			return foreach_crossover_wcrossover(
+			  std::forward<Lambda>(lambda), crossovers<Crossover>{}, wcrossovers<WCrossovers...>{});
+		}
+		return false;
+	}
+
+	template<typename Lambda, typename Crossover, typename... Crossovers, typename... WCrossovers>
+	bool foreach_crossover_wcrossover(Lambda&& lambda,
+	                                  crossovers<Crossover, Crossovers...>,
+	                                  wcrossovers<WCrossovers...>) noexcept
+	{
+		if(foreach_crossover_wcrossover(
+		     std::forward<Lambda>(lambda), crossovers<Crossover>{}, wcrossovers<WCrossovers...>{}))
+		{
+			return foreach_crossover_wcrossover(std::forward<Lambda>(lambda),
+			                                    crossovers<Crossovers...>{},
+			                                    wcrossovers<WCrossovers...>{});
+		}
+		return false;
+	}
+
+	template<typename Lambda, typename... Crossovers, typename... WCrossovers>
+	bool forall_crossover_wcrossover(Lambda&& lambda) noexcept
+	{
+		return foreach_crossover_wcrossover(std::forward<Lambda>(lambda),
+		                                    crossovers<uscp::crossover::merge,
+		                                               uscp::crossover::subproblem_random,
+		                                               uscp::crossover::subproblem_greedy,
+		                                               uscp::crossover::greedy_merge,
+		                                               uscp::crossover::identity>{},
+		                                    wcrossovers<uscp::wcrossover::reset,
+		                                                uscp::wcrossover::keep,
+		                                                uscp::wcrossover::average,
+		                                                uscp::wcrossover::mix_random>{});
+	}
 } // namespace
 
 int main(int argc, char* argv[])
@@ -53,6 +130,7 @@ int main(int argc, char* argv[])
 	bool memetic = false;
 	uscp::memetic::config memetic_config;
 	std::string memetic_crossover;
+	std::string memetic_wcrossover;
 	try
 	{
 		std::ostringstream help_txt;
@@ -165,6 +243,12 @@ int main(int argc, char* argv[])
 		  cxxopts::Option("memetic_crossover",
 		                  "Memetic crossover operator",
 		                  cxxopts::value<std::string>(memetic_crossover)->default_value("default"),
+		                  "OPERATOR"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("memetic_wcrossover",
+		                  "Memetic RWLS weights crossover operator",
+		                  cxxopts::value<std::string>(memetic_wcrossover)->default_value("default"),
 		                  "OPERATOR"));
 		cxxopts::ParseResult result = options.parse(argc, argv);
 
@@ -406,56 +490,43 @@ int main(int argc, char* argv[])
 					data_instance["memetic"] = std::move(data_memetic);
 					return true;
 				};
-				if(memetic_crossover == uscp::crossover::merge::to_string())
-				{
-					uscp::memetic::memetic<uscp::crossover::merge, uscp::wcrossover::reset>
-					  memetic_alg_(instance);
-					if(!process_memetic(memetic_alg_))
+
+				bool found_crossover = false;
+				bool found_wcrossover = false;
+				bool success = false;
+				forall_crossover_wcrossover([&](auto crossover, auto wcrossover) {
+					typedef typename decltype(crossover)::type crossover_type;
+					typedef typename decltype(wcrossover)::type wcrossover_type;
+					if(memetic_crossover == crossover_type::to_string())
 					{
-						return EXIT_FAILURE;
+						found_crossover = true;
+						if(memetic_wcrossover == wcrossover_type::to_string())
+						{
+							found_wcrossover = true;
+							uscp::memetic::memetic<crossover_type, wcrossover_type> memetic_alg_(
+							  instance);
+							if(process_memetic(memetic_alg_))
+							{
+								success = true;
+							}
+							return false;
+						}
 					}
-				}
-				else if(memetic_crossover == uscp::crossover::subproblem_random::to_string())
-				{
-					uscp::memetic::memetic<uscp::crossover::subproblem_random,
-					                       uscp::wcrossover::reset>
-					  memetic_alg_(instance);
-					if(!process_memetic(memetic_alg_))
-					{
-						return EXIT_FAILURE;
-					}
-				}
-				else if(memetic_crossover == uscp::crossover::subproblem_greedy::to_string())
-				{
-					uscp::memetic::memetic<uscp::crossover::subproblem_greedy,
-					                       uscp::wcrossover::reset>
-					  memetic_alg_(instance);
-					if(!process_memetic(memetic_alg_))
-					{
-						return EXIT_FAILURE;
-					}
-				}
-				else if(memetic_crossover == uscp::crossover::greedy_merge::to_string())
-				{
-					uscp::memetic::memetic<uscp::crossover::greedy_merge, uscp::wcrossover::reset>
-					  memetic_alg_(instance);
-					if(!process_memetic(memetic_alg_))
-					{
-						return EXIT_FAILURE;
-					}
-				}
-				else if(memetic_crossover == uscp::crossover::identity::to_string())
-				{
-					uscp::memetic::memetic<uscp::crossover::identity, uscp::wcrossover::reset>
-					  memetic_alg_(instance);
-					if(!process_memetic(memetic_alg_))
-					{
-						return EXIT_FAILURE;
-					}
-				}
-				else
+					return true;
+				});
+				if(!found_crossover)
 				{
 					LOGGER->error("No crossover operator named \"{}\" exist", memetic_crossover);
+					return EXIT_FAILURE;
+				}
+				if(!found_wcrossover)
+				{
+					LOGGER->error("No RWLS weights crossover operator named \"{}\" exist",
+					              memetic_wcrossover);
+					return EXIT_FAILURE;
+				}
+				if(!success)
+				{
 					return EXIT_FAILURE;
 				}
 			}
