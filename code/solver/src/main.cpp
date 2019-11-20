@@ -13,6 +13,7 @@
 #include "solver/algorithms/crossovers/subproblem_random.hpp"
 #include "solver/algorithms/crossovers/subproblem_greedy.hpp"
 #include "solver/algorithms/crossovers/greedy_merge.hpp"
+#include "solver/algorithms/crossovers/identity.hpp"
 #include "solver/algorithms/wcrossover/reset.hpp"
 #include "solver/data/instances.hpp"
 #include "common/utils/logger.hpp"
@@ -437,6 +438,15 @@ int main(int argc, char* argv[])
 				else if(memetic_crossover == uscp::crossover::greedy_merge::to_string())
 				{
 					uscp::memetic::memetic<uscp::crossover::greedy_merge, uscp::wcrossover::reset>
+					  memetic_alg_(instance);
+					if(!process_memetic(memetic_alg_))
+					{
+						return EXIT_FAILURE;
+					}
+				}
+				else if(memetic_crossover == uscp::crossover::identity::to_string())
+				{
+					uscp::memetic::memetic<uscp::crossover::identity, uscp::wcrossover::reset>
 					  memetic_alg_(instance);
 					if(!process_memetic(memetic_alg_))
 					{
