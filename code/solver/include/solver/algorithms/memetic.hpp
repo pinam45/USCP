@@ -42,10 +42,12 @@ namespace uscp::memetic
 	struct report final
 	{
 		solution solution_final;
+		std::vector<ssize_t> points_weights_final;
 		position found_at;
 		position ended_at;
 		config solve_config;
 		std::string crossover_operator;
+		std::string wcrossover_operator;
 
 		explicit report(const problem::instance& problem) noexcept;
 		report(const report&) = default;

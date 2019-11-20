@@ -41,10 +41,12 @@ void uscp::memetic::to_json(nlohmann::json& j, const uscp::memetic::report_seria
 {
 	j = nlohmann::json{
 	  {"solution_final", serial.solution_final},
+	  {"points_weights_final", serial.points_weights_final},
 	  {"found_at", serial.found_at},
 	  {"ended_at", serial.ended_at},
 	  {"solve_config", serial.solve_config},
 	  {"crossover_operator", serial.crossover_operator},
+	  {"wcrossover_operator", serial.wcrossover_operator},
 	};
 }
 
@@ -55,4 +57,8 @@ void uscp::memetic::from_json(const nlohmann::json& j, uscp::memetic::report_ser
 	j.at("ended_at").get_to(serial.ended_at);
 	j.at("solve_config").get_to(serial.solve_config);
 	j.at("crossover_operator").get_to(serial.crossover_operator);
+
+	// support for versions after de859b75cec4bb457af200479b4deb071df256e9
+	serial.points_weights_final = j.value<std::vector<ssize_t>>("points_weights_final", {});
+	serial.wcrossover_operator = j.value<std::string>("wcrossover_operator", {});
 }

@@ -109,6 +109,7 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 				report.found_at.rwls_cumulative_position =
 				  rwls_cumulative_position + rwls_reports[i].found_at;
 				report.found_at.time = timer.elapsed();
+				report.points_weights_final = rwls_reports[i].points_weights_final;
 				best_solution_subsets_number = solution_subsets_number;
 				LOGGER->info(
 				  "({}) Memetic new best solution with {} subsets at generation {} in {}s",

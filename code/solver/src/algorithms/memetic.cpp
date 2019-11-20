@@ -62,10 +62,12 @@ uscp::memetic::report_serial uscp::memetic::report::serialize() const noexcept
 {
 	report_serial serial;
 	serial.solution_final = solution_final.serialize();
+	serial.points_weights_final = points_weights_final;
 	serial.found_at = found_at.serialize();
 	serial.ended_at = ended_at.serialize();
 	serial.solve_config = solve_config.serialize();
 	serial.crossover_operator = crossover_operator;
+	serial.wcrossover_operator = wcrossover_operator;
 	return serial;
 }
 
@@ -76,6 +78,7 @@ bool uscp::memetic::report::load(const uscp::memetic::report_serial& serial) noe
 		LOGGER->warn("Failed to load final solution");
 		return false;
 	}
+	points_weights_final = serial.points_weights_final;
 	if(!found_at.load(serial.found_at))
 	{
 		LOGGER->warn("Failed to load solution found at position");
@@ -92,6 +95,7 @@ bool uscp::memetic::report::load(const uscp::memetic::report_serial& serial) noe
 		return false;
 	}
 	crossover_operator = serial.crossover_operator;
+	wcrossover_operator = serial.wcrossover_operator;
 	return true;
 }
 

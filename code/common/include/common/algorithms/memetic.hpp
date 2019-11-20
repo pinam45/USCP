@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <limits>
 #include <string>
+#include <vector>
 
 namespace uscp::memetic
 {
@@ -36,10 +37,12 @@ namespace uscp::memetic
 	struct report_serial final
 	{
 		solution_serial solution_final;
+		std::vector<ssize_t> points_weights_final;
 		position_serial found_at;
 		position_serial ended_at;
 		config_serial solve_config;
 		std::string crossover_operator;
+		std::string wcrossover_operator;
 	};
 	void to_json(nlohmann::json& j, const report_serial& serial);
 	void from_json(const nlohmann::json& j, report_serial& serial);
