@@ -23,6 +23,10 @@ namespace uscp::crossover
 		explicit greedy_merge(const uscp::problem::instance& problem_): problem(problem_)
 		{
 		}
+		greedy_merge(const greedy_merge&) = default;
+		greedy_merge(greedy_merge&&) noexcept = default;
+		greedy_merge& operator=(const greedy_merge& other) = delete;
+		greedy_merge& operator=(greedy_merge&& other) noexcept = delete;
 
 		solution apply(const solution& a,
 		               const solution& b,

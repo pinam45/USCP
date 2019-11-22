@@ -24,6 +24,10 @@ namespace uscp::wcrossover
 		  : problem(problem_), weights(problem_.points_number, 1)
 		{
 		}
+		reset(const reset&) = default;
+		reset(reset&&) noexcept = default;
+		reset& operator=(const reset& other) = delete;
+		reset& operator=(reset&& other) noexcept = delete;
 
 		std::vector<ssize_t> apply1([[maybe_unused]] const std::vector<ssize_t>& a,
 		                            [[maybe_unused]] const std::vector<ssize_t>& b,
@@ -45,7 +49,7 @@ namespace uscp::wcrossover
 		}
 
 		const uscp::problem::instance& problem;
-		const std::vector<ssize_t> weights;
+		std::vector<ssize_t> weights;
 	};
 } // namespace uscp::wcrossover
 

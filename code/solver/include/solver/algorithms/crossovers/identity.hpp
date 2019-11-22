@@ -23,6 +23,10 @@ namespace uscp::crossover
 		explicit identity(const uscp::problem::instance& problem_): problem(problem_)
 		{
 		}
+		identity(const identity&) = default;
+		identity(identity&&) noexcept = default;
+		identity& operator=(const identity& other) = delete;
+		identity& operator=(identity&& other) noexcept = delete;
 
 		solution apply1(const solution& a,
 		                [[maybe_unused]] const solution& b,

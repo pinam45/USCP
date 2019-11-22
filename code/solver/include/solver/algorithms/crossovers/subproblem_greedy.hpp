@@ -24,6 +24,10 @@ namespace uscp::crossover
 		explicit subproblem_greedy(const uscp::problem::instance& problem_): problem(problem_)
 		{
 		}
+		subproblem_greedy(const subproblem_greedy&) = default;
+		subproblem_greedy(subproblem_greedy&&) noexcept = default;
+		subproblem_greedy& operator=(const subproblem_greedy& other) = delete;
+		subproblem_greedy& operator=(subproblem_greedy&& other) noexcept = delete;
 
 		solution apply1(const solution& a,
 		                const solution& b,

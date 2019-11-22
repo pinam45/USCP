@@ -23,6 +23,10 @@ namespace uscp::crossover
 		explicit merge(const uscp::problem::instance& problem_): problem(problem_)
 		{
 		}
+		merge(const merge&) = default;
+		merge(merge&&) noexcept = default;
+		merge& operator=(const merge& other) = delete;
+		merge& operator=(merge&& other) noexcept = delete;
 
 		solution apply(const solution& a,
 		               const solution& b,

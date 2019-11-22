@@ -23,6 +23,10 @@ namespace uscp::crossover
 		explicit subproblem_random(const uscp::problem::instance& problem_): problem(problem_)
 		{
 		}
+		subproblem_random(const subproblem_random&) = default;
+		subproblem_random(subproblem_random&&) noexcept = default;
+		subproblem_random& operator=(const subproblem_random& other) = delete;
+		subproblem_random& operator=(subproblem_random&& other) noexcept = delete;
 
 		solution apply(const solution& a, const solution& b, random_engine& generator) const
 		  noexcept

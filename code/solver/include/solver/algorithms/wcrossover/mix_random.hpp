@@ -23,6 +23,10 @@ namespace uscp::wcrossover
 		explicit mix_random(const uscp::problem::instance& problem_): problem(problem_)
 		{
 		}
+		mix_random(const mix_random&) = default;
+		mix_random(mix_random&&) noexcept = default;
+		mix_random& operator=(const mix_random& other) = delete;
+		mix_random& operator=(mix_random&& other) noexcept = delete;
 
 		[[nodiscard]] std::vector<ssize_t> apply(const std::vector<ssize_t>& a,
 		                                         const std::vector<ssize_t>& b,

@@ -74,7 +74,11 @@ namespace
 		return lambda(crossover<Crossover>{}, wcrossover<WCrossover>{});
 	}
 
-	template<typename Lambda, typename Crossover, typename WCrossover, typename... WCrossovers>
+	template<typename Lambda,
+	         typename Crossover,
+	         typename WCrossover,
+	         typename... WCrossovers,
+	         typename = std::enable_if_t<sizeof...(WCrossovers) >= 1>>
 	bool foreach_crossover_wcrossover(Lambda&& lambda,
 	                                  crossovers<Crossover>,
 	                                  wcrossovers<WCrossover, WCrossovers...>) noexcept
@@ -88,7 +92,11 @@ namespace
 		return false;
 	}
 
-	template<typename Lambda, typename Crossover, typename... Crossovers, typename... WCrossovers>
+	template<typename Lambda,
+	         typename Crossover,
+	         typename... Crossovers,
+	         typename... WCrossovers,
+	         typename = std::enable_if_t<sizeof...(Crossovers) >= 1>>
 	bool foreach_crossover_wcrossover(Lambda&& lambda,
 	                                  crossovers<Crossover, Crossovers...>,
 	                                  wcrossovers<WCrossovers...>) noexcept
@@ -494,7 +502,7 @@ int main(int argc, char* argv[])
 				bool found_crossover = false;
 				bool found_wcrossover = false;
 				bool success = false;
-				forall_crossover_wcrossover([&](auto crossover, auto wcrossover) {
+				forall_crossover_wcrossover([&](auto crossover, auto wcrossover) noexcept {
 					typedef typename decltype(crossover)::type crossover_type;
 					typedef typename decltype(wcrossover)::type wcrossover_type;
 					if(memetic_crossover == crossover_type::to_string())

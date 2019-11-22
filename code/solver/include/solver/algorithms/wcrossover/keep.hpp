@@ -23,6 +23,10 @@ namespace uscp::wcrossover
 		explicit keep(const uscp::problem::instance& problem_): problem(problem_)
 		{
 		}
+		keep(const keep&) = default;
+		keep(keep&&) noexcept = default;
+		keep& operator=(const keep& other) = delete;
+		keep& operator=(keep&& other) noexcept = delete;
 
 		std::vector<ssize_t> apply1(const std::vector<ssize_t>& a,
 		                            [[maybe_unused]] const std::vector<ssize_t>& b,

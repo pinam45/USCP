@@ -23,6 +23,10 @@ namespace uscp::wcrossover
 		explicit average(const uscp::problem::instance& problem_): problem(problem_)
 		{
 		}
+		average(const average&) = default;
+		average(average&&) noexcept = default;
+		average& operator=(const average& other) = delete;
+		average& operator=(average&& other) noexcept = delete;
 
 		[[nodiscard]] std::vector<ssize_t> apply(const std::vector<ssize_t>& a,
 		                                         const std::vector<ssize_t>& b) const noexcept
