@@ -1,5 +1,6 @@
 %!TEX root = ../main.tex
 \rowcolors{1}{gray!10}{white}
+\footnotesize
 \begin{longtable}{@{\extracolsep{0pt}}cc{c}cc{c}ccccc{c}cccccc}
 	\hiderowcolors
 	\caption{Results}\\
@@ -42,7 +43,7 @@
 				<<result/rwls/best>>
 			<*endif*>
 		<*endif*>
-		&  <<round(result/rwls/average,1)>> &  <<result/rwls/best_number>>/<<result/rwls/total_number>> &  <<round(result/rwls/steps)>> &  <<round(result/rwls/time,2)>>
+		&  <<round(result/rwls/average,1)>> &  <<result/rwls/best_number>>/<<result/rwls/total_number>> &  <<sep(round(result/rwls/steps))>> &  <<round(result/rwls/time,2)>>
 	<*else*>
 		--- & --- & --- & --- & ---
 	<*endif*>
@@ -57,7 +58,7 @@
 				<<result/memetic/best>>
 			<*endif*>
 		<*endif*>
-		&  <<round(result/memetic/average,1)>> &  <<result/memetic/best_number>>/<<result/memetic/total_number>> &  <<round(result/memetic/generations,1)>> &  <<round(result/memetic/steps)>> &  <<round(result/memetic/time,2)>>
+		&  <<round(result/memetic/average,1)>> &  <<result/memetic/best_number>>/<<result/memetic/total_number>> &  <<round(result/memetic/generations,1)>> &  <<sep(round(result/memetic/steps))>> &  <<round(result/memetic/time,2)>>
 	<*else*>
 		--- & --- & --- & --- & --- & ---
 	<*endif*>
