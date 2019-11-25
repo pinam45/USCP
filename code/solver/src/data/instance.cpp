@@ -128,8 +128,9 @@ namespace
 		bool reduced = false;
 		dynamic_bitset<> ignored_subsets = reduction.reduction_applied.subsets_dominated
 		                                   | reduction.reduction_applied.subsets_included;
-#pragma omp parallel for default(none) \
-  shared(reduction, ignored_subsets, reduced) if(reduction.parent_instance->subsets_number > 128)
+		dynamic_bitset<> extended_subset; // to minimize memory allocations
+#pragma omp parallel for default(none) shared(reduction, ignored_subsets, reduced) private( \
+  extended_subset) if(reduction.parent_instance->subsets_number > 128)
 		for(size_t i_current_subset = 0;
 		    i_current_subset < reduction.parent_instance->subsets_number;
 		    ++i_current_subset)
@@ -140,9 +141,8 @@ namespace
 				// not a problem: it will just check if a dominated subset dominate other subsets and domination is transitive
 				continue;
 			}
-			dynamic_bitset<> extended_subset =
-			  (reduction.parent_instance->subsets_points[i_current_subset]
-			   | reduction.reduction_applied.points_covered);
+			extended_subset = reduction.parent_instance->subsets_points[i_current_subset];
+			extended_subset |= reduction.reduction_applied.points_covered;
 			for(size_t i_other_subset = 0;
 			    i_other_subset < reduction.parent_instance->subsets_number;
 			    ++i_other_subset)
@@ -178,13 +178,14 @@ namespace
 	{
 		timer timer;
 		bool reduced = false;
+		dynamic_bitset<> points_remaining_subsets;
 		for(size_t i_point = 0; i_point < reduction.parent_instance->points_number; ++i_point)
 		{
 			if(reduction.reduction_applied.points_covered[i_point])
 			{
 				continue;
 			}
-			dynamic_bitset<> points_remaining_subsets = points_subsets[i_point];
+			points_remaining_subsets = points_subsets[i_point];
 			points_remaining_subsets -= reduction.reduction_applied.subsets_dominated;
 			assert(points_remaining_subsets.any());
 			if(points_remaining_subsets.count() == 1)
