@@ -87,6 +87,7 @@ namespace
 	{
 		uscp::memetic::config_serial config;
 		std::string crossover_operator;
+		std::string wcrossover_operator;
 		memetic_result result;
 	};
 	void to_json(nlohmann::json& j, const memetic_config_result& serial);
@@ -173,6 +174,7 @@ namespace
 		j = nlohmann::json{
 		  {"config", serial.config},
 		  {"crossover_operator", serial.crossover_operator},
+		  {"wcrossover_operator", serial.wcrossover_operator},
 		  {"result", serial.result},
 		};
 	}
@@ -297,7 +299,7 @@ printer::printer(std::string_view output_prefix) noexcept
 		txt << std::fixed;
 		if(args.size() > 1)
 		{
-			txt << std::setprecision(args.at(1)->get<size_t>());
+			txt << std::setprecision(args.at(1)->get<int>());
 		}
 		else
 		{
@@ -309,6 +311,21 @@ printer::printer(std::string_view output_prefix) noexcept
 
 	m_environment.add_callback("percent", 1, percent_callback);
 	m_environment.add_callback("percent", 2, percent_callback);
+
+	m_environment.add_callback("sep", 1, [](inja::Arguments& args) {
+		constexpr char separator = ' ';
+		std::string value = std::to_string(args.at(0)->get<size_t>());
+		size_t len = value.length();
+		size_t dlen = 3;
+
+		while(len > dlen)
+		{
+			value.insert(len - dlen, 1, separator);
+			dlen += 4;
+			len += 1;
+		}
+		return value;
+	});
 }
 
 void printer::add(const uscp::greedy::report_serial& report) noexcept
@@ -744,6 +761,7 @@ bool printer::generate_memetic_comparisons_tables(
 			               std::end(comparison.results),
 			               [&](const memetic_config_result& result) {
 				               return result.crossover_operator == memetic.crossover_operator
+				                      && result.wcrossover_operator == memetic.wcrossover_operator
 				                      && result.config.stopping_criterion.generation
 				                           == memetic.solve_config.stopping_criterion.generation;
 			               });
@@ -758,6 +776,7 @@ bool printer::generate_memetic_comparisons_tables(
 				result = &comparison.results.back();
 				result->config = memetic.solve_config;
 				result->crossover_operator = memetic.crossover_operator;
+				result->wcrossover_operator = memetic.wcrossover_operator;
 				result->result.exist = true;
 			}
 			++result->result.total_number;
@@ -803,15 +822,17 @@ bool printer::generate_memetic_comparisons_tables(
 		std::sort(std::begin(comparison.results),
 		          std::end(comparison.results),
 		          [](const memetic_config_result& a, const memetic_config_result& b) {
-			          return std::make_tuple(a.crossover_operator,
-			                                 a.config.stopping_criterion.generation)
-			                 < std::make_tuple(b.crossover_operator,
-			                                   b.config.stopping_criterion.generation);
+			          return std::make_tuple(
+			                   a.result.best, -a.result.best_number, a.result.steps, a.result.time)
+			                 < std::make_tuple(
+			                   b.result.best, -b.result.best_number, b.result.steps, b.result.time);
 		          });
-		std::for_each(
-		  std::begin(comparison.results),
-		  std::end(comparison.results),
-		  [](memetic_config_result& result) { replace(result.crossover_operator, "_", "\\_"); });
+		std::for_each(std::begin(comparison.results),
+		              std::end(comparison.results),
+		              [](memetic_config_result& result) {
+			              replace(result.crossover_operator, "_", "\\_");
+			              replace(result.wcrossover_operator, "_", "\\_");
+		              });
 
 		const std::string template_file =
 		  memetic_comparisons_tables_template_folder
