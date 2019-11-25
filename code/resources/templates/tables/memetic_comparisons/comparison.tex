@@ -1,19 +1,19 @@
 %!TEX root = ../main.tex
 \rowcolors{1}{gray!10}{white}
-\begin{longtable}{@{\extracolsep{0pt}}cc{c}cccccc}
+\begin{longtable}{@{\extracolsep{0pt}}ccc{c}cccccc}
 	\hiderowcolors
 	\caption{Memetic parameter comparison for <<comparison/instance/name>>}\\
 	\toprule
-	\multicolumn{2}{l}{Config} && \multicolumn{5}{l}{Results}\\
-	\cmidrule{1-2}\cmidrule{4-9}
-	Crossover & Gen./Limit && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
+	\multicolumn{3}{l}{Config} && \multicolumn{5}{l}{Results}\\
+	\cmidrule{1-3}\cmidrule{5-10}
+	Crossover & Wrights Crossover & Gen./Limit && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
 	\midrule
 	\endfirsthead
 	\caption{Memetic parameter comparison for <<comparison/instance/name>> (continued)}\\
 	\toprule
-	\multicolumn{2}{l}{Config} && \multicolumn{5}{l}{Results}\\
-	\cmidrule{1-2}\cmidrule{4-9}
-	Crossover & Gen./Limit && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
+	\multicolumn{3}{l}{Config} && \multicolumn{5}{l}{Results}\\
+	\cmidrule{1-3}\cmidrule{5-10}
+	Crossover & Wrights Crossover & Gen./Limit && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
 	\midrule
 	\endhead
 	\bottomrule
@@ -21,6 +21,7 @@
 	\showrowcolors
 <*for result in comparison/results*>
 	<<result/crossover_operator>> &
+	<<result/wcrossover_operator>> &
 	<*if result/config/rwls_stopping_criterion/steps == 18446744073709551615*>
 		<<result/config/stopping_criterion/generation>>g/<<round(result/config/rwls_stopping_criterion/time)>>seconds
 	<*else*>
@@ -36,7 +37,7 @@
 			<<result/result/best>>
 		<*endif*>
 	<*endif*>
-	&  <<round(result/result/average,1)>> &  <<result/result/best_number>>/<<result/result/total_number>> &  <<round(result/result/generations,1)>> &  <<round(result/result/steps)>> &  <<round(result/result/time,2)>>
+	&  <<round(result/result/average,1)>> &  <<result/result/best_number>>/<<result/result/total_number>> &  <<round(result/result/generations,1)>> &  <<sep(round(result/result/steps))>> &  <<round(result/result/time,2)>>
 	\\
 <*endfor*>
 \end{longtable}
