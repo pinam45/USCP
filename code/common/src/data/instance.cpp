@@ -28,6 +28,72 @@ void uscp::problem::from_json(const nlohmann::json& j, uscp::problem::instance_s
 	j.at("subsets_number").get_to(serial.subsets_number);
 }
 
+void uscp::problem::to_json(nlohmann::json& j, const uscp::problem::reduction_serial& serial)
+{
+	j = nlohmann::json{
+	  {"points_number", serial.points_number},
+	  {"subsets_number", serial.subsets_number},
+	  {"points_covered", serial.points_covered},
+	  {"subsets_dominated", serial.subsets_dominated},
+	  {"subsets_included", serial.subsets_included},
+	};
+}
+
+void uscp::problem::from_json(const nlohmann::json& j, uscp::problem::reduction_serial& serial)
+{
+	j.at("points_number").get_to(serial.points_number);
+	j.at("subsets_number").get_to(serial.subsets_number);
+	j.at("points_covered").get_to(serial.points_covered);
+	j.at("subsets_dominated").get_to(serial.subsets_dominated);
+	j.at("subsets_included").get_to(serial.subsets_included);
+}
+
+uscp::problem::reduction_serial uscp::problem::reduction::serialize() const noexcept
+{
+	reduction_serial serial;
+	assert(subsets_dominated.size() == subsets_included.size());
+	serial.points_number = points_covered.size();
+	serial.subsets_number = subsets_dominated.size();
+
+	serial.points_covered.reserve(points_covered.count());
+	points_covered.iterate_bits_on([&](size_t bit_on) { serial.points_covered.push_back(bit_on); });
+
+	serial.subsets_dominated.reserve(subsets_dominated.count());
+	subsets_dominated.iterate_bits_on(
+	  [&](size_t bit_on) { serial.subsets_dominated.push_back(bit_on); });
+
+	serial.subsets_included.reserve(subsets_included.count());
+	subsets_included.iterate_bits_on(
+	  [&](size_t bit_on) { serial.subsets_included.push_back(bit_on); });
+	return serial;
+}
+
+bool uscp::problem::reduction::load(const uscp::problem::reduction_serial& serial) noexcept
+{
+	points_covered.resize(serial.points_number);
+	points_covered.reset();
+	for(size_t point: serial.points_covered)
+	{
+		points_covered.set(point);
+	}
+
+	subsets_dominated.resize(serial.subsets_number);
+	subsets_dominated.reset();
+	for(size_t subset: serial.subsets_dominated)
+	{
+		subsets_dominated.set(subset);
+	}
+
+	subsets_included.resize(serial.subsets_number);
+	subsets_included.reset();
+	for(size_t subset: serial.subsets_included)
+	{
+		subsets_included.set(subset);
+	}
+
+	return true;
+}
+
 uscp::problem::reduction::reduction(size_t points_number, size_t subsets_number) noexcept
   : points_covered(points_number)
   , subsets_dominated(subsets_number)

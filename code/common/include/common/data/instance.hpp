@@ -37,6 +37,23 @@ namespace uscp::problem
 	void to_json(nlohmann::json& j, const instance_serial& serial);
 	void from_json(const nlohmann::json& j, instance_serial& serial);
 
+	struct reduction_serial final
+	{
+		size_t points_number;
+		size_t subsets_number;
+		std::vector<size_t> points_covered;
+		std::vector<size_t> subsets_dominated;
+		std::vector<size_t> subsets_included;
+
+		reduction_serial() = default;
+		reduction_serial(const reduction_serial&) = default;
+		reduction_serial(reduction_serial&&) noexcept = default;
+		reduction_serial& operator=(const reduction_serial&) = default;
+		reduction_serial& operator=(reduction_serial&&) noexcept = default;
+	};
+	void to_json(nlohmann::json& j, const reduction_serial& serial);
+	void from_json(const nlohmann::json& j, reduction_serial& serial);
+
 	struct reduction final
 	{
 		// relative to full solution
@@ -49,6 +66,9 @@ namespace uscp::problem
 		reduction(reduction&&) noexcept = default;
 		reduction& operator=(const reduction&) = default;
 		reduction& operator=(reduction&&) noexcept = default;
+
+		[[nodiscard]] reduction_serial serialize() const noexcept;
+		bool load(const reduction_serial& serial) noexcept;
 	};
 
 	struct instance;
