@@ -95,6 +95,11 @@ namespace
 	[[gnu::hot]] bool reduce_inclusion(const std::vector<dynamic_bitset<>>& points_subsets,
 	                                   uscp::problem::reduction_info& reduction);
 
+	[[gnu::hot]] uscp::problem::reduction_info compute_reduction(
+	  const uscp::problem::instance& full_instance);
+
+	[[gnu::hot]] uscp::problem::instance apply_reduction(uscp::problem::reduction_info reduction);
+
 	bool reduce_domination_iterate(uscp::problem::reduction_info& reduction)
 	{
 		timer timer;
@@ -205,14 +210,121 @@ namespace
 		                    timer.elapsed());
 		return reduced;
 	}
+
+	uscp::problem::reduction_info compute_reduction(const uscp::problem::instance& full_instance)
+	{
+		const timer timer;
+
+		// Generate flipped instance matrix
+		std::vector<dynamic_bitset<>> points_subsets;
+		points_subsets.resize(full_instance.points_number);
+		for(dynamic_bitset<>& point_subsets: points_subsets)
+		{
+			point_subsets.resize(full_instance.subsets_number);
+		}
+		for(size_t i_subset = 0; i_subset < full_instance.subsets_number; ++i_subset)
+		{
+			full_instance.subsets_points[i_subset].iterate_bits_on([&](
+			  size_t point_bit_on) noexcept { points_subsets[point_bit_on].set(i_subset); });
+		}
+
+		// Compute reduction
+		uscp::problem::reduction_info reduction(&full_instance);
+		reduce_domination(reduction);
+		if(reduce_inclusion(points_subsets, reduction))
+		{
+			while(reduce_domination(reduction) && reduce_inclusion(points_subsets, reduction))
+				;
+		}
+		if((reduction.reduction_applied.subsets_included
+		    & reduction.reduction_applied.subsets_dominated)
+		     .any())
+		{
+			LOGGER->error("Reduction generated subset dominated and included at the same time");
+			abort();
+		}
+		SPDLOG_LOGGER_DEBUG(
+		  LOGGER, "({}) Computed full reduction in {}s", full_instance.name, timer.elapsed());
+		return reduction;
+	}
+
+	uscp::problem::instance apply_reduction(uscp::problem::reduction_info reduction)
+	{
+		const timer timer;
+
+		uscp::problem::instance reduced_instance(reduction);
+		reduced_instance.name = reduction.parent_instance->name;
+		reduced_instance.points_number = reduction.parent_instance->points_number
+		                                 - reduction.reduction_applied.points_covered.count();
+		reduced_instance.subsets_number = reduction.parent_instance->subsets_number
+		                                  - reduction.reduction_applied.subsets_dominated.count()
+		                                  - reduction.reduction_applied.subsets_included.count();
+
+		dynamic_bitset<> removed_subsets = reduction.reduction_applied.subsets_dominated
+		                                   | reduction.reduction_applied.subsets_included;
+		reduced_instance.subsets_points.resize(reduced_instance.subsets_number);
+		size_t i_subset_full_instance = 0;
+		while(removed_subsets[i_subset_full_instance])
+		{
+			++i_subset_full_instance;
+		}
+		for(size_t i_subset = 0; i_subset < reduced_instance.subsets_number; ++i_subset)
+		{
+			assert(i_subset_full_instance < reduction.parent_instance->subsets_number);
+			reduced_instance.subsets_points[i_subset].resize(reduced_instance.points_number);
+			size_t i_point_full_instance = 0;
+			while(reduction.reduction_applied.points_covered[i_point_full_instance])
+			{
+				++i_point_full_instance;
+			}
+			for(size_t i_point = 0; i_point < reduced_instance.points_number; ++i_point)
+			{
+				assert(i_point_full_instance < reduction.parent_instance->points_number);
+				reduced_instance.subsets_points[i_subset][i_point] =
+				  reduction.parent_instance
+				    ->subsets_points[i_subset_full_instance][i_point_full_instance];
+				do
+				{
+					++i_point_full_instance;
+				} while(i_point_full_instance < reduction.parent_instance->points_number
+				        && reduction.reduction_applied.points_covered[i_point_full_instance]);
+			}
+			assert(i_point_full_instance == reduction.parent_instance->points_number);
+			if(i_point_full_instance != reduction.parent_instance->points_number)
+			{
+				LOGGER->error("Solution reduction failed, only {}/{} points for subset {}",
+				              i_subset_full_instance,
+				              reduction.parent_instance->subsets_number,
+				              i_subset_full_instance);
+				abort();
+			}
+			do
+			{
+				++i_subset_full_instance;
+			} while(i_subset_full_instance < reduction.parent_instance->subsets_number
+			        && removed_subsets[i_subset_full_instance]);
+		}
+		assert(i_subset_full_instance == reduction.parent_instance->subsets_number);
+		if(i_subset_full_instance != reduction.parent_instance->subsets_number)
+		{
+			LOGGER->error("Solution reduction failed, only {}/{} subsets",
+			              i_subset_full_instance,
+			              reduction.parent_instance->subsets_number);
+			abort();
+		}
+		reduced_instance.name += " reduced";
+
+		SPDLOG_LOGGER_DEBUG(LOGGER,
+		                    "({}) Applied reduction in {}s",
+		                    reduction.parent_instance->name,
+		                    timer.elapsed());
+
+		return reduced_instance;
+	}
 } // namespace
 
 uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& full_instance)
 {
-	LOGGER->info("({}) Start reducing instance", full_instance.name);
-	timer partial_timer;
-	const timer timer;
-
 	assert(!full_instance.reduction.has_value());
 	if(full_instance.reduction)
 	{
@@ -220,108 +332,11 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 		return full_instance;
 	}
 
-	// Generate flipped instance matrix
-	std::vector<dynamic_bitset<>> points_subsets;
-	points_subsets.resize(full_instance.points_number);
-	for(dynamic_bitset<>& point_subsets: points_subsets)
-	{
-		point_subsets.resize(full_instance.subsets_number);
-	}
-	for(size_t i_subset = 0; i_subset < full_instance.subsets_number; ++i_subset)
-	{
-		full_instance.subsets_points[i_subset].iterate_bits_on([&](size_t point_bit_on) noexcept {
-			points_subsets[point_bit_on].set(i_subset);
-		});
-	}
-	SPDLOG_LOGGER_DEBUG(LOGGER,
-	                    "({}) Generated flipped instance matrix in {}s",
-	                    full_instance.name,
-	                    partial_timer.elapsed());
+	const timer timer;
+	LOGGER->info("({}) Start reducing instance", full_instance.name);
+	reduction_info reduction = compute_reduction(full_instance);
+	instance reduced_instance = apply_reduction(reduction);
 
-	// Compute reduction
-	partial_timer.reset();
-	reduction_info reduction(&full_instance);
-	reduce_domination(reduction);
-	if(reduce_inclusion(points_subsets, reduction))
-	{
-		while(reduce_domination(reduction) && reduce_inclusion(points_subsets, reduction))
-			;
-	}
-	if((reduction.reduction_applied.subsets_included
-	    & reduction.reduction_applied.subsets_dominated)
-	     .any())
-	{
-		LOGGER->error("Reduction generated subset dominated and included at the same time");
-		abort();
-	}
-	SPDLOG_LOGGER_DEBUG(
-	  LOGGER, "({}) Computed full reduction in {}s", full_instance.name, partial_timer.elapsed());
-
-	// Apply reduction
-	partial_timer.reset();
-	instance reduced_instance(reduction);
-	reduced_instance.name = full_instance.name;
-	reduced_instance.points_number =
-	  full_instance.points_number - reduction.reduction_applied.points_covered.count();
-	reduced_instance.subsets_number = full_instance.subsets_number
-	                                  - reduction.reduction_applied.subsets_dominated.count()
-	                                  - reduction.reduction_applied.subsets_included.count();
-
-	dynamic_bitset<> removed_subsets =
-	  reduction.reduction_applied.subsets_dominated | reduction.reduction_applied.subsets_included;
-	reduced_instance.subsets_points.resize(reduced_instance.subsets_number);
-	size_t i_subset_full_instance = 0;
-	while(removed_subsets[i_subset_full_instance])
-	{
-		++i_subset_full_instance;
-	}
-	for(size_t i_subset = 0; i_subset < reduced_instance.subsets_number; ++i_subset)
-	{
-		assert(i_subset_full_instance < full_instance.subsets_number);
-		reduced_instance.subsets_points[i_subset].resize(reduced_instance.points_number);
-		size_t i_point_full_instance = 0;
-		while(reduction.reduction_applied.points_covered[i_point_full_instance])
-		{
-			++i_point_full_instance;
-		}
-		for(size_t i_point = 0; i_point < reduced_instance.points_number; ++i_point)
-		{
-			assert(i_point_full_instance < full_instance.points_number);
-			reduced_instance.subsets_points[i_subset][i_point] =
-			  full_instance.subsets_points[i_subset_full_instance][i_point_full_instance];
-			do
-			{
-				++i_point_full_instance;
-			} while(i_point_full_instance < full_instance.points_number
-			        && reduction.reduction_applied.points_covered[i_point_full_instance]);
-		}
-		assert(i_point_full_instance == full_instance.points_number);
-		if(i_point_full_instance != full_instance.points_number)
-		{
-			LOGGER->error("Solution reduction failed, only {}/{} points for subset {}",
-			              i_subset_full_instance,
-			              full_instance.subsets_number,
-			              i_subset_full_instance);
-			abort();
-		}
-		do
-		{
-			++i_subset_full_instance;
-		} while(i_subset_full_instance < full_instance.subsets_number
-		        && removed_subsets[i_subset_full_instance]);
-	}
-	assert(i_subset_full_instance == full_instance.subsets_number);
-	if(i_subset_full_instance != full_instance.subsets_number)
-	{
-		LOGGER->error("Solution reduction failed, only {}/{} subsets",
-		              i_subset_full_instance,
-		              full_instance.subsets_number);
-		abort();
-	}
-	SPDLOG_LOGGER_DEBUG(
-	  LOGGER, "({}) Applied reduction in {}s", full_instance.name, partial_timer.elapsed());
-
-	reduced_instance.name += " reduced";
 	LOGGER->info("({}) Reduced instance from {} subsets {} points to {} subsets {} points in {}s",
 	             full_instance.name,
 	             full_instance.subsets_number,
