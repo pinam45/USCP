@@ -88,19 +88,20 @@ bool uscp::problem::has_solution(const uscp::problem::instance& instance) noexce
 
 namespace
 {
-	[[gnu::hot]] bool reduce_domination_iterate(uscp::problem::reduction_info& reduction);
+	[[gnu::hot]] bool reduce_domination_iterate(uscp::problem::reduction_info& reduction) noexcept;
 
-	[[gnu::hot]] bool reduce_domination(uscp::problem::reduction_info& reduction);
+	[[gnu::hot]] bool reduce_domination(uscp::problem::reduction_info& reduction) noexcept;
 
 	[[gnu::hot]] bool reduce_inclusion(const std::vector<dynamic_bitset<>>& points_subsets,
-	                                   uscp::problem::reduction_info& reduction);
+	                                   uscp::problem::reduction_info& reduction) noexcept;
 
 	[[gnu::hot]] uscp::problem::reduction_info compute_reduction(
-	  const uscp::problem::instance& full_instance);
+	  const uscp::problem::instance& full_instance) noexcept;
 
-	[[gnu::hot]] uscp::problem::instance apply_reduction(uscp::problem::reduction_info reduction);
+	[[gnu::hot]] uscp::problem::instance apply_reduction(
+	  uscp::problem::reduction_info reduction) noexcept;
 
-	bool reduce_domination_iterate(uscp::problem::reduction_info& reduction)
+	bool reduce_domination_iterate(uscp::problem::reduction_info& reduction) noexcept
 	{
 		timer timer;
 		bool reduced = false;
@@ -127,7 +128,7 @@ namespace
 		return reduced;
 	}
 
-	bool reduce_domination(uscp::problem::reduction_info& reduction)
+	bool reduce_domination(uscp::problem::reduction_info& reduction) noexcept
 	{
 		timer timer;
 		bool reduced = false;
@@ -179,7 +180,7 @@ namespace
 	}
 
 	bool reduce_inclusion(const std::vector<dynamic_bitset<>>& points_subsets,
-	                      uscp::problem::reduction_info& reduction)
+	                      uscp::problem::reduction_info& reduction) noexcept
 	{
 		timer timer;
 		bool reduced = false;
@@ -211,7 +212,8 @@ namespace
 		return reduced;
 	}
 
-	uscp::problem::reduction_info compute_reduction(const uscp::problem::instance& full_instance)
+	uscp::problem::reduction_info compute_reduction(
+	  const uscp::problem::instance& full_instance) noexcept
 	{
 		const timer timer;
 
@@ -248,7 +250,7 @@ namespace
 		return reduction;
 	}
 
-	uscp::problem::instance apply_reduction(uscp::problem::reduction_info reduction)
+	uscp::problem::instance apply_reduction(uscp::problem::reduction_info reduction) noexcept
 	{
 		const timer timer;
 
@@ -323,7 +325,7 @@ namespace
 	}
 } // namespace
 
-uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& full_instance)
+uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& full_instance) noexcept
 {
 	assert(!full_instance.reduction.has_value());
 	if(full_instance.reduction)

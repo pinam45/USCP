@@ -30,7 +30,7 @@ namespace uscp::problem
 
 	[[nodiscard]] bool has_solution(const instance& instance) noexcept;
 
-	[[nodiscard, gnu::hot]] instance reduce(const instance& full_instance);
+	[[nodiscard, gnu::hot]] instance reduce(const instance& full_instance) noexcept;
 } // namespace uscp::problem
 
 #endif //USCP_INSTANCE_HPP
