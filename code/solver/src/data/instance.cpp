@@ -167,7 +167,7 @@ namespace
 			}
 		}
 		SPDLOG_LOGGER_DEBUG(LOGGER,
-		                    "({}) Applied domination reduction in {}s",
+		                    "({}) Computed domination reduction in {}s",
 		                    reduction.parent_instance->name,
 		                    timer.elapsed());
 		return reduced;
@@ -200,7 +200,7 @@ namespace
 			}
 		}
 		SPDLOG_LOGGER_DEBUG(LOGGER,
-		                    "({}) Applied inclusion reduction in {}s",
+		                    "({}) Computed inclusion reduction in {}s",
 		                    reduction.parent_instance->name,
 		                    timer.elapsed());
 		return reduced;
@@ -210,6 +210,7 @@ namespace
 uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& full_instance)
 {
 	LOGGER->info("({}) Start reducing instance", full_instance.name);
+	timer partial_timer;
 	const timer timer;
 
 	assert(!full_instance.reduction.has_value());
@@ -232,8 +233,13 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 			points_subsets[point_bit_on].set(i_subset);
 		});
 	}
+	SPDLOG_LOGGER_DEBUG(LOGGER,
+	                    "({}) Generated flipped instance matrix in {}s",
+	                    full_instance.name,
+	                    partial_timer.elapsed());
 
 	// Compute reduction
+	partial_timer.reset();
 	reduction_info reduction(&full_instance);
 	reduce_domination(reduction);
 	if(reduce_inclusion(points_subsets, reduction))
@@ -248,8 +254,11 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 		LOGGER->error("Reduction generated subset dominated and included at the same time");
 		abort();
 	}
+	SPDLOG_LOGGER_DEBUG(
+	  LOGGER, "({}) Computed full reduction in {}s", full_instance.name, partial_timer.elapsed());
 
 	// Apply reduction
+	partial_timer.reset();
 	instance reduced_instance(reduction);
 	reduced_instance.name = full_instance.name;
 	reduced_instance.points_number =
@@ -309,6 +318,8 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 		              full_instance.subsets_number);
 		abort();
 	}
+	SPDLOG_LOGGER_DEBUG(
+	  LOGGER, "({}) Applied reduction in {}s", full_instance.name, partial_timer.elapsed());
 
 	reduced_instance.name += " reduced";
 	LOGGER->info("({}) Reduced instance from {} subsets {} points to {} subsets {} points in {}s",
