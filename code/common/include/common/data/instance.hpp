@@ -39,8 +39,8 @@ namespace uscp::problem
 
 	struct reduction_serial final
 	{
-		size_t points_number;
-		size_t subsets_number;
+		size_t points_number = 0;
+		size_t subsets_number = 0;
 		std::vector<size_t> points_covered;
 		std::vector<size_t> subsets_dominated;
 		std::vector<size_t> subsets_included;

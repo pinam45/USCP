@@ -16,6 +16,8 @@
 
 namespace uscp::problem
 {
+	static constexpr const std::string_view REDUCTIONS_CACHE_FOLDER = "./resources/reductions/";
+
 	[[nodiscard]] instance generate(std::string_view name,
 	                                size_t points_number,
 	                                size_t subsets_number,
@@ -31,6 +33,8 @@ namespace uscp::problem
 	[[nodiscard]] bool has_solution(const instance& instance) noexcept;
 
 	[[nodiscard, gnu::hot]] instance reduce(const instance& full_instance) noexcept;
+
+	[[nodiscard, gnu::hot]] instance reduce_cache(const instance& full_instance) noexcept;
 } // namespace uscp::problem
 
 #endif //USCP_INSTANCE_HPP

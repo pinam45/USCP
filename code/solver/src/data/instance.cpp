@@ -11,6 +11,7 @@
 
 #include <cassert>
 #include <vector>
+#include <fstream>
 
 uscp::problem::instance uscp::problem::generate(std::string_view name,
                                                 size_t points_number,
@@ -337,6 +338,118 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 	const timer timer;
 	LOGGER->info("({}) Start reducing instance", full_instance.name);
 	reduction_info reduction = compute_reduction(full_instance);
+	instance reduced_instance = apply_reduction(reduction);
+
+	LOGGER->info("({}) Reduced instance from {} subsets {} points to {} subsets {} points in {}s",
+	             full_instance.name,
+	             full_instance.subsets_number,
+	             full_instance.points_number,
+	             reduced_instance.subsets_number,
+	             reduced_instance.points_number,
+	             timer.elapsed());
+	return reduced_instance;
+}
+
+namespace
+{
+	uscp::problem::reduction_info compute_reduction_cache(
+	  const uscp::problem::instance& full_instance) noexcept
+	{
+		std::filesystem::path reduction_cache_path =
+		  std::string(uscp::problem::REDUCTIONS_CACHE_FOLDER) + full_instance.name + ".json";
+		std::error_code ignored;
+		if(std::filesystem::exists(reduction_cache_path, ignored))
+		{
+			std::ifstream reduction_stream(reduction_cache_path);
+			if(reduction_stream)
+			{
+				nlohmann::json data;
+				reduction_stream >> data;
+				uscp::problem::reduction_serial reduction_serial;
+				bool processed = false;
+				try
+				{
+					data.get_to(reduction_serial);
+					processed = true;
+				}
+				catch(const std::exception& e)
+				{
+					LOGGER->error("({}) error processing cache: {}", full_instance.name, e.what());
+				}
+				catch(...)
+				{
+					LOGGER->error("({}) unknown error processing cache", full_instance.name);
+				}
+
+				if(processed)
+				{
+					uscp::problem::reduction reduction(full_instance.points_number,
+					                                   full_instance.subsets_number);
+					if(reduction.load(reduction_serial))
+					{
+						LOGGER->info("({}) Loaded reduction from cache {}",
+						             full_instance.name,
+						             reduction_cache_path);
+						uscp::problem::reduction_info reduction_info(&full_instance);
+						reduction_info.reduction_applied = reduction;
+						return reduction_info;
+					}
+					else
+					{
+						LOGGER->error("({}) Failed to load cache data from {}",
+						              full_instance.name,
+						              reduction_cache_path);
+					}
+				}
+			}
+			else
+			{
+				SPDLOG_LOGGER_DEBUG(LOGGER, "std::ifstream constructor failed");
+				LOGGER->error("Failed to read file {}", reduction_cache_path);
+			}
+		}
+		else
+		{
+			SPDLOG_LOGGER_DEBUG(
+			  LOGGER, "({}) {} doesn't exist", full_instance.name, reduction_cache_path);
+		}
+
+		LOGGER->info("({}) No valid cache for reduction", full_instance.name);
+
+		uscp::problem::reduction_info reduction = compute_reduction(full_instance);
+		std::filesystem::create_directories(uscp::problem::REDUCTIONS_CACHE_FOLDER, ignored);
+
+		std::ofstream reduction_stream(reduction_cache_path, std::ios::out | std::ios::trunc);
+		if(reduction_stream)
+		{
+			const nlohmann::json data = reduction.reduction_applied.serialize();
+			reduction_stream << data.dump(4);
+			LOGGER->info("({}) Generated cache {}", full_instance.name, reduction_cache_path);
+		}
+		else
+		{
+			SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
+			LOGGER->error("Failed to write file {}", reduction_cache_path);
+			LOGGER->error("({}) Failed to generate cache", full_instance.name);
+		}
+
+		return reduction;
+	}
+} // namespace
+
+uscp::problem::instance uscp::problem::reduce_cache(
+  const uscp::problem::instance& full_instance) noexcept
+{
+	assert(!full_instance.reduction.has_value());
+	if(full_instance.reduction)
+	{
+		LOGGER->warn("Tried to reduce instance already reduced");
+		return full_instance;
+	}
+
+	const timer timer;
+	LOGGER->info("({}) Start reducing instance", full_instance.name);
+	reduction_info reduction = compute_reduction_cache(full_instance);
 	instance reduced_instance = apply_reduction(reduction);
 
 	LOGGER->info("({}) Reduced instance from {} subsets {} points to {} subsets {} points in {}s",

@@ -351,7 +351,7 @@ int main(int argc, char* argv[])
 			uscp::problem::instance instance;
 			if(reduced)
 			{
-				instance = uscp::problem::reduce(instance_base);
+				instance = uscp::problem::reduce_cache(instance_base);
 				if(!uscp::problem::has_solution(instance))
 				{
 					LOGGER->error("Invalid reduced instance");
