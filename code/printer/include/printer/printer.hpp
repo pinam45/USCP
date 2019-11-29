@@ -27,36 +27,36 @@ public:
 	{
 		struct inja
 		{
-			static constexpr std::string_view STATEMENT_OPEN = "<*";
-			static constexpr std::string_view STATEMENT_CLOSE = "*>";
-			static constexpr std::string_view EXPRESSION_OPEN = "<<";
-			static constexpr std::string_view EXPRESSION_CLOSE = ">>";
-			static constexpr std::string_view COMMENT_OPEN = "<#";
-			static constexpr std::string_view COMMENT_CLOSE = "#>";
-			static constexpr std::string_view LINE_STATEMENT_START = "##";
+			static constexpr const std::string_view STATEMENT_OPEN = "<*";
+			static constexpr const std::string_view STATEMENT_CLOSE = "*>";
+			static constexpr const std::string_view EXPRESSION_OPEN = "<<";
+			static constexpr const std::string_view EXPRESSION_CLOSE = ">>";
+			static constexpr const std::string_view COMMENT_OPEN = "<#";
+			static constexpr const std::string_view COMMENT_CLOSE = "#>";
+			static constexpr const std::string_view LINE_STATEMENT_START = "##";
 		};
 
 		struct partial
 		{
-			static constexpr std::string_view RESOURCES_FOLDER = "./resources/";
-			static constexpr std::string_view OUTPUT_FOLDER_PREFIX = "./printer_out_";
-			static constexpr std::string_view OUTPUT_FOLDER_POSTFIX = "/";
+			static constexpr const std::string_view RESOURCES_FOLDER = "./resources/";
+			static constexpr const std::string_view OUTPUT_FOLDER_PREFIX = "./printer_out_";
+			static constexpr const std::string_view OUTPUT_FOLDER_POSTFIX = "/";
 
-			static constexpr std::string_view TEMPLATE_SUBFOLDER = "templates/";
-			static constexpr std::string_view TABLES_TEMPLATE_SUBFOLDER = "tables/";
-			static constexpr std::string_view MEMETIC_COMPARISONS_TABLES_TEMPLATE_SUBFOLDER =
+			static constexpr const std::string_view TEMPLATE_SUBFOLDER = "templates/";
+			static constexpr const std::string_view TABLES_TEMPLATE_SUBFOLDER = "tables/";
+			static constexpr const std::string_view MEMETIC_COMPARISONS_TABLES_TEMPLATE_SUBFOLDER =
 			  "memetic_comparisons/";
 
-			static constexpr std::string_view DOCUMENT_TEMPLATE_FILE = "main.tex";
-			static constexpr std::string_view RESULT_TABLE_TEMPLATE_FILE = "results.tex";
-			static constexpr std::string_view RWLS_STATS_TABLE_TEMPLATE_FILE = "rwls_stats.tex";
-			static constexpr std::string_view MEMETIC_COMPARISON_TABLE_TEMPLATE_FILE =
+			static constexpr const std::string_view DOCUMENT_TEMPLATE_FILE = "main.tex";
+			static constexpr const std::string_view RESULT_TABLE_TEMPLATE_FILE = "results.tex";
+			static constexpr const std::string_view RWLS_STATS_TABLE_TEMPLATE_FILE = "rwls_stats.tex";
+			static constexpr const std::string_view MEMETIC_COMPARISON_TABLE_TEMPLATE_FILE =
 			  "comparison.tex";
-			static constexpr std::string_view MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX =
+			static constexpr const std::string_view MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX =
 			  "comparison_";
-			static constexpr std::string_view MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_POSTFIX = ".tex";
+			static constexpr const std::string_view MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_POSTFIX = ".tex";
 
-			static constexpr std::array<std::string_view, 4> INSTANCES_TABLES_FILES = {
+			static constexpr const std::array<std::string_view, 4> INSTANCES_TABLES_FILES = {
 			  "orlibrary_instances_base.tex",
 			  "orlibrary_instances_cyc_clr.tex",
 			  "orlibrary_instances_rail.tex",
@@ -65,8 +65,8 @@ public:
 
 		struct info
 		{
-			static constexpr std::string_view DOCUMENT_TITLE = "USCP results";
-			static constexpr std::string_view DOCUMENT_AUTHOR =
+			static constexpr const std::string_view DOCUMENT_TITLE = "USCP results";
+			static constexpr const std::string_view DOCUMENT_AUTHOR =
 			  "\\url{https://github.com/pinam45/USCP}";
 		};
 	};
