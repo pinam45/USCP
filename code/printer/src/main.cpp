@@ -24,6 +24,9 @@
 
 int main(int argc, char* argv[])
 {
+	std::ios_base::sync_with_stdio(false);
+	std::setlocale(LC_ALL, "C");
+
 	std::vector<std::string> input_folder_files;
 	std::string output_prefix = "printer_out_";
 	std::string validation_regex_txt = ".*\\.json";

@@ -129,6 +129,9 @@ namespace
 
 int main(int argc, char* argv[])
 {
+	std::ios_base::sync_with_stdio(false);
+	std::setlocale(LC_ALL, "C");
+
 	std::vector<std::string> instances;
 	std::string output_prefix = "solver_out_";
 	size_t repetitions = 1;
