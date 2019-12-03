@@ -362,6 +362,13 @@ bool printer::generate_document() noexcept
 	}
 	LOGGER->info("Created output folders");
 
+	if(!copy_latexmkrc())
+	{
+		LOGGER->warn("Failed to copy .latexmkrc");
+		return false;
+	}
+	LOGGER->info("Copied .latexmkrc");
+
 	if(!copy_instances_tables())
 	{
 		LOGGER->warn("Failed to copy instances tables");
@@ -458,6 +465,22 @@ bool printer::create_output_folders() noexcept
 			LOGGER->warn("Directory creation failed for: {}", directory);
 			return false;
 		}
+	}
+	return true;
+}
+
+bool printer::copy_latexmkrc() noexcept
+{
+	std::error_code error;
+	std::filesystem::copy(concat(template_folder, config::partial::LATEXMKRC_FILE),
+	                      concat(output_folder, config::partial::LATEXMKRC_FILE),
+	                      std::filesystem::copy_options::skip_existing,
+	                      error);
+	if(error)
+	{
+		SPDLOG_LOGGER_DEBUG(LOGGER, "std::filesystem::copy failed: {}", error.message());
+		LOGGER->warn("File copy failed for: {}", config::partial::LATEXMKRC_FILE);
+		return false;
 	}
 	return true;
 }

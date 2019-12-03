@@ -56,6 +56,7 @@ public:
 			  "comparison_";
 			static constexpr const std::string_view MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_POSTFIX = ".tex";
 
+			static constexpr const std::string_view LATEXMKRC_FILE = ".latexmkrc";
 			static constexpr const std::array<std::string_view, 4> INSTANCES_TABLES_FILES = {
 			  "orlibrary_instances_base.tex",
 			  "orlibrary_instances_cyc_clr.tex",
@@ -106,6 +107,7 @@ private:
 
 	bool create_output_folders() noexcept;
 
+	bool copy_latexmkrc() noexcept;
 	bool copy_instances_tables() noexcept;
 
 	bool generate_results_table() noexcept;
