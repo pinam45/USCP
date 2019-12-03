@@ -9,6 +9,16 @@
 #define USCP_UTILS_HPP
 
 #include <vector>
+#include <sstream>
+#include <string>
+
+template<typename... Args>
+std::string concat(const Args&... args) noexcept
+{
+	std::ostringstream stream;
+	(stream << ... << args);
+	return stream.str();
+}
 
 template<typename T>
 size_t count_common_elements_sorted(const std::vector<T>& a, const std::vector<T>& b)

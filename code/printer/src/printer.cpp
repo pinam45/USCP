@@ -258,17 +258,14 @@ namespace
 
 printer::printer(std::string_view output_prefix) noexcept
   : output_folder(generate_output_folder_name(output_prefix))
-  , tables_output_folder(output_folder + std::string(config::partial::TABLES_TEMPLATE_SUBFOLDER))
+  , tables_output_folder(concat(output_folder, config::partial::TABLES_TEMPLATE_SUBFOLDER))
   , memetic_comparisons_tables_output_folder(
-      tables_output_folder
-      + std::string(config::partial::MEMETIC_COMPARISONS_TABLES_TEMPLATE_SUBFOLDER))
-  , template_folder(
-      std::string(config::partial::RESOURCES_FOLDER).append(config::partial::TEMPLATE_SUBFOLDER))
-  , tables_template_folder(template_folder
-                           + std::string(config::partial::TABLES_TEMPLATE_SUBFOLDER))
+      concat(tables_output_folder, config::partial::MEMETIC_COMPARISONS_TABLES_TEMPLATE_SUBFOLDER))
+  , template_folder(concat(config::partial::RESOURCES_FOLDER, config::partial::TEMPLATE_SUBFOLDER))
+  , tables_template_folder(concat(template_folder, config::partial::TABLES_TEMPLATE_SUBFOLDER))
   , memetic_comparisons_tables_template_folder(
-      tables_template_folder
-      + std::string(config::partial::MEMETIC_COMPARISONS_TABLES_TEMPLATE_SUBFOLDER))
+      concat(tables_template_folder,
+             config::partial::MEMETIC_COMPARISONS_TABLES_TEMPLATE_SUBFOLDER))
   , m_environment()
   , m_greedy_reports()
   , m_rwls_reports()
@@ -415,9 +412,9 @@ bool printer::generate_document() noexcept
 	// generate document
 	try
 	{
-		m_environment.write(template_folder + std::string(config::partial::DOCUMENT_TEMPLATE_FILE),
+		m_environment.write(concat(template_folder, config::partial::DOCUMENT_TEMPLATE_FILE),
 		                    data,
-		                    output_folder + std::string(config::partial::DOCUMENT_TEMPLATE_FILE));
+		                    concat(output_folder, config::partial::DOCUMENT_TEMPLATE_FILE));
 		LOGGER->info("Generated main document");
 	}
 	catch(const std::exception& e)
@@ -432,7 +429,7 @@ bool printer::generate_document() noexcept
 	}
 
 	// save data
-	const std::string file_data = output_folder + "main.json";
+	const std::string file_data = concat(output_folder, "main.json");
 	std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
 	if(!data_stream)
 	{
@@ -449,29 +446,18 @@ bool printer::generate_document() noexcept
 bool printer::create_output_folders() noexcept
 {
 	std::error_code error;
-	std::filesystem::create_directories(output_folder, error);
-	if(error)
+	for(const std::string& directory: {output_folder,
+	                                   tables_output_folder,
+	                                   memetic_comparisons_tables_output_folder})
 	{
-		SPDLOG_LOGGER_DEBUG(
-		  LOGGER, "std::filesystem::create_directories failed: {}", error.message());
-		LOGGER->warn("Directory creation failed for: {}", output_folder);
-		return false;
-	}
-	std::filesystem::create_directories(tables_output_folder, error);
-	if(error)
-	{
-		SPDLOG_LOGGER_DEBUG(
-		  LOGGER, "std::filesystem::create_directories failed: {}", error.message());
-		LOGGER->warn("Directory creation failed for: {}", tables_output_folder);
-		return false;
-	}
-	std::filesystem::create_directories(memetic_comparisons_tables_output_folder, error);
-	if(error)
-	{
-		SPDLOG_LOGGER_DEBUG(
-		  LOGGER, "std::filesystem::create_directories failed: {}", error.message());
-		LOGGER->warn("Directory creation failed for: {}", memetic_comparisons_tables_output_folder);
-		return false;
+		std::filesystem::create_directories(directory, error);
+		if(error)
+		{
+			SPDLOG_LOGGER_DEBUG(
+			  LOGGER, "std::filesystem::create_directories failed: {}", error.message());
+			LOGGER->warn("Directory creation failed for: {}", directory);
+			return false;
+		}
 	}
 	return true;
 }
@@ -481,8 +467,8 @@ bool printer::copy_instances_tables() noexcept
 	for(const std::string_view& instance_table_file: config::partial::INSTANCES_TABLES_FILES)
 	{
 		std::error_code error;
-		std::filesystem::copy(tables_template_folder + std::string(instance_table_file),
-		                      tables_output_folder + std::string(instance_table_file),
+		std::filesystem::copy(concat(tables_template_folder, instance_table_file),
+		                      concat(tables_output_folder, instance_table_file),
 		                      std::filesystem::copy_options::skip_existing,
 		                      error);
 		if(error)
@@ -606,9 +592,9 @@ bool printer::generate_results_table() noexcept
 	try
 	{
 		m_environment.write(
-		  tables_template_folder + std::string(config::partial::RESULT_TABLE_TEMPLATE_FILE),
+		  concat(tables_template_folder, config::partial::RESULT_TABLE_TEMPLATE_FILE),
 		  data,
-		  tables_output_folder + std::string(config::partial::RESULT_TABLE_TEMPLATE_FILE));
+		  concat(tables_output_folder, config::partial::RESULT_TABLE_TEMPLATE_FILE));
 	}
 	catch(const std::exception& e)
 	{
@@ -622,7 +608,7 @@ bool printer::generate_results_table() noexcept
 	}
 
 	// save data
-	const std::string file_data = tables_output_folder + "results.json";
+	const std::string file_data = concat(tables_output_folder, "results.json");
 	std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
 	if(!data_stream)
 	{
@@ -706,9 +692,9 @@ bool printer::generate_rwls_stats_table() noexcept
 	try
 	{
 		m_environment.write(
-		  tables_template_folder + std::string(config::partial::RWLS_STATS_TABLE_TEMPLATE_FILE),
+		  concat(tables_template_folder, config::partial::RWLS_STATS_TABLE_TEMPLATE_FILE),
 		  data,
-		  tables_output_folder + std::string(config::partial::RWLS_STATS_TABLE_TEMPLATE_FILE));
+		  concat(tables_output_folder, config::partial::RWLS_STATS_TABLE_TEMPLATE_FILE));
 	}
 	catch(const std::exception& e)
 	{
@@ -722,7 +708,7 @@ bool printer::generate_rwls_stats_table() noexcept
 	}
 
 	// save data
-	const std::string file_data = tables_output_folder + "rwls_stats.json";
+	const std::string file_data = concat(tables_output_folder, "rwls_stats.json");
 	std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
 	if(!data_stream)
 	{
@@ -835,13 +821,14 @@ bool printer::generate_memetic_comparisons_tables(
 		              });
 
 		const std::string template_file =
-		  memetic_comparisons_tables_template_folder
-		  + std::string(config::partial::MEMETIC_COMPARISON_TABLE_TEMPLATE_FILE);
+		  concat(memetic_comparisons_tables_template_folder,
+		         config::partial::MEMETIC_COMPARISON_TABLE_TEMPLATE_FILE);
 		const std::string output_file =
-		  std::string(config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX)
-		  + comparison.instance.name
-		  + std::string(config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_POSTFIX);
-		const std::string output_file_full = memetic_comparisons_tables_output_folder + output_file;
+		  concat(config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX,
+		         comparison.instance.name,
+		         config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_POSTFIX);
+		const std::string output_file_full =
+		  concat(memetic_comparisons_tables_output_folder, output_file);
 
 		nlohmann::json data;
 		data["comparison"] = comparison;
@@ -864,9 +851,10 @@ bool printer::generate_memetic_comparisons_tables(
 
 		// save data
 		const std::string file_data =
-		  memetic_comparisons_tables_output_folder
-		  + std::string(config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX)
-		  + comparison.instance.name + ".json";
+		  concat(memetic_comparisons_tables_output_folder,
+		         config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX,
+		         comparison.instance.name,
+		         ".json");
 		std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
 		if(!data_stream)
 		{
