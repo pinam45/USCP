@@ -56,6 +56,8 @@ namespace
 	struct instance_info final
 	{
 		std::string name;
+		size_t points_number = 0;
+		size_t subsets_number = 0;
 		size_t bks = 0;
 	};
 	void to_json(nlohmann::json& j, const instance_info& serial);
@@ -140,6 +142,8 @@ namespace
 	{
 		j = nlohmann::json{
 		  {"name", serial.name},
+		  {"points_number", serial.points_number},
+		  {"subsets_number", serial.subsets_number},
 		  {"bks", serial.bks},
 		};
 	}
@@ -512,11 +516,14 @@ bool printer::generate_results_table() noexcept
 	std::sort(std::begin(m_memetic_reports), std::end(m_memetic_reports), memetic_report_less);
 
 	std::vector<instance_result> results;
+	results.reserve(uscp::problem::instances.size());
 	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
 	{
 		instance_result result;
 		result.instance.name = instance.name;
 		result.instance.bks = instance.bks;
+		result.instance.subsets_number = instance.subsets;
+		result.instance.points_number = instance.points;
 
 		const auto [greedy_begin, greedy_end] = std::equal_range(std::cbegin(m_greedy_reports),
 		                                                         std::cend(m_greedy_reports),
@@ -646,15 +653,17 @@ bool printer::generate_results_table() noexcept
 bool printer::generate_rwls_stats_table() noexcept
 {
 	// generate data
-	std::sort(std::begin(m_greedy_reports), std::end(m_greedy_reports), greedy_report_less);
 	std::sort(std::begin(m_rwls_reports), std::end(m_rwls_reports), rwls_report_less);
 
 	std::vector<rwls_stat> stats;
+	stats.reserve(uscp::problem::instances.size());
 	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
 	{
 		rwls_stat stat;
 		stat.instance.name = instance.name;
 		stat.instance.bks = instance.bks;
+		stat.instance.subsets_number = instance.subsets;
+		stat.instance.points_number = instance.points;
 
 		const auto [rwls_begin, rwls_end] = std::equal_range(
 		  std::begin(m_rwls_reports), std::end(m_rwls_reports), instance.name, rwls_report_less);
@@ -750,11 +759,14 @@ bool printer::generate_memetic_comparisons_tables(
 	std::sort(std::begin(m_memetic_reports), std::end(m_memetic_reports), memetic_report_less);
 
 	std::vector<memetic_comparison> comparisons;
+	comparisons.reserve(uscp::problem::instances.size());
 	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
 	{
 		memetic_comparison comparison;
 		comparison.instance.name = instance.name;
 		comparison.instance.bks = instance.bks;
+		comparison.instance.subsets_number = instance.subsets;
+		comparison.instance.points_number = instance.points;
 
 		const auto [memetic_begin, memetic_end] = std::equal_range(std::cbegin(m_memetic_reports),
 		                                                           std::cend(m_memetic_reports),
