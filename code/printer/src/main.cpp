@@ -6,6 +6,7 @@
 // https://opensource.org/licenses/MIT
 //
 #include "common/utils/logger.hpp"
+#include "common/utils/timer.hpp"
 #include "printer/printer.hpp"
 #include "printer/data.hpp"
 #include "git_info.hpp"
@@ -119,6 +120,7 @@ int main(int argc, char* argv[])
 		printer.generate_memetic_comparisons(memetic_comparisons);
 		std::deque<std::string> paths(std::cbegin(input_folder_files),
 		                              std::cend(input_folder_files));
+		const timer timer;
 		while(!paths.empty())
 		{
 			const std::string path = paths.front();
@@ -193,6 +195,7 @@ int main(int argc, char* argv[])
 				LOGGER->error("Check if path is a regular file failed for {}", path);
 			}
 		}
+		LOGGER->info("Loaded all data in {}s", timer.elapsed());
 
 		if(!printer.generate_document())
 		{
