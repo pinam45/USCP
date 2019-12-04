@@ -1,0 +1,91 @@
+%!TEX program = lualatex
+\documentclass{standalone}
+
+%----------------------------------------
+% Packages
+%----------------------------------------
+
+% Programming facilities
+\usepackage{etoolbox}
+\usepackage{ifxetex}
+\usepackage{ifluatex}
+% Encoding
+\usepackage[T1]{fontenc}
+\ifboolexpr{bool{xetex} or bool{luatex}}{%
+	\usepackage{fontspec}
+}{%
+	\usepackage[utf8]{inputenc}
+}
+% PGF-TikZ
+\usepackage{pgf}
+\usepackage{pgfplots}
+
+%----------------------------------------
+% Configuration
+%----------------------------------------
+
+\pgfplotsset{
+	compat=1.16,
+	table/col sep=comma
+}
+\pgfplotsset{
+	table/search path={./},
+}
+\usetikzlibrary{intersections}
+\usepgfplotslibrary{fillbetween}
+
+%----------------------------------------
+% Document
+%----------------------------------------
+\begin{document}
+	\begin{tikzpicture}
+		\begin{axis}[
+			width=800pt,
+			height=500pt,
+			xtick=\empty,
+			enlargelimits=0,
+			legend columns=4,
+			legend cell align=left,
+			legend style={/tikz/every even column/.append style={column sep=10pt}},
+			y tick label style={
+				/pgf/number format/.cd,
+					scaled y ticks = false,
+					fixed,
+				/tikz/.cd
+			},
+		]
+			% data
+			\addplot table[
+				y=mean,
+				%y error=stddev,
+				only marks,
+				mark=*
+			]{<<weights_stat/data_file>>};
+
+			% average
+			\addplot[domain=0:<<weights_stat/instance/points_number>>,dashed,thick]{<<weights_stat/weights_mean_mean>>};
+
+			% min/max
+			\addplot[name path=A,draw=none] table[y=min]{<<weights_stat/data_file>>};
+			\addplot[name path=B,draw=none] table[y=max]{<<weights_stat/data_file>>};
+			\addplot[red!70,fill opacity=0.5] fill between[of=A and B];
+
+			% stddev
+			\addplot[name path=A,draw=none] table[y expr=\thisrow{mean}-\thisrow{stddev}]{<<weights_stat/data_file>>};
+			\addplot[name path=B,draw=none] table[y expr=\thisrow{mean}+\thisrow{stddev}]{<<weights_stat/data_file>>};
+			\addplot[green!70,fill opacity=0.5] fill between[of=A and B];
+
+			% legend
+			\legend{
+				Weights,
+				Average,
+				,
+				,
+				Min/Max,
+				,
+				,
+				Std. dev.
+			}
+		\end{axis}
+	\end{tikzpicture}
+\end{document}
