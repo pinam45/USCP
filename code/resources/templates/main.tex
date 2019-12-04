@@ -90,8 +90,14 @@
 %----------------------------------------
 
 \pgfplotsset{
-  table/search path={./plots},
+	compat=1.16,
+	table/col sep=comma
 }
+\pgfplotsset{
+	table/search path={./plots},
+}
+\usetikzlibrary{intersections}
+\usepgfplotslibrary{fillbetween}
 
 %----------------------------------------
 % Links
@@ -125,6 +131,18 @@
 <*if rwls_stats*>
 	\newpage\section{Stats}
 		\input{./tables/rwls_stats}
+<*endif*>
+<*if rwls_weights*>
+	\begin{landscape}
+		\newpage\section{RWLS weights}
+	<*for plot in rwls_weights_plots_files*>
+		<*if loop/is_first*>
+			\input{./plots/<<plot>>}
+		<*else*>
+			\newpage\input{./plots/<<plot>>}
+		<*endif*>
+	<*endfor*>
+	\end{landscape}
 <*endif*>
 <*if memetic_comparisons*>
 	\begin{landscape}
