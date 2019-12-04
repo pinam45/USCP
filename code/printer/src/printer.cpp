@@ -102,6 +102,18 @@ namespace
 	};
 	void to_json(nlohmann::json& j, const memetic_comparison& serial);
 
+	struct rwls_weights_stats final
+	{
+		instance_info instance;
+		bool exist = false;
+		//uscp::rwls::position_serial stopping_criterion;
+		size_t repetitions = 0;
+		float weights_mean_mean = 0;
+		std::string data_file; //csv
+		std::string plot_file; //tex
+	};
+	void to_json(nlohmann::json& j, const rwls_weights_stats& serial);
+
 	void to_json(nlohmann::json& j, const greedy_result& serial)
 	{
 		j = nlohmann::json{
@@ -192,6 +204,19 @@ namespace
 		};
 	}
 
+	void to_json(nlohmann::json& j, const rwls_weights_stats& serial)
+	{
+		j = nlohmann::json{
+		  {"instance", serial.instance},
+		  {"exist", serial.exist},
+		  //{"stopping_criterion", serial.stopping_criterion},
+		  {"repetitions", serial.repetitions},
+		  {"weights_mean_mean", serial.weights_mean_mean},
+		  {"data_file", serial.data_file},
+		  {"plot_file", serial.plot_file},
+		};
+	}
+
 	void replace(std::string& data, std::string_view search, std::string_view replace)
 	{
 		size_t pos = data.find(search);
@@ -265,16 +290,19 @@ printer::printer(std::string_view output_prefix) noexcept
   , tables_output_folder(concat(output_folder, config::partial::TABLES_TEMPLATE_SUBFOLDER))
   , memetic_comparisons_tables_output_folder(
       concat(tables_output_folder, config::partial::MEMETIC_COMPARISONS_TABLES_TEMPLATE_SUBFOLDER))
+  , plots_output_folder(concat(output_folder, config::partial::PLOTS_TEMPLATE_SUBFOLDER))
   , template_folder(concat(config::partial::RESOURCES_FOLDER, config::partial::TEMPLATE_SUBFOLDER))
   , tables_template_folder(concat(template_folder, config::partial::TABLES_TEMPLATE_SUBFOLDER))
   , memetic_comparisons_tables_template_folder(
       concat(tables_template_folder,
              config::partial::MEMETIC_COMPARISONS_TABLES_TEMPLATE_SUBFOLDER))
+  , plots_template_folder(concat(template_folder, config::partial::PLOTS_TEMPLATE_SUBFOLDER))
   , m_environment()
   , m_greedy_reports()
   , m_rwls_reports()
   , m_memetic_reports()
   , m_generate_rwls_stats(false)
+  , m_generate_rwls_weights(false)
   , m_generate_memetic_comparisons(false)
 {
 	m_environment.set_statement(std::string(config::inja::STATEMENT_OPEN),
@@ -349,6 +377,11 @@ void printer::generate_rwls_stats(bool enable) noexcept
 	m_generate_rwls_stats = enable;
 }
 
+void printer::generate_rwls_weights(bool enable) noexcept
+{
+	m_generate_rwls_weights = enable;
+}
+
 void printer::generate_memetic_comparisons(bool enable) noexcept
 {
 	m_generate_memetic_comparisons = enable;
@@ -397,6 +430,17 @@ bool printer::generate_document() noexcept
 		LOGGER->info("Generated rwls stats table");
 	}
 
+	std::vector<std::string> rwls_weights_plots_files;
+	if(m_generate_rwls_weights)
+	{
+		if(!generate_rwls_weights_plots(rwls_weights_plots_files))
+		{
+			LOGGER->warn("Failed to generate rwls weights plots");
+			return false;
+		}
+		LOGGER->info("Generated rwls weights plots");
+	}
+
 	std::vector<std::string> memetic_comparisons_tables_files;
 	if(m_generate_memetic_comparisons)
 	{
@@ -418,7 +462,9 @@ bool printer::generate_document() noexcept
 	data["date"] = now_txt.str();
 	data["rwls_stats"] = m_generate_rwls_stats;
 	data["memetic_comparisons"] = m_generate_memetic_comparisons;
+	data["rwls_weights"] = m_generate_rwls_weights;
 	data["memetic_comparisons_tables_files"] = memetic_comparisons_tables_files;
+	data["rwls_weights_plots_files"] = rwls_weights_plots_files;
 
 	// generate document
 	try
@@ -459,7 +505,8 @@ bool printer::create_output_folders() noexcept
 	std::error_code error;
 	for(const std::string& directory: {output_folder,
 	                                   tables_output_folder,
-	                                   memetic_comparisons_tables_output_folder})
+	                                   memetic_comparisons_tables_output_folder,
+	                                   plots_output_folder})
 	{
 		std::filesystem::create_directories(directory, error);
 		if(error)
@@ -749,6 +796,188 @@ bool printer::generate_rwls_stats_table() noexcept
 		return false;
 	}
 	data_stream << data.dump(4);
+	return true;
+}
+
+bool printer::generate_rwls_weights_plots(std::vector<std::string>& generated_plots_files) noexcept
+{
+	// generate data
+	std::sort(std::begin(m_rwls_reports), std::end(m_rwls_reports), rwls_report_less);
+
+	struct weights_data
+	{
+		float mean = 0;
+		float stddev = 0;
+		float min = std::numeric_limits<float>::max();
+		float max = std::numeric_limits<float>::min();
+	};
+	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
+	{
+		rwls_weights_stats weights_stat;
+		weights_stat.instance.name = instance.name;
+		weights_stat.instance.bks = instance.bks;
+		weights_stat.instance.subsets_number = instance.subsets;
+		weights_stat.instance.points_number = instance.points;
+		weights_stat.repetitions = 0;
+
+		std::vector<const uscp::rwls::report_serial*> rwls_reports_with_weights;
+		const auto [rwls_begin, rwls_end] = std::equal_range(
+		  std::begin(m_rwls_reports), std::end(m_rwls_reports), instance.name, rwls_report_less);
+		for(auto it = rwls_begin; it < rwls_end; ++it)
+		{
+			if(it->points_weights_final.size() != instance.points)
+			{
+				// no final weights information
+				continue;
+			}
+			rwls_reports_with_weights.push_back(it.base());
+			weights_stat.exist = true;
+			++weights_stat.repetitions;
+		}
+
+		std::vector<weights_data> weights_data;
+		weights_data.resize(instance.points);
+		for(const uscp::rwls::report_serial* rwls_ptr: rwls_reports_with_weights)
+		{
+			const uscp::rwls::report_serial& rwls = *rwls_ptr;
+			for(size_t i = 0; i < instance.points; ++i)
+			{
+				weights_data[i].mean += rwls.points_weights_final[i];
+				if(rwls.points_weights_final[i] < weights_data[i].min)
+				{
+					weights_data[i].min = rwls.points_weights_final[i];
+				}
+				if(rwls.points_weights_final[i] > weights_data[i].max)
+				{
+					weights_data[i].max = rwls.points_weights_final[i];
+				}
+			}
+		}
+		if(!weights_stat.exist)
+		{
+			continue;
+		}
+		for(size_t i = 0; i < instance.points; ++i)
+		{
+			weights_data[i].mean /= weights_stat.repetitions;
+			weights_stat.weights_mean_mean += weights_data[i].mean;
+		}
+		weights_stat.weights_mean_mean /= instance.points;
+		for(const uscp::rwls::report_serial* rwls_ptr: rwls_reports_with_weights)
+		{
+			const uscp::rwls::report_serial& rwls = *rwls_ptr;
+
+			for(size_t i = 0; i < instance.points; ++i)
+			{
+				weights_data[i].stddev +=
+				  std::pow(rwls.points_weights_final[i] - weights_data[i].mean, 2);
+			}
+		}
+		for(size_t i = 0; i < instance.points; ++i)
+		{
+			weights_data[i].stddev /= weights_stat.repetitions;
+			weights_data[i].stddev = std::sqrt(weights_data[i].stddev);
+		}
+
+		weights_stat.data_file = concat(config::partial::RWLS_WEIGHTS_CSV_OUTPUT_FILE_PREFIX,
+		                                instance.name,
+		                                config::partial::RWLS_WEIGHTS_CSV_OUTPUT_FILE_POSTFIX);
+		{
+			const std::string data_file = concat(plots_output_folder, weights_stat.data_file);
+			std::ofstream data_stream(data_file, std::ios::out | std::ios::trunc);
+			if(!data_stream)
+			{
+				SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
+				LOGGER->warn("Failed to write file {}", data_file);
+				return false;
+			}
+			data_stream << "point, mean, stddev, min, max\n";
+			for(size_t i = 0; i < weights_data.size(); ++i)
+			{
+				data_stream << i << ", " << weights_data[i].mean << ", " << weights_data[i].stddev
+				            << ", " << weights_data[i].min << ", " << weights_data[i].max << "\n";
+			}
+		}
+
+		weights_stat.plot_file = concat(config::partial::RWLS_WEIGHTS_PLOT_OUTPUT_FILE_PREFIX,
+		                                instance.name,
+		                                config::partial::RWLS_WEIGHTS_PLOT_OUTPUT_FILE_POSTFIX);
+		{
+			const std::string plot_file_source =
+			  concat(plots_template_folder, config::partial::RWLS_WEIGHTS_PLOT_TEMPLATE_FILE);
+			const std::string plot_file_dest = concat(plots_output_folder, weights_stat.plot_file);
+
+			nlohmann::json data;
+			data["weights_stat"] = weights_stat;
+
+			try
+			{
+				m_environment.write(plot_file_source, data, plot_file_dest);
+			}
+			catch(const std::exception& e)
+			{
+				LOGGER->warn("error writing RWLS weights plot: {}", e.what());
+				return false;
+			}
+			catch(...)
+			{
+				LOGGER->warn("unknown error writing RWLS weights plot");
+				return false;
+			}
+
+			// save data
+			const std::string file_data = concat(plot_file_dest, ".json");
+			std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
+			if(!data_stream)
+			{
+				SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
+				LOGGER->warn("Failed to write file {}", file_data);
+				return false;
+			}
+			data_stream << data.dump(4);
+		}
+
+		std::string import_file =
+		  concat(config::partial::RWLS_WEIGHTS_PLOT_IMPORT_OUTPUT_FILE_PREFIX,
+		         instance.name,
+		         config::partial::RWLS_WEIGHTS_PLOT_IMPORT_OUTPUT_FILE_POSTFIX);
+		generated_plots_files.push_back(import_file);
+		{
+			const std::string import_file_source = concat(
+			  plots_template_folder, config::partial::RWLS_WEIGHTS_PLOT_IMPORT_TEMPLATE_FILE);
+			const std::string import_file_dest = concat(plots_output_folder, import_file);
+
+			nlohmann::json data;
+			data["weights_stat"] = weights_stat;
+
+			try
+			{
+				m_environment.write(import_file_source, data, import_file_dest);
+			}
+			catch(const std::exception& e)
+			{
+				LOGGER->warn("error writing RWLS weights plot import: {}", e.what());
+				return false;
+			}
+			catch(...)
+			{
+				LOGGER->warn("unknown error writing RWLS weights plot import");
+				return false;
+			}
+
+			// save data
+			const std::string file_data = concat(import_file_dest, ".json");
+			std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
+			if(!data_stream)
+			{
+				SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
+				LOGGER->warn("Failed to write file {}", file_data);
+				return false;
+			}
+			data_stream << data.dump(4);
+		}
+	}
+
 	return true;
 }
 
