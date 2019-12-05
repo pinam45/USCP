@@ -18,10 +18,13 @@ uscp::solution uscp::expand(const uscp::solution& reduced_solution) noexcept
 		LOGGER->error("Tried to expand solution of non-reduced instance");
 		return reduced_solution;
 	}
-	if(reduced_solution.problem.subsets_number
+	if(((reduced_solution.problem.subsets_number
 	     + reduced_solution.problem.reduction->reduction_applied.subsets_dominated.count()
-	     + reduced_solution.problem.reduction->reduction_applied.subsets_included.count()
-	   != reduced_solution.problem.reduction->parent_instance->subsets_number)
+	     + reduced_solution.problem.reduction->reduction_applied.subsets_included.count())
+	    != reduced_solution.problem.reduction->parent_instance->subsets_number)
+	   || ((reduced_solution.problem.points_number
+	        + reduced_solution.problem.reduction->reduction_applied.points_covered.count())
+	       != reduced_solution.problem.reduction->parent_instance->points_number))
 	{
 		LOGGER->error("Tried to expand solution of an invalid reduced instance");
 		abort();

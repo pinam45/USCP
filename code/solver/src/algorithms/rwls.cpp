@@ -666,7 +666,11 @@ uscp::rwls::report uscp::rwls::expand(const uscp::rwls::report& reduced_report) 
 	}
 	report expanded_report(*reduced_report.solution_final.problem.reduction->parent_instance);
 	expanded_report.solution_initial = expand(reduced_report.solution_initial);
+	expanded_report.points_weights_initial = expand_points_info(
+	  reduced_report.solution_initial.problem, reduced_report.points_weights_initial);
 	expanded_report.solution_final = expand(reduced_report.solution_final);
+	expanded_report.points_weights_final = expand_points_info(reduced_report.solution_final.problem,
+	                                                          reduced_report.points_weights_final);
 	expanded_report.found_at = reduced_report.found_at;
 	expanded_report.ended_at = reduced_report.ended_at;
 	expanded_report.stopping_criterion = reduced_report.stopping_criterion;
