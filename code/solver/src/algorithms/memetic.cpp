@@ -108,9 +108,12 @@ uscp::memetic::report uscp::memetic::expand(const uscp::memetic::report& reduced
 	}
 	report expanded_report(*reduced_report.solution_final.problem.reduction->parent_instance);
 	expanded_report.solution_final = expand(reduced_report.solution_final);
+	expanded_report.points_weights_final = expand_points_info(reduced_report.solution_final.problem,
+	                                                          reduced_report.points_weights_final);
 	expanded_report.found_at = reduced_report.found_at;
 	expanded_report.ended_at = reduced_report.ended_at;
 	expanded_report.solve_config = reduced_report.solve_config;
 	expanded_report.crossover_operator = reduced_report.crossover_operator;
+	expanded_report.wcrossover_operator = reduced_report.wcrossover_operator;
 	return expanded_report;
 }
