@@ -18,6 +18,12 @@
 #include "solver/algorithms/wcrossover/keep.hpp"
 #include "solver/algorithms/wcrossover/average.hpp"
 #include "solver/algorithms/wcrossover/mix_random.hpp"
+#include "solver/algorithms/wcrossover/add.hpp"
+#include "solver/algorithms/wcrossover/difference.hpp"
+#include "solver/algorithms/wcrossover/max.hpp"
+#include "solver/algorithms/wcrossover/min.hpp"
+#include "solver/algorithms/wcrossover/minmax.hpp"
+#include "solver/algorithms/wcrossover/shuffle.hpp"
 #include "solver/data/instances.hpp"
 #include "common/utils/logger.hpp"
 #include "common/utils/random.hpp"
@@ -111,19 +117,27 @@ namespace
 		return false;
 	}
 
+	using all_crossovers = crossovers<uscp::crossover::merge,
+	                                  uscp::crossover::subproblem_random,
+	                                  uscp::crossover::subproblem_greedy,
+	                                  uscp::crossover::greedy_merge,
+	                                  uscp::crossover::identity>;
+	using all_wcrossovers = wcrossovers<uscp::wcrossover::reset,
+	                                    uscp::wcrossover::keep,
+	                                    uscp::wcrossover::average,
+	                                    uscp::wcrossover::mix_random,
+	                                    uscp::wcrossover::add,
+	                                    uscp::wcrossover::difference,
+	                                    uscp::wcrossover::max,
+	                                    uscp::wcrossover::min,
+	                                    uscp::wcrossover::minmax,
+	                                    uscp::wcrossover::shuffle>;
+
 	template<typename Lambda, typename... Crossovers, typename... WCrossovers>
 	bool forall_crossover_wcrossover(Lambda&& lambda) noexcept
 	{
-		return foreach_crossover_wcrossover(std::forward<Lambda>(lambda),
-		                                    crossovers<uscp::crossover::merge,
-		                                               uscp::crossover::subproblem_random,
-		                                               uscp::crossover::subproblem_greedy,
-		                                               uscp::crossover::greedy_merge,
-		                                               uscp::crossover::identity>{},
-		                                    wcrossovers<uscp::wcrossover::reset,
-		                                                uscp::wcrossover::keep,
-		                                                uscp::wcrossover::average,
-		                                                uscp::wcrossover::mix_random>{});
+		return foreach_crossover_wcrossover(
+		  std::forward<Lambda>(lambda), all_crossovers{}, all_wcrossovers{});
 	}
 } // namespace
 
