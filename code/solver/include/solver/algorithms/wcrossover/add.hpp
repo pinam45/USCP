@@ -5,8 +5,8 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#ifndef USCP_AVERAGE_HPP
-#define USCP_AVERAGE_HPP
+#ifndef USCP_ADD_HPP
+#define USCP_ADD_HPP
 
 #include "common/data/instance.hpp"
 #include "common/data/solution.hpp"
@@ -15,18 +15,19 @@
 #include <dynamic_bitset.hpp>
 
 #include <string_view>
+#include <algorithm>
 
 namespace uscp::wcrossover
 {
-	struct average final
+	struct add final
 	{
-		explicit average(const uscp::problem::instance& problem_): problem(problem_)
+		explicit add(const uscp::problem::instance& problem_): problem(problem_)
 		{
 		}
-		average(const average&) = default;
-		average(average&&) noexcept = default;
-		average& operator=(const average& other) = delete;
-		average& operator=(average&& other) noexcept = delete;
+		add(const add&) = default;
+		add(add&&) noexcept = default;
+		add& operator=(const add& other) = delete;
+		add& operator=(add&& other) noexcept = delete;
 
 		[[nodiscard]] std::vector<ssize_t> apply(const std::vector<ssize_t>& a,
 		                                         const std::vector<ssize_t>& b) const noexcept
@@ -37,7 +38,7 @@ namespace uscp::wcrossover
 			               std::cend(a),
 			               std::cbegin(b),
 			               std::back_inserter(weights),
-			               [](ssize_t wa, ssize_t wb) { return (wa + wb) / 2; });
+			               std::plus<>());
 			return weights;
 		}
 
@@ -59,11 +60,11 @@ namespace uscp::wcrossover
 
 		[[nodiscard]] static std::string_view to_string() noexcept
 		{
-			return "average";
+			return "add";
 		}
 
 		const uscp::problem::instance& problem;
 	};
 } // namespace uscp::wcrossover
 
-#endif //USCP_AVERAGE_HPP
+#endif //USCP_ADD_HPP
