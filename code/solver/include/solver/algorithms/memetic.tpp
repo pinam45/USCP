@@ -46,7 +46,10 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 		initialize();
 	}
 
-	LOGGER->info("({}) Start solving problem with memetic algorithm", m_problem.name);
+	LOGGER->info("({}) Start solving problem with memetic algorithm ({}/{})",
+	             m_problem.name,
+	             Crossover::to_string(),
+	             WeightsCrossover::to_string());
 
 	report report(m_problem);
 	report.solve_config = config;
