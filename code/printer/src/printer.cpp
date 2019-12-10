@@ -1073,9 +1073,15 @@ bool printer::generate_memetic_comparisons_tables(
 		          std::end(comparison.results),
 		          [](const memetic_config_result& a, const memetic_config_result& b) {
 			          return std::make_tuple(
-			                   a.result.best, -a.result.best_number, a.result.steps, a.result.time)
+			                   a.result.best,
+			                   -(static_cast<float>(a.result.best_number) / a.result.total_number),
+			                   a.result.steps,
+			                   a.result.time)
 			                 < std::make_tuple(
-			                   b.result.best, -b.result.best_number, b.result.steps, b.result.time);
+			                   b.result.best,
+			                   -(static_cast<float>(b.result.best_number) / b.result.total_number),
+			                   b.result.steps,
+			                   b.result.time);
 		          });
 		std::for_each(std::begin(comparison.results),
 		              std::end(comparison.results),
