@@ -397,28 +397,24 @@ bool printer::generate_document() noexcept
 		LOGGER->warn("Failed to create output folders");
 		return false;
 	}
-	LOGGER->info("Created output folders");
 
 	if(!copy_latexmkrc())
 	{
 		LOGGER->warn("Failed to copy .latexmkrc");
 		return false;
 	}
-	LOGGER->info("Copied .latexmkrc");
 
 	if(!copy_instances_tables())
 	{
 		LOGGER->warn("Failed to copy instances tables");
 		return false;
 	}
-	LOGGER->info("Copied instances tables");
 
 	if(!generate_results_table())
 	{
 		LOGGER->warn("Failed to generate result table");
 		return false;
 	}
-	LOGGER->info("Generated result table");
 
 	if(m_generate_rwls_stats)
 	{
@@ -427,7 +423,6 @@ bool printer::generate_document() noexcept
 			LOGGER->warn("Failed to generate rwls stats table");
 			return false;
 		}
-		LOGGER->info("Generated rwls stats table");
 	}
 
 	std::vector<std::string> rwls_weights_plots_files;
@@ -438,7 +433,6 @@ bool printer::generate_document() noexcept
 			LOGGER->warn("Failed to generate rwls weights plots");
 			return false;
 		}
-		LOGGER->info("Generated rwls weights plots");
 	}
 
 	std::vector<std::string> memetic_comparisons_tables_files;
@@ -449,7 +443,6 @@ bool printer::generate_document() noexcept
 			LOGGER->warn("Failed to generate memetic comparison tables");
 			return false;
 		}
-		LOGGER->info("Generated memetic comparison tables");
 	}
 
 	// generate data
@@ -470,32 +463,11 @@ bool printer::generate_document() noexcept
 	const std::string template_file =
 	  concat(template_folder, config::partial::DOCUMENT_TEMPLATE_FILE);
 	const std::string output_file = concat(output_folder, config::partial::DOCUMENT_TEMPLATE_FILE);
-	try
+	if(!write_and_save(template_file, data, output_file))
 	{
-		m_environment.write(template_file, data, output_file);
-		LOGGER->info("Generated main document");
-	}
-	catch(const std::exception& e)
-	{
-		LOGGER->warn("error writing document: {}", e.what());
+		LOGGER->error("Failed to generate full document");
 		return false;
 	}
-	catch(...)
-	{
-		LOGGER->warn("unknown error writing document");
-		return false;
-	}
-
-	// save data
-	const std::string file_data = concat(output_file, ".json");
-	std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
-	if(!data_stream)
-	{
-		SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
-		LOGGER->warn("Failed to write file {}", file_data);
-		return false;
-	}
-	data_stream << data.dump(4);
 
 	LOGGER->info("Generated full document in {}s", timer.elapsed());
 	return true;
@@ -518,6 +490,7 @@ bool printer::create_output_folders() noexcept
 			return false;
 		}
 	}
+	LOGGER->info("Created output folders");
 	return true;
 }
 
@@ -534,6 +507,7 @@ bool printer::copy_latexmkrc() noexcept
 		LOGGER->warn("File copy failed for: {}", config::partial::LATEXMKRC_FILE);
 		return false;
 	}
+	LOGGER->info("Copied .latexmkrc");
 	return true;
 }
 
@@ -553,11 +527,14 @@ bool printer::copy_instances_tables() noexcept
 			return false;
 		}
 	}
+	LOGGER->info("Copied instances tables");
 	return true;
 }
 
 bool printer::generate_results_table() noexcept
 {
+	const timer timer;
+
 	// generate data
 	std::sort(std::begin(m_greedy_reports), std::end(m_greedy_reports), greedy_report_less);
 	std::sort(std::begin(m_rwls_reports), std::end(m_rwls_reports), rwls_report_less);
@@ -584,8 +561,9 @@ bool printer::generate_results_table() noexcept
 			result.greedy.time = greedy_begin->time;
 			if(std::distance(greedy_begin, greedy_end) > 1)
 			{
-				LOGGER->info("Multiple greedy results for {}, only the first will be used",
-				             instance.name);
+				SPDLOG_LOGGER_DEBUG(LOGGER,
+				                    "Multiple greedy results for {}, only the first will be used",
+				                    instance.name);
 			}
 		}
 
@@ -671,36 +649,20 @@ bool printer::generate_results_table() noexcept
 	  concat(tables_template_folder, config::partial::RESULT_TABLE_TEMPLATE_FILE);
 	const std::string output_file =
 	  concat(tables_output_folder, config::partial::RESULT_TABLE_TEMPLATE_FILE);
-	try
+	if(!write_and_save(template_file, data, output_file))
 	{
-		m_environment.write(template_file, data, output_file);
-	}
-	catch(const std::exception& e)
-	{
-		LOGGER->warn("error writing result table: {}", e.what());
-		return false;
-	}
-	catch(...)
-	{
-		LOGGER->warn("unknown error writing result table");
+		LOGGER->error("Failed to generate results table");
 		return false;
 	}
 
-	// save data
-	const std::string file_data = concat(output_file, ".json");
-	std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
-	if(!data_stream)
-	{
-		SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
-		LOGGER->warn("Failed to write file {}", file_data);
-		return false;
-	}
-	data_stream << data.dump(4);
+	LOGGER->info("Generated results table in {}", timer.elapsed());
 	return true;
 }
 
 bool printer::generate_rwls_stats_table() noexcept
 {
+	const timer timer;
+
 	// generate data
 	std::sort(std::begin(m_rwls_reports), std::end(m_rwls_reports), rwls_report_less);
 
@@ -774,31 +736,13 @@ bool printer::generate_rwls_stats_table() noexcept
 	  concat(tables_template_folder, config::partial::RWLS_STATS_TABLE_TEMPLATE_FILE);
 	const std::string output_file =
 	  concat(tables_output_folder, config::partial::RWLS_STATS_TABLE_TEMPLATE_FILE);
-	try
+	if(!write_and_save(template_file, data, output_file))
 	{
-		m_environment.write(template_file, data, output_file);
-	}
-	catch(const std::exception& e)
-	{
-		LOGGER->warn("error writing rwls stats table: {}", e.what());
-		return false;
-	}
-	catch(...)
-	{
-		LOGGER->warn("unknown error writing rwls stats table");
+		LOGGER->error("Failed to generate RWLS stats table");
 		return false;
 	}
 
-	// save data
-	const std::string file_data = concat(output_file, ".json");
-	std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
-	if(!data_stream)
-	{
-		SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
-		LOGGER->warn("Failed to write file {}", file_data);
-		return false;
-	}
-	data_stream << data.dump(4);
+	LOGGER->info("Generated RWLS stats table in {}", timer.elapsed());
 	return true;
 }
 
@@ -816,6 +760,7 @@ bool printer::generate_rwls_weights_plots(std::vector<std::string>& generated_pl
 	};
 	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
 	{
+		const timer timer;
 		rwls_weights_stats weights_stat;
 		weights_stat.instance.name = instance.name;
 		weights_stat.instance.bks = instance.bks;
@@ -906,38 +851,20 @@ bool printer::generate_rwls_weights_plots(std::vector<std::string>& generated_pl
 		                                instance.name,
 		                                config::partial::RWLS_WEIGHTS_PLOT_OUTPUT_FILE_POSTFIX);
 		{
-			const std::string plot_file_source =
+			const std::string template_plot_file =
 			  concat(plots_template_folder, config::partial::RWLS_WEIGHTS_PLOT_TEMPLATE_FILE);
-			const std::string plot_file_dest = concat(plots_output_folder, weights_stat.plot_file);
+			const std::string output_plot_file =
+			  concat(plots_output_folder, weights_stat.plot_file);
 
 			nlohmann::json data;
 			data["weights_stat"] = weights_stat;
 
-			try
+			if(!write_and_save(template_plot_file, data, output_plot_file))
 			{
-				m_environment.write(plot_file_source, data, plot_file_dest);
-			}
-			catch(const std::exception& e)
-			{
-				LOGGER->warn("error writing RWLS weights plot: {}", e.what());
+				LOGGER->error("Failed to generate RWLS weights plot for instance {}",
+				              instance.name);
 				return false;
 			}
-			catch(...)
-			{
-				LOGGER->warn("unknown error writing RWLS weights plot");
-				return false;
-			}
-
-			// save data
-			const std::string file_data = concat(plot_file_dest, ".json");
-			std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
-			if(!data_stream)
-			{
-				SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
-				LOGGER->warn("Failed to write file {}", file_data);
-				return false;
-			}
-			data_stream << data.dump(4);
 		}
 
 		std::string import_file =
@@ -946,39 +873,22 @@ bool printer::generate_rwls_weights_plots(std::vector<std::string>& generated_pl
 		         config::partial::RWLS_WEIGHTS_PLOT_IMPORT_OUTPUT_FILE_POSTFIX);
 		generated_plots_files.push_back(import_file);
 		{
-			const std::string import_file_source = concat(
+			const std::string template_figure_file = concat(
 			  plots_template_folder, config::partial::RWLS_WEIGHTS_PLOT_IMPORT_TEMPLATE_FILE);
-			const std::string import_file_dest = concat(plots_output_folder, import_file);
+			const std::string output_figure_file = concat(plots_output_folder, import_file);
 
 			nlohmann::json data;
 			data["weights_stat"] = weights_stat;
 
-			try
+			if(!write_and_save(template_figure_file, data, output_figure_file))
 			{
-				m_environment.write(import_file_source, data, import_file_dest);
-			}
-			catch(const std::exception& e)
-			{
-				LOGGER->warn("error writing RWLS weights plot import: {}", e.what());
+				LOGGER->error("Failed to generate RWLS weights plot figure for instance {}",
+				              instance.name);
 				return false;
 			}
-			catch(...)
-			{
-				LOGGER->warn("unknown error writing RWLS weights plot import");
-				return false;
-			}
-
-			// save data
-			const std::string file_data = concat(import_file_dest, ".json");
-			std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
-			if(!data_stream)
-			{
-				SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
-				LOGGER->warn("Failed to write file {}", file_data);
-				return false;
-			}
-			data_stream << data.dump(4);
 		}
+		LOGGER->info(
+		  "Generated RWLS weights plot for instance {} in {}", instance.name, timer.elapsed());
 	}
 
 	return true;
@@ -990,10 +900,10 @@ bool printer::generate_memetic_comparisons_tables(
 	// generate data
 	std::sort(std::begin(m_memetic_reports), std::end(m_memetic_reports), memetic_report_less);
 
-	std::vector<memetic_comparison> comparisons;
-	comparisons.reserve(uscp::problem::instances.size());
 	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
 	{
+		const timer timer;
+
 		memetic_comparison comparison;
 		comparison.instance.name = instance.name;
 		comparison.instance.bks = instance.bks;
@@ -1062,16 +972,11 @@ bool printer::generate_memetic_comparisons_tables(
 				                       * (memetic.found_at.time - result->result.time);
 			}
 		}
-
-		comparisons.push_back(std::move(comparison));
-	}
-
-	for(memetic_comparison& comparison: comparisons)
-	{
 		if(!comparison.exist)
 		{
 			continue;
 		}
+
 		std::sort(std::begin(comparison.results),
 		          std::end(comparison.results),
 		          [](const memetic_config_result& a, const memetic_config_result& b) {
@@ -1093,47 +998,30 @@ bool printer::generate_memetic_comparisons_tables(
 			              replace(result.wcrossover_operator, "_", "\\_");
 		              });
 
-		const std::string template_file =
-		  concat(memetic_comparisons_tables_template_folder,
-		         config::partial::MEMETIC_COMPARISON_TABLE_TEMPLATE_FILE);
-		const std::string output_file =
-		  concat(config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX,
-		         comparison.instance.name,
-		         config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_POSTFIX);
-		const std::string output_file_full =
-		  concat(memetic_comparisons_tables_output_folder, output_file);
-
 		nlohmann::json data;
 		data["comparison"] = comparison;
 
 		// generate table
-		try
+		const std::string template_file =
+		  concat(memetic_comparisons_tables_template_folder,
+		         config::partial::MEMETIC_COMPARISON_TABLE_TEMPLATE_FILE);
+		const std::string output_file_relative =
+		  concat(config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX,
+		         comparison.instance.name,
+		         config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_POSTFIX);
+		const std::string output_file =
+		  concat(memetic_comparisons_tables_output_folder, output_file_relative);
+		if(!write_and_save(template_file, data, output_file))
 		{
-			m_environment.write(template_file, data, output_file_full);
-		}
-		catch(const std::exception& e)
-		{
-			LOGGER->warn("error writing memetic comparison table table: {}", e.what());
-			return false;
-		}
-		catch(...)
-		{
-			LOGGER->warn("unknown error writing memetic comparison table table");
+			LOGGER->error("Failed to generate Memetic comparison table for instance {}",
+			              instance.name);
 			return false;
 		}
 
-		// save data
-		const std::string file_data = concat(output_file_full, ".json");
-		std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
-		if(!data_stream)
-		{
-			SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
-			LOGGER->warn("Failed to write file {}", file_data);
-			return false;
-		}
-		data_stream << data.dump(4);
-
-		generated_tables_files.push_back(output_file);
+		LOGGER->info("Generated Memetic comparison table for instance {} in {}s",
+		             instance.name,
+		             timer.elapsed());
+		generated_tables_files.push_back(output_file_relative);
 	}
 
 	return true;
@@ -1147,4 +1035,36 @@ std::string printer::generate_output_folder_name(std::string_view output_prefix)
 	output_folder_stream << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S");
 	output_folder_stream << config::partial::OUTPUT_FOLDER_POSTFIX;
 	return output_folder_stream.str();
+}
+
+bool printer::write_and_save(const std::string& template_file,
+                             const nlohmann::json& data,
+                             const std::string& output_file) noexcept
+{
+	try
+	{
+		m_environment.write(template_file, data, output_file);
+	}
+	catch(const std::exception& e)
+	{
+		LOGGER->warn("Error writing {}: {}", output_file, e.what());
+		return false;
+	}
+	catch(...)
+	{
+		LOGGER->warn("Unknown error writing {}", output_file);
+		return false;
+	}
+
+	// save data
+	const std::string file_data = concat(output_file, ".json");
+	std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
+	if(!data_stream)
+	{
+		SPDLOG_LOGGER_DEBUG(LOGGER, "std::ofstream constructor failed");
+		LOGGER->warn("Failed to write file {}", file_data);
+		return false;
+	}
+	data_stream << data.dump(4);
+	return true;
 }

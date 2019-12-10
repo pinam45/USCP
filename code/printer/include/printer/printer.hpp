@@ -143,6 +143,10 @@ private:
 
 	[[nodiscard]] std::string generate_output_folder_name(std::string_view output_prefix) const
 	  noexcept;
+
+	bool write_and_save(const std::string& template_file,
+	                    const nlohmann::json& data,
+	                    const std::string& output_file) noexcept;
 };
 
 #endif //USCP_PRINTER_HPP
