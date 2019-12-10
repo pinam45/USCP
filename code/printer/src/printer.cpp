@@ -467,11 +467,12 @@ bool printer::generate_document() noexcept
 	data["rwls_weights_plots_files"] = rwls_weights_plots_files;
 
 	// generate document
+	const std::string template_file =
+	  concat(template_folder, config::partial::DOCUMENT_TEMPLATE_FILE);
+	const std::string output_file = concat(output_folder, config::partial::DOCUMENT_TEMPLATE_FILE);
 	try
 	{
-		m_environment.write(concat(template_folder, config::partial::DOCUMENT_TEMPLATE_FILE),
-		                    data,
-		                    concat(output_folder, config::partial::DOCUMENT_TEMPLATE_FILE));
+		m_environment.write(template_file, data, output_file);
 		LOGGER->info("Generated main document");
 	}
 	catch(const std::exception& e)
@@ -486,7 +487,7 @@ bool printer::generate_document() noexcept
 	}
 
 	// save data
-	const std::string file_data = concat(output_folder, "main.json");
+	const std::string file_data = concat(output_file, ".json");
 	std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
 	if(!data_stream)
 	{
@@ -666,12 +667,13 @@ bool printer::generate_results_table() noexcept
 	data["results"] = std::move(results);
 
 	// generate table
+	const std::string template_file =
+	  concat(tables_template_folder, config::partial::RESULT_TABLE_TEMPLATE_FILE);
+	const std::string output_file =
+	  concat(tables_output_folder, config::partial::RESULT_TABLE_TEMPLATE_FILE);
 	try
 	{
-		m_environment.write(
-		  concat(tables_template_folder, config::partial::RESULT_TABLE_TEMPLATE_FILE),
-		  data,
-		  concat(tables_output_folder, config::partial::RESULT_TABLE_TEMPLATE_FILE));
+		m_environment.write(template_file, data, output_file);
 	}
 	catch(const std::exception& e)
 	{
@@ -685,7 +687,7 @@ bool printer::generate_results_table() noexcept
 	}
 
 	// save data
-	const std::string file_data = concat(tables_output_folder, "results.json");
+	const std::string file_data = concat(output_file, ".json");
 	std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
 	if(!data_stream)
 	{
@@ -768,12 +770,13 @@ bool printer::generate_rwls_stats_table() noexcept
 	data["stats"] = std::move(stats);
 
 	// generate table
+	const std::string template_file =
+	  concat(tables_template_folder, config::partial::RWLS_STATS_TABLE_TEMPLATE_FILE);
+	const std::string output_file =
+	  concat(tables_output_folder, config::partial::RWLS_STATS_TABLE_TEMPLATE_FILE);
 	try
 	{
-		m_environment.write(
-		  concat(tables_template_folder, config::partial::RWLS_STATS_TABLE_TEMPLATE_FILE),
-		  data,
-		  concat(tables_output_folder, config::partial::RWLS_STATS_TABLE_TEMPLATE_FILE));
+		m_environment.write(template_file, data, output_file);
 	}
 	catch(const std::exception& e)
 	{
@@ -787,7 +790,7 @@ bool printer::generate_rwls_stats_table() noexcept
 	}
 
 	// save data
-	const std::string file_data = concat(tables_output_folder, "rwls_stats.json");
+	const std::string file_data = concat(output_file, ".json");
 	std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
 	if(!data_stream)
 	{
@@ -870,7 +873,7 @@ bool printer::generate_rwls_weights_plots(std::vector<std::string>& generated_pl
 			for(size_t i = 0; i < instance.points; ++i)
 			{
 				weights_data[i].stddev +=
-				  std::pow(rwls.points_weights_final[i] - weights_data[i].mean, 2);
+				  std::pow(rwls.points_weights_final[i] - weights_data[i].mean, 2.f);
 			}
 		}
 		for(size_t i = 0; i < instance.points; ++i)
@@ -1120,11 +1123,7 @@ bool printer::generate_memetic_comparisons_tables(
 		}
 
 		// save data
-		const std::string file_data =
-		  concat(memetic_comparisons_tables_output_folder,
-		         config::partial::MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX,
-		         comparison.instance.name,
-		         ".json");
+		const std::string file_data = concat(output_file_full, ".json");
 		std::ofstream data_stream(file_data, std::ios::out | std::ios::trunc);
 		if(!data_stream)
 		{
