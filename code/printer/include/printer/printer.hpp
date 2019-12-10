@@ -55,7 +55,7 @@ public:
 			  "rwls_stats.tex";
 			static constexpr const std::string_view RWLS_WEIGHTS_PLOT_TEMPLATE_FILE = "weights.tex";
 			static constexpr const std::string_view RWLS_WEIGHTS_PLOT_IMPORT_TEMPLATE_FILE =
-			  "weights_import.tex";
+			  "figure_weights.tex";
 			static constexpr const std::string_view MEMETIC_COMPARISON_TABLE_TEMPLATE_FILE =
 			  "comparison.tex";
 
@@ -67,7 +67,7 @@ public:
 			  "rwls_weights_";
 			static constexpr const std::string_view RWLS_WEIGHTS_PLOT_OUTPUT_FILE_POSTFIX = ".tex";
 			static constexpr const std::string_view RWLS_WEIGHTS_PLOT_IMPORT_OUTPUT_FILE_PREFIX =
-			  "rwls_weights_import_";
+			  "figure_rwls_weights_";
 			static constexpr const std::string_view RWLS_WEIGHTS_PLOT_IMPORT_OUTPUT_FILE_POSTFIX =
 			  ".tex";
 			static constexpr const std::string_view MEMETIC_COMPARISON_TABLE_OUTPUT_FILE_PREFIX =
