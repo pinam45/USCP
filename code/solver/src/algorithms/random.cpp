@@ -10,9 +10,10 @@
 #include "common/utils/timer.hpp"
 
 uscp::solution uscp::random::solve(random_engine& generator,
-                                   const problem::instance& problem) noexcept
+                                   const problem::instance& problem,
+                                   std::shared_ptr<spdlog::logger> logger) noexcept
 {
-	SPDLOG_LOGGER_DEBUG(LOGGER, "({}) Start building random solution", problem.name);
+	SPDLOG_LOGGER_DEBUG(logger, "({}) Start building random solution", problem.name);
 	const timer timer;
 	solution solution(problem);
 
@@ -31,7 +32,7 @@ uscp::solution uscp::random::solve(random_engine& generator,
 	}
 	solution.cover_all_points = true;
 
-	SPDLOG_LOGGER_DEBUG(LOGGER,
+	SPDLOG_LOGGER_DEBUG(logger,
 	                    "({}) Built random solution with {} subsets in {}s",
 	                    problem.name,
 	                    solution.selected_subsets.count(),

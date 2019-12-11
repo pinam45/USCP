@@ -11,11 +11,13 @@
 #include "common/data/instance.hpp"
 #include "common/data/solution.hpp"
 #include "common/utils/random.hpp"
+#include "common/utils/logger.hpp"
 
 namespace uscp::random
 {
 	[[nodiscard]] solution solve(random_engine& generator,
-	                             const problem::instance& problem) noexcept;
+	                             const problem::instance& problem,
+	                             std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
 }
 
 #endif //USCP_RANDOM_HPP
