@@ -52,7 +52,8 @@ namespace uscp::crossover
 					new_covered_points = solution.covered_points;
 					new_covered_points |= problem.subsets_points[i];
 					const size_t new_covered_points_number = new_covered_points.count();
-					if(new_covered_points_number > covered_points_number_with_max_subset)
+					if(new_covered_points_number
+					   > covered_points_number_with_max_subset) // > for apply1
 					{
 						max_subset_number = i;
 						covered_points_with_max_subset = new_covered_points;
@@ -67,7 +68,7 @@ namespace uscp::crossover
 					abort();
 				}
 
-				// update solution
+				// update solution (faster)
 				solution.selected_subsets[max_subset_number].set();
 				solution.covered_points = covered_points_with_max_subset;
 				solution.cover_all_points = solution.covered_points.all();
@@ -98,7 +99,8 @@ namespace uscp::crossover
 					new_covered_points = solution.covered_points;
 					new_covered_points |= problem.subsets_points[i];
 					const size_t new_covered_points_number = new_covered_points.count();
-					if(new_covered_points_number >= covered_points_number_with_max_subset)
+					if(new_covered_points_number
+					   >= covered_points_number_with_max_subset) // >= for apply2
 					{
 						max_subset_number = i;
 						covered_points_with_max_subset = new_covered_points;
