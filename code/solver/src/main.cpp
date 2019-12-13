@@ -228,13 +228,13 @@ int main(int argc, char* argv[])
 		                   cxxopts::Option("memetic",
 		                                   "Solve with memetic algorithm",
 		                                   cxxopts::value<bool>(memetic)->default_value("false")));
-		options.add_option(
+		/*options.add_option(
 		  "",
 		  cxxopts::Option("memetic_generations",
 		                  "Memetic generations number limit",
 		                  cxxopts::value<size_t>(memetic_config.stopping_criterion.generation)
 		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		                  "N"));
+		                  "N"));*/
 		options.add_option(
 		  "",
 		  cxxopts::Option(
@@ -258,20 +258,20 @@ int main(int argc, char* argv[])
 		                  cxxopts::value<double>(memetic_config.stopping_criterion.time)
 		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
 		                  "N"));
-		options.add_option(
+		/*options.add_option(
 		  "",
 		  cxxopts::Option("memetic_rwls_steps",
 		                  "Memetic RWLS steps limit",
 		                  cxxopts::value<size_t>(memetic_config.rwls_stopping_criterion.steps)
 		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		                  "N"));
-		options.add_option(
+		                  "N"));*/
+		/*options.add_option(
 		  "",
 		  cxxopts::Option("memetic_rwls_time",
 		                  "Memetic RWLS time (seconds) limit",
 		                  cxxopts::value<double>(memetic_config.rwls_stopping_criterion.time)
 		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		                  "N"));
+		                  "N"));*/
 		options.add_option(
 		  "",
 		  cxxopts::Option("memetic_crossover",

@@ -39,8 +39,13 @@ void uscp::memetic::memetic<Crossover, WeightsCrossover>::initialize() noexcept
 template<typename Crossover, typename WeightsCrossover>
 uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve(
   uscp::random_engine& generator,
-  const uscp::memetic::config& config) noexcept
+  uscp::memetic::config config) noexcept
 {
+	// Memetic algorithm now uses dynamic RWLS steps, thus some parameters are now ignored
+	config.stopping_criterion.generation = std::numeric_limits<size_t>::max();
+	config.rwls_stopping_criterion.steps = std::numeric_limits<size_t>::max();
+	config.rwls_stopping_criterion.time = std::numeric_limits<double>::max();
+
 	if(!m_initialized)
 	{
 		initialize();
@@ -57,13 +62,16 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 	report.wcrossover_operator = m_wcrossover.to_string();
 
 	timer timer;
-	std::array<solution, 2> population{solution(m_problem), solution(m_problem)};
+
+	// Population weights
 	std::array<std::vector<ssize_t>, 2> population_weights;
 	for(std::vector<ssize_t>& weights: population_weights)
 	{
 		weights.resize(m_problem.points_number, 1);
 	}
 
+	// Population
+	std::array<solution, 2> population{solution(m_problem), solution(m_problem)};
 	for(solution& solution: population)
 	{
 		solution = uscp::random::solve(generator, m_problem);
@@ -78,15 +86,23 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 	size_t best_solution_subsets_number = std::numeric_limits<size_t>::max();
 	std::array<uscp::rwls::report, 2> rwls_reports{uscp::rwls::report(m_problem),
 	                                               uscp::rwls::report(m_problem)};
+
+	// Dynamic steps setup
+	std::deque<size_t> dynamic_steps;
+	static constexpr size_t dynamic_steps_recorded_generations = 10;
+	const size_t base_steps = 2 * m_problem.subsets_number;
+	dynamic_steps.resize(dynamic_steps_recorded_generations, base_steps);
+	config.rwls_stopping_criterion.steps = base_steps;
+
+	// Main loop
 	while(generation < config.stopping_criterion.generation
 	      && rwls_cumulative_position < config.stopping_criterion.rwls_cumulative_position
 	      && timer.elapsed() < config.stopping_criterion.time)
 	{
-		SPDLOG_LOGGER_DEBUG(LOGGER,
-		                    "({}) Memetic generation {}: start at {}s",
-		                    m_problem.name,
-		                    generation,
-		                    timer.elapsed());
+		LOGGER->info("[------------------------------] ({}) Memetic generation {}, start at {}s",
+		             m_problem.name,
+		             generation,
+		             timer.elapsed());
 #pragma omp parallel for default(none) \
   shared(population, population_weights, rwls_reports, config, generator)
 		for(size_t i = 0; i < population.size(); ++i)
@@ -127,8 +143,16 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 		{
 			rwls_cumulative_position += rwls_reports[i].ended_at;
 		}
-
-		LOGGER->info("({}) Memetic generation {}: parent ({}, {}){}",
+		LOGGER->info("({}) M g{}: applied {} RWLS steps to get parents",
+		             m_problem.name,
+		             generation,
+		             config.rwls_stopping_criterion.steps);
+		LOGGER->info("({}) M g{}: parents found at: ({}, {})",
+		             m_problem.name,
+		             generation,
+		             rwls_reports[0].found_at.steps,
+		             rwls_reports[1].found_at.steps);
+		LOGGER->info("({}) M g{}: parents subsets: ({}, {}){}",
 		             m_problem.name,
 		             generation,
 		             rwls_reports[0].solution_final.selected_subsets.count(),
@@ -137,6 +161,57 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 		                 == rwls_reports[1].solution_final.selected_subsets
 		               ? " [same]"
 		               : "");
+
+		if(rwls_reports[0].found_at.steps == 0 || rwls_reports[1].found_at.steps == 0)
+		{
+			LOGGER->info(
+			  "({}) M g{}: RWLS did not change the parents: randomize parents and double RWLS steps of next generation",
+			  m_problem.name,
+			  generation);
+			config.rwls_stopping_criterion.steps *= 2;
+			rwls_reports[0].solution_final = uscp::random::solve(generator, m_problem, NULL_LOGGER);
+			rwls_reports[1].solution_final = uscp::random::solve(generator, m_problem, NULL_LOGGER);
+			LOGGER->info("({}) M g{}: new parents subsets: ({}, {}){}",
+			             m_problem.name,
+			             generation,
+			             rwls_reports[0].solution_final.selected_subsets.count(),
+			             rwls_reports[1].solution_final.selected_subsets.count(),
+			             rwls_reports[0].solution_final.selected_subsets
+			                 == rwls_reports[1].solution_final.selected_subsets
+			               ? " [same]"
+			               : "");
+		}
+		else
+		{
+			if(rwls_reports[0].solution_final.selected_subsets
+			   == rwls_reports[1].solution_final.selected_subsets)
+			{
+				LOGGER->info(
+				  "({}) M g{}: same parents: randomize parents", m_problem.name, generation);
+				rwls_reports[0].solution_final =
+				  uscp::random::solve(generator, m_problem, NULL_LOGGER);
+				rwls_reports[1].solution_final =
+				  uscp::random::solve(generator, m_problem, NULL_LOGGER);
+				LOGGER->info("({}) M g{}: new parents subsets: ({}, {}){}",
+				             m_problem.name,
+				             generation,
+				             rwls_reports[0].solution_final.selected_subsets.count(),
+				             rwls_reports[1].solution_final.selected_subsets.count(),
+				             rwls_reports[0].solution_final.selected_subsets
+				                 == rwls_reports[1].solution_final.selected_subsets
+				               ? " [same]"
+				               : "");
+			}
+
+			dynamic_steps.push_back(rwls_reports[0].found_at.steps
+			                        + rwls_reports[1].found_at.steps);
+			dynamic_steps.pop_front();
+			config.rwls_stopping_criterion.steps =
+			  base_steps
+			  + std::accumulate(std::begin(dynamic_steps), std::end(dynamic_steps), size_t(0))
+			      / dynamic_steps.size();
+		}
+
 #pragma omp parallel sections
 		{
 #pragma omp section
@@ -150,7 +225,7 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 				  rwls_reports[0].solution_final, rwls_reports[1].solution_final, generator);
 			}
 		}
-		LOGGER->info("({}) Memetic generation {}: children ({}, {}){}",
+		LOGGER->info("({}) M g{}: children subsets: ({}, {}){}",
 		             m_problem.name,
 		             generation,
 		             population[0].selected_subsets.count(),
@@ -173,6 +248,10 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 				                                            generator);
 			}
 		}
+		LOGGER->info("({}) M g{}: current best solution subsets number: {}",
+		             m_problem.name,
+		             generation,
+		             best_solution_subsets_number);
 
 		++generation;
 	}
