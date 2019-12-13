@@ -30,9 +30,17 @@ namespace uscp::greedy
 		bool load(const report_serial& serial) noexcept;
 	};
 
-	[[nodiscard]] solution solve(const problem::instance& problem) noexcept;
+	[[nodiscard, gnu::hot]] solution solve(const problem::instance& problem) noexcept;
 
 	[[nodiscard, gnu::hot]] report solve_report(const problem::instance& problem) noexcept;
+
+	[[nodiscard, gnu::hot]] solution restricted_solve(
+	  const problem::instance& problem,
+	  const dynamic_bitset<>& authorized_subsets) noexcept;
+
+	[[nodiscard, gnu::hot]] report restricted_solve_report(
+	  const problem::instance& problem,
+	  const dynamic_bitset<>& authorized_subsets) noexcept;
 
 	[[nodiscard]] report expand(const report& reduced_report) noexcept;
 } // namespace uscp::greedy
