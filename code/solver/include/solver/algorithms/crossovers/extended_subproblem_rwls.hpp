@@ -5,13 +5,14 @@
 // See accompanying file LICENSE or copy at
 // https://opensource.org/licenses/MIT
 //
-#ifndef USCP_SUBPROBLEM_RWLS_HPP
-#define USCP_SUBPROBLEM_RWLS_HPP
+#ifndef USCP_EXTENDED_SUBPROBLEM_RWLS_HPP
+#define USCP_EXTENDED_SUBPROBLEM_RWLS_HPP
 
 #include "common/data/instance.hpp"
 #include "common/data/solution.hpp"
 #include "common/utils/random.hpp"
 #include "common/utils/logger.hpp"
+#include "solver/algorithms/random.hpp"
 #include "solver/algorithms/greedy.hpp"
 #include "solver/algorithms/rwls.hpp"
 
@@ -21,9 +22,9 @@
 
 namespace uscp::crossover
 {
-	struct subproblem_rwls final
+	struct extended_subproblem_rwls final
 	{
-		explicit subproblem_rwls(const uscp::problem::instance& problem_)
+		explicit extended_subproblem_rwls(const uscp::problem::instance& problem_)
 		  : problem(problem_), rwls(problem_, NULL_LOGGER)
 		{
 			rwls.initialize();
@@ -42,10 +43,10 @@ namespace uscp::crossover
 				});
 			}
 		}
-		subproblem_rwls(const subproblem_rwls&) = default;
-		subproblem_rwls(subproblem_rwls&&) noexcept = default;
-		subproblem_rwls& operator=(const subproblem_rwls& other) = delete;
-		subproblem_rwls& operator=(subproblem_rwls&& other) noexcept = delete;
+		extended_subproblem_rwls(const extended_subproblem_rwls&) = default;
+		extended_subproblem_rwls(extended_subproblem_rwls&&) noexcept = default;
+		extended_subproblem_rwls& operator=(const extended_subproblem_rwls& other) = delete;
+		extended_subproblem_rwls& operator=(extended_subproblem_rwls&& other) noexcept = delete;
 
 		solution apply(solution solution,
 		               dynamic_bitset<> authorized_subsets,
@@ -76,7 +77,10 @@ namespace uscp::crossover
 
 		solution apply1(const solution& a, const solution& b, random_engine& generator) noexcept
 		{
-			dynamic_bitset<> authorized_subsets = a.selected_subsets;
+			solution random_solution =
+			  uscp::random::solve(generator, problem, NULL_LOGGER); // to extend the subproblem
+			dynamic_bitset<> authorized_subsets = random_solution.selected_subsets;
+			authorized_subsets |= a.selected_subsets;
 			authorized_subsets |= b.selected_subsets;
 			solution solution =
 			  uscp::greedy::restricted_solve(problem, authorized_subsets, NULL_LOGGER);
@@ -87,7 +91,10 @@ namespace uscp::crossover
 
 		solution apply2(const solution& a, const solution& b, random_engine& generator) noexcept
 		{
-			dynamic_bitset<> authorized_subsets = a.selected_subsets;
+			solution random_solution =
+			  uscp::random::solve(generator, problem, NULL_LOGGER); // to extend the subproblem
+			dynamic_bitset<> authorized_subsets = random_solution.selected_subsets;
+			authorized_subsets |= a.selected_subsets;
 			authorized_subsets |= b.selected_subsets;
 			solution solution =
 			  uscp::greedy::restricted_rsolve(problem, authorized_subsets, NULL_LOGGER);
@@ -98,7 +105,7 @@ namespace uscp::crossover
 
 		[[nodiscard]] static std::string_view to_string() noexcept
 		{
-			return "subproblem_rwls";
+			return "extended_subproblem_rwls";
 		}
 
 		const uscp::problem::instance& problem;
@@ -108,4 +115,4 @@ namespace uscp::crossover
 	};
 } // namespace uscp::crossover
 
-#endif //USCP_SUBPROBLEM_RWLS_HPP
+#endif //USCP_EXTENDED_SUBPROBLEM_RWLS_HPP
