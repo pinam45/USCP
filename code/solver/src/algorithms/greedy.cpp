@@ -11,16 +11,19 @@
 #include "solver/data/solution.hpp"
 
 #include <dynamic_bitset.hpp>
+
 #include <utility>
+#include <functional>
 
 namespace
 {
-	template<bool restricted>
+	template<typename is_greater_t, bool restricted>
 	[[nodiscard, gnu::hot]] uscp::greedy::report solve_report_impl(
 	  const uscp::problem::instance& problem,
 	  [[maybe_unused]] const dynamic_bitset<>& authorized_subsets,
 	  std::shared_ptr<spdlog::logger> logger) noexcept
 	{
+		const is_greater_t is_greater;
 		if constexpr(restricted)
 		{
 			assert(authorized_subsets.size() == problem.subsets_number);
@@ -55,7 +58,7 @@ namespace
 				new_covered_points = report.solution_final.covered_points;
 				new_covered_points |= problem.subsets_points[i];
 				const size_t new_covered_points_number = new_covered_points.count();
-				if(new_covered_points_number > covered_points_number_with_max_subset)
+				if(is_greater(new_covered_points_number, covered_points_number_with_max_subset))
 				{
 					max_subset_number = i;
 					covered_points_with_max_subset = new_covered_points;
@@ -125,7 +128,20 @@ uscp::solution uscp::greedy::solve(const uscp::problem::instance& problem,
 uscp::greedy::report uscp::greedy::solve_report(const uscp::problem::instance& problem,
                                                 std::shared_ptr<spdlog::logger> logger) noexcept
 {
-	return solve_report_impl<false>(problem, dynamic_bitset<>{}, std::move(logger));
+	return solve_report_impl<std::greater<>, false>(problem, dynamic_bitset<>{}, std::move(logger));
+}
+
+uscp::solution uscp::greedy::rsolve(const uscp::problem::instance& problem,
+                                    std::shared_ptr<spdlog::logger> logger) noexcept
+{
+	return rsolve_report(problem, std::move(logger)).solution_final;
+}
+
+uscp::greedy::report uscp::greedy::rsolve_report(const uscp::problem::instance& problem,
+                                                 std::shared_ptr<spdlog::logger> logger) noexcept
+{
+	return solve_report_impl<std::greater_equal<>, false>(
+	  problem, dynamic_bitset<>{}, std::move(logger));
 }
 
 uscp::solution uscp::greedy::restricted_solve(const uscp::problem::instance& problem,
@@ -140,7 +156,23 @@ uscp::greedy::report uscp::greedy::restricted_solve_report(
   const dynamic_bitset<>& authorized_subsets,
   std::shared_ptr<spdlog::logger> logger) noexcept
 {
-	return solve_report_impl<true>(problem, authorized_subsets, std::move(logger));
+	return solve_report_impl<std::greater<>, true>(problem, authorized_subsets, std::move(logger));
+}
+
+uscp::solution uscp::greedy::restricted_rsolve(const uscp::problem::instance& problem,
+                                               const dynamic_bitset<>& authorized_subsets,
+                                               std::shared_ptr<spdlog::logger> logger) noexcept
+{
+	return restricted_rsolve_report(problem, authorized_subsets, std::move(logger)).solution_final;
+}
+
+uscp::greedy::report uscp::greedy::restricted_rsolve_report(
+  const uscp::problem::instance& problem,
+  const dynamic_bitset<>& authorized_subsets,
+  std::shared_ptr<spdlog::logger> logger) noexcept
+{
+	return solve_report_impl<std::greater_equal<>, true>(
+	  problem, authorized_subsets, std::move(logger));
 }
 
 uscp::greedy::report uscp::greedy::expand(const uscp::greedy::report& reduced_report) noexcept

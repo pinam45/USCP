@@ -39,12 +39,30 @@ namespace uscp::greedy
 	  const problem::instance& problem,
 	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
 
+	[[nodiscard, gnu::hot]] solution rsolve(
+	  const problem::instance& problem,
+	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
+
+	[[nodiscard, gnu::hot]] report rsolve_report(
+	  const problem::instance& problem,
+	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
+
 	[[nodiscard, gnu::hot]] solution restricted_solve(
 	  const problem::instance& problem,
 	  const dynamic_bitset<>& authorized_subsets,
 	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
 
 	[[nodiscard, gnu::hot]] report restricted_solve_report(
+	  const problem::instance& problem,
+	  const dynamic_bitset<>& authorized_subsets,
+	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
+
+	[[nodiscard, gnu::hot]] solution restricted_rsolve(
+	  const problem::instance& problem,
+	  const dynamic_bitset<>& authorized_subsets,
+	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
+
+	[[nodiscard, gnu::hot]] report restricted_rsolve_report(
 	  const problem::instance& problem,
 	  const dynamic_bitset<>& authorized_subsets,
 	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
