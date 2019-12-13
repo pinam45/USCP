@@ -6,25 +6,26 @@
 // https://opensource.org/licenses/MIT
 //
 #include "solver/algorithms/greedy.hpp"
-#include "common/utils/logger.hpp"
 #include "common/utils/timer.hpp"
 #include "common/data/instance.hpp"
 #include "solver/data/solution.hpp"
 
 #include <dynamic_bitset.hpp>
+#include <utility>
 
 namespace
 {
 	template<bool restricted>
 	[[nodiscard, gnu::hot]] uscp::greedy::report solve_report_impl(
 	  const uscp::problem::instance& problem,
-	  [[maybe_unused]] const dynamic_bitset<>& authorized_subsets) noexcept
+	  [[maybe_unused]] const dynamic_bitset<>& authorized_subsets,
+	  std::shared_ptr<spdlog::logger> logger) noexcept
 	{
 		if constexpr(restricted)
 		{
 			assert(authorized_subsets.size() == problem.subsets_number);
 		}
-		SPDLOG_LOGGER_DEBUG(LOGGER, "({}) Start building greedy solution", problem.name);
+		SPDLOG_LOGGER_DEBUG(logger, "({}) Start building greedy solution", problem.name);
 		const timer timer;
 
 		uscp::greedy::report report(problem);
@@ -65,7 +66,7 @@ namespace
 			// all subset already included or no subset add covered points
 			if(max_subset_number == report.solution_final.selected_subsets.size())
 			{
-				LOGGER->error("The problem has no solution");
+				logger->error("The problem has no solution");
 				abort();
 			}
 
@@ -80,7 +81,7 @@ namespace
 		}
 
 		report.time = timer.elapsed();
-		SPDLOG_LOGGER_DEBUG(LOGGER,
+		SPDLOG_LOGGER_DEBUG(logger,
 		                    "({}) Built greedy solution with {} subsets in {}s",
 		                    problem.name,
 		                    report.solution_final.selected_subsets.count(),
@@ -115,27 +116,31 @@ bool uscp::greedy::report::load(const uscp::greedy::report_serial& serial) noexc
 	return true;
 }
 
-uscp::solution uscp::greedy::solve(const uscp::problem::instance& problem) noexcept
+uscp::solution uscp::greedy::solve(const uscp::problem::instance& problem,
+                                   std::shared_ptr<spdlog::logger> logger) noexcept
 {
-	return solve_report(problem).solution_final;
+	return solve_report(problem, std::move(logger)).solution_final;
 }
 
-uscp::greedy::report uscp::greedy::solve_report(const uscp::problem::instance& problem) noexcept
+uscp::greedy::report uscp::greedy::solve_report(const uscp::problem::instance& problem,
+                                                std::shared_ptr<spdlog::logger> logger) noexcept
 {
-	return solve_report_impl<false>(problem, dynamic_bitset<>{});
+	return solve_report_impl<false>(problem, dynamic_bitset<>{}, std::move(logger));
 }
 
 uscp::solution uscp::greedy::restricted_solve(const uscp::problem::instance& problem,
-                                              const dynamic_bitset<>& authorized_subsets) noexcept
+                                              const dynamic_bitset<>& authorized_subsets,
+                                              std::shared_ptr<spdlog::logger> logger) noexcept
 {
-	return restricted_solve_report(problem, authorized_subsets).solution_final;
+	return restricted_solve_report(problem, authorized_subsets, std::move(logger)).solution_final;
 }
 
 uscp::greedy::report uscp::greedy::restricted_solve_report(
   const uscp::problem::instance& problem,
-  const dynamic_bitset<>& authorized_subsets) noexcept
+  const dynamic_bitset<>& authorized_subsets,
+  std::shared_ptr<spdlog::logger> logger) noexcept
 {
-	return solve_report_impl<true>(problem, authorized_subsets);
+	return solve_report_impl<true>(problem, authorized_subsets, std::move(logger));
 }
 
 uscp::greedy::report uscp::greedy::expand(const uscp::greedy::report& reduced_report) noexcept
