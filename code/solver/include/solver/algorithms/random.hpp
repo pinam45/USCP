@@ -18,6 +18,12 @@ namespace uscp::random
 	[[nodiscard]] solution solve(random_engine& generator,
 	                             const problem::instance& problem,
 	                             std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
-}
+
+	[[nodiscard]] solution restricted_solve(
+	  random_engine& generator,
+	  const problem::instance& problem,
+	  const dynamic_bitset<>& authorized_subsets,
+	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
+} // namespace uscp::random
 
 #endif //USCP_RANDOM_HPP

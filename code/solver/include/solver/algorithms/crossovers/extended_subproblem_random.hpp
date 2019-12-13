@@ -35,25 +35,11 @@ namespace uscp::crossover
 		{
 			solution random_solution =
 			  uscp::random::solve(generator, problem, NULL_LOGGER); // to extend the subproblem
-			solution solution(problem);
 			dynamic_bitset<> authorized_subsets = random_solution.selected_subsets;
 			authorized_subsets |= a.selected_subsets;
 			authorized_subsets |= b.selected_subsets;
-			std::uniform_int_distribution<size_t> dist(0, problem.subsets_number - 1);
-			while(!solution.covered_points.all())
-			{
-				assert(!solution.selected_subsets.all());
-				size_t selected_subset = dist(generator);
-				while(!authorized_subsets.test(selected_subset)
-				      || solution.selected_subsets.test(selected_subset))
-				{
-					selected_subset = dist(generator);
-				}
-				solution.selected_subsets.set(selected_subset);
-				solution.covered_points |= problem.subsets_points[selected_subset];
-			}
-			solution.cover_all_points = true;
-			return solution;
+			return uscp::random::restricted_solve(
+			  generator, problem, authorized_subsets, NULL_LOGGER);
 		}
 
 		solution apply1(const solution& a, const solution& b, random_engine& generator) const
