@@ -9,11 +9,15 @@
 #include "solver/algorithms/greedy.hpp"
 #include "solver/algorithms/rwls.hpp"
 #include "solver/algorithms/memetic.hpp"
-#include "solver/algorithms/crossovers/merge.hpp"
-#include "solver/algorithms/crossovers/subproblem_random.hpp"
-#include "solver/algorithms/crossovers/subproblem_greedy.hpp"
-#include "solver/algorithms/crossovers/greedy_merge.hpp"
 #include "solver/algorithms/crossovers/identity.hpp"
+#include "solver/algorithms/crossovers/merge.hpp"
+#include "solver/algorithms/crossovers/greedy_merge.hpp"
+#include "solver/algorithms/crossovers/subproblem_random.hpp"
+#include "solver/algorithms/crossovers/extended_subproblem_random.hpp"
+#include "solver/algorithms/crossovers/subproblem_greedy.hpp"
+#include "solver/algorithms/crossovers/extended_subproblem_greedy.hpp"
+#include "solver/algorithms/crossovers/subproblem_rwls.hpp"
+#include "solver/algorithms/crossovers/extended_subproblem_rwls.hpp"
 #include "solver/algorithms/wcrossover/reset.hpp"
 #include "solver/algorithms/wcrossover/keep.hpp"
 #include "solver/algorithms/wcrossover/average.hpp"
@@ -117,11 +121,16 @@ namespace
 		return false;
 	}
 
-	using all_crossovers = crossovers<uscp::crossover::merge,
-	                                  uscp::crossover::subproblem_random,
-	                                  uscp::crossover::subproblem_greedy,
+	using all_crossovers = crossovers<uscp::crossover::identity,
+	                                  uscp::crossover::merge,
 	                                  uscp::crossover::greedy_merge,
-	                                  uscp::crossover::identity>;
+	                                  uscp::crossover::subproblem_random,
+	                                  uscp::crossover::extended_subproblem_random,
+	                                  uscp::crossover::subproblem_greedy,
+	                                  uscp::crossover::extended_subproblem_greedy,
+	                                  uscp::crossover::subproblem_rwls,
+	                                  uscp::crossover::extended_subproblem_rwls>;
+
 	using all_wcrossovers = wcrossovers<uscp::wcrossover::reset,
 	                                    uscp::wcrossover::keep,
 	                                    uscp::wcrossover::average,
