@@ -81,6 +81,19 @@ namespace uscp::rwls
 		                                       random_engine& generator,
 		                                       position stopping_criterion) noexcept;
 
+		[[nodiscard, gnu::hot]] report restricted_improve(
+		  const uscp::solution& solution,
+		  random_engine& generator,
+		  position stopping_criterion,
+		  const dynamic_bitset<>& authorized_subsets) noexcept;
+
+		[[nodiscard, gnu::hot]] report restricted_improve(
+		  const uscp::solution& solution,
+		  const std::vector<ssize_t>& points_weights_initial,
+		  random_engine& generator,
+		  position stopping_criterion,
+		  const dynamic_bitset<>& authorized_subsets) noexcept;
+
 	private:
 		struct point_information final // row
 		{
@@ -105,11 +118,20 @@ namespace uscp::rwls
 			std::vector<subset_information> subsets_information;
 			std::deque<size_t> tabu_subsets;
 
+			dynamic_bitset<> subsets_tmp;
 			dynamic_bitset<> points_tmp1;
 			dynamic_bitset<> points_tmp2;
 
 			explicit resolution_data(solution& solution, random_engine& generator) noexcept;
 		};
+
+		template<bool restricted>
+		[[nodiscard, gnu::hot]] report improve_impl(
+		  const uscp::solution& solution,
+		  const std::vector<ssize_t>& points_weights_initial,
+		  random_engine& generator,
+		  position stopping_criterion,
+		  const dynamic_bitset<>& authorized_subsets) noexcept;
 
 		[[gnu::hot]] ssize_t compute_subset_score(const resolution_data& data,
 		                                          size_t subset_number) noexcept;
@@ -125,10 +147,20 @@ namespace uscp::rwls
 
 		[[nodiscard, gnu::hot]] static size_t select_subset_to_remove_no_timestamp(
 		  const resolution_data& data) noexcept;
+		[[nodiscard, gnu::hot]] static size_t restricted_select_subset_to_remove_no_timestamp(
+		  resolution_data& data,
+		  const dynamic_bitset<>& authorized_subsets) noexcept;
 		[[nodiscard, gnu::hot]] size_t select_subset_to_remove(
 		  const resolution_data& data) noexcept;
+		[[nodiscard, gnu::hot]] size_t restricted_select_subset_to_remove(
+		  resolution_data& data,
+		  const dynamic_bitset<>& authorized_subsets) noexcept;
 		[[nodiscard, gnu::hot]] size_t select_subset_to_add(const resolution_data& data,
 		                                                    size_t point_to_cover) noexcept;
+		[[nodiscard, gnu::hot]] size_t restricted_select_subset_to_add(
+		  const resolution_data& data,
+		  size_t point_to_cover,
+		  const dynamic_bitset<>& authorized_subsets) noexcept;
 		[[nodiscard, gnu::hot]] static size_t select_uncovered_point(
 		  resolution_data& data) noexcept;
 

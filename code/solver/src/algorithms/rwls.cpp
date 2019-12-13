@@ -39,6 +39,153 @@
 #	define assert_score(expr) static_cast<void>(0)
 #endif
 
+template<bool restricted = false>
+uscp::rwls::report uscp::rwls::rwls::improve_impl(
+  const uscp::solution& solution,
+  const std::vector<ssize_t>& points_weights_initial,
+  uscp::random_engine& generator,
+  uscp::rwls::position stopping_criterion,
+  [[maybe_unused]] const dynamic_bitset<>& authorized_subsets) noexcept
+{
+	assert(points_weights_initial.size() == m_problem.points_number);
+#ifndef NDEBUG
+	if constexpr(restricted)
+	{
+		assert(authorized_subsets.size() == m_problem.subsets_number);
+		/*solution.selected_subsets.iterate_bits_on([&](size_t bit_on) noexcept {
+			assert(authorized_subsets.test(bit_on));
+		});*/
+	}
+#endif
+
+	if(!m_initialized)
+	{
+		initialize();
+	}
+
+	m_logger->info("({}) Start optimising by RWLS solution with {} subsets",
+	               solution.problem.name,
+	               solution.selected_subsets.count());
+
+	report report(m_problem);
+	report.solution_initial = solution;
+	report.solution_final = solution;
+	report.found_at = {0, 0};
+	report.ended_at = {0, 0};
+	report.stopping_criterion = stopping_criterion;
+	report.points_weights_initial = points_weights_initial;
+
+	timer timer;
+	resolution_data data(report.solution_final, generator);
+	init(data, points_weights_initial);
+	SPDLOG_LOGGER_DEBUG(m_logger, "({}) RWLS inited in {}s", m_problem.name, timer.elapsed());
+
+	timer.reset();
+	size_t step = 0;
+	while(step < stopping_criterion.steps && timer.elapsed() < stopping_criterion.time)
+	{
+		while(data.uncovered_points.none())
+		{
+			data.current_solution.compute_cover();
+			assert(data.current_solution.cover_all_points);
+			if(!data.current_solution.cover_all_points)
+			{
+				LOGGER->error("RWLS new best solution doesn't cover all points");
+				abort();
+			}
+
+			data.best_solution = data.current_solution;
+			report.found_at.steps = step;
+			report.found_at.time = timer.elapsed();
+			for(size_t i = 0; i < m_problem.points_number; ++i)
+			{
+				report.points_weights_final[i] = data.points_information[i].weight;
+			}
+			SPDLOG_LOGGER_DEBUG(m_logger,
+			                    "({}) RWLS new best solution with {} subsets at step {} in {}s",
+			                    m_problem.name,
+			                    data.best_solution.selected_subsets.count(),
+			                    step,
+			                    timer.elapsed());
+
+			size_t selected_subset;
+			if constexpr(restricted)
+			{
+				selected_subset =
+				  restricted_select_subset_to_remove_no_timestamp(data, authorized_subsets);
+			}
+			else
+			{
+				selected_subset = select_subset_to_remove_no_timestamp(data);
+			}
+			remove_subset(data, selected_subset);
+		}
+
+		// remove subset
+		size_t subset_to_remove;
+		if constexpr(restricted)
+		{
+			subset_to_remove = restricted_select_subset_to_remove(data, authorized_subsets);
+		}
+		else
+		{
+			subset_to_remove = select_subset_to_remove(data);
+		}
+		remove_subset(data, subset_to_remove);
+		data.subsets_information[subset_to_remove].timestamp = static_cast<ssize_t>(step);
+
+		// add subset
+		const size_t selected_point = select_uncovered_point(data);
+		size_t subset_to_add;
+		if constexpr(restricted)
+		{
+			subset_to_add =
+			  restricted_select_subset_to_add(data, selected_point, authorized_subsets);
+		}
+		else
+		{
+			subset_to_add = select_subset_to_add(data, selected_point);
+		}
+		add_subset(data, subset_to_add);
+
+		data.subsets_information[subset_to_add].timestamp = static_cast<ssize_t>(step);
+		make_tabu(data, subset_to_add);
+
+		// update points weights
+		data.uncovered_points.iterate_bits_on([&](size_t uncovered_points_bit_on) noexcept {
+			assert(data.points_information[uncovered_points_bit_on].subsets_covering_in_solution
+			       == 0);
+
+			++data.points_information[uncovered_points_bit_on].weight;
+
+			// update subsets score depending on this point weight
+			// subset that can cover the point if added to solution
+			for(size_t subset_covering_point: m_subsets_covering_points[uncovered_points_bit_on])
+			{
+				++data.subsets_information[subset_covering_point].score;
+			}
+		});
+#if !defined(NDEBUG) && !defined(NDEBUG_SCORE)
+		for(size_t i = 0; i < m_problem.subsets_number; ++i)
+		{
+			assert(data.subsets_information[i].score == compute_subset_score(data, i));
+		}
+#endif
+
+		++step;
+	}
+	report.ended_at.steps = step;
+	report.ended_at.time = timer.elapsed();
+
+	m_logger->info("({}) Optimised RWLS solution to {} subsets in {} steps {}s",
+	               m_problem.name,
+	               data.best_solution.selected_subsets.count(),
+	               step,
+	               timer.elapsed());
+
+	return report;
+}
+
 uscp::rwls::position& uscp::rwls::position::operator+=(const uscp::rwls::position& other) noexcept
 {
 	steps += other.steps;
@@ -171,108 +318,30 @@ uscp::rwls::report uscp::rwls::rwls::improve(const uscp::solution& solution,
                                              uscp::random_engine& generator,
                                              uscp::rwls::position stopping_criterion) noexcept
 {
-	assert(points_weights_initial.size() == m_problem.points_number);
+	return improve_impl<false>(
+	  solution, points_weights_initial, generator, stopping_criterion, dynamic_bitset<>{});
+}
 
-	if(!m_initialized)
-	{
-		initialize();
-	}
+uscp::rwls::report uscp::rwls::rwls::restricted_improve(
+  const uscp::solution& solution,
+  uscp::random_engine& generator,
+  uscp::rwls::position stopping_criterion,
+  const dynamic_bitset<>& authorized_subsets) noexcept
+{
+	std::vector<ssize_t> points_initial_weights(m_problem.points_number, 1);
+	return restricted_improve(
+	  solution, points_initial_weights, generator, stopping_criterion, authorized_subsets);
+}
 
-	m_logger->info("({}) Start optimising by RWLS solution with {} subsets",
-	               solution.problem.name,
-	               solution.selected_subsets.count());
-
-	report report(m_problem);
-	report.solution_initial = solution;
-	report.solution_final = solution;
-	report.found_at = {0, 0};
-	report.ended_at = {0, 0};
-	report.stopping_criterion = stopping_criterion;
-	report.points_weights_initial = points_weights_initial;
-
-	timer timer;
-	resolution_data data(report.solution_final, generator);
-	init(data, points_weights_initial);
-	SPDLOG_LOGGER_DEBUG(m_logger, "({}) RWLS inited in {}s", m_problem.name, timer.elapsed());
-
-	timer.reset();
-	size_t step = 0;
-	while(step < stopping_criterion.steps && timer.elapsed() < stopping_criterion.time)
-	{
-		while(data.uncovered_points.none())
-		{
-			data.current_solution.compute_cover();
-			assert(data.current_solution.cover_all_points);
-			if(!data.current_solution.cover_all_points)
-			{
-				LOGGER->error("RWLS new best solution doesn't cover all points");
-				abort();
-			}
-
-			data.best_solution = data.current_solution;
-			report.found_at.steps = step;
-			report.found_at.time = timer.elapsed();
-			for(size_t i = 0; i < m_problem.points_number; ++i)
-			{
-				report.points_weights_final[i] = data.points_information[i].weight;
-			}
-			SPDLOG_LOGGER_DEBUG(m_logger,
-			                    "({}) RWLS new best solution with {} subsets at step {} in {}s",
-			                    m_problem.name,
-			                    data.best_solution.selected_subsets.count(),
-			                    step,
-			                    timer.elapsed());
-
-			const size_t selected_subset = select_subset_to_remove_no_timestamp(data);
-			remove_subset(data, selected_subset);
-		}
-
-		// remove subset
-		const size_t subset_to_remove = select_subset_to_remove(data);
-		remove_subset(data, subset_to_remove);
-		data.subsets_information[subset_to_remove].timestamp = static_cast<ssize_t>(step);
-
-		// add subset
-		const size_t selected_point = select_uncovered_point(data);
-		const size_t subset_to_add = select_subset_to_add(data, selected_point);
-		add_subset(data, subset_to_add);
-
-		data.subsets_information[subset_to_add].timestamp = static_cast<ssize_t>(step);
-		make_tabu(data, subset_to_add);
-
-		// update points weights
-		data.uncovered_points.iterate_bits_on([&](size_t uncovered_points_bit_on) noexcept {
-			assert(data.points_information[uncovered_points_bit_on].subsets_covering_in_solution
-			       == 0);
-
-			++data.points_information[uncovered_points_bit_on].weight;
-
-			// update subsets score depending on this point weight
-			// subset that can cover the point if added to solution
-			for(size_t subset_covering_point: m_subsets_covering_points[uncovered_points_bit_on])
-			{
-				++data.subsets_information[subset_covering_point].score;
-			}
-		});
-#if !defined(NDEBUG) && !defined(NDEBUG_SCORE)
-		for(size_t i = 0; i < m_problem.subsets_number; ++i)
-		{
-			assert(data.subsets_information[i].score == compute_subset_score(data, i));
-		}
-#endif
-
-		++step;
-	}
-	report.ended_at.steps = step;
-	report.ended_at.time = timer.elapsed();
-
-	m_logger->info("({}) Optimised RWLS solution to {} subsets in {} steps {}s",
-	               m_problem.name,
-	               data.best_solution.selected_subsets.count(),
-	               step,
-	               timer.elapsed());
-
-	return report;
+uscp::rwls::report uscp::rwls::rwls::restricted_improve(
+  const uscp::solution& solution,
+  const std::vector<ssize_t>& points_weights_initial,
+  uscp::random_engine& generator,
+  uscp::rwls::position stopping_criterion,
+  const dynamic_bitset<>& authorized_subsets) noexcept
+{
+	return improve_impl<true>(
+	  solution, points_weights_initial, generator, stopping_criterion, authorized_subsets);
 }
 
 uscp::rwls::rwls::resolution_data::resolution_data(uscp::solution& solution,
@@ -284,6 +353,7 @@ uscp::rwls::rwls::resolution_data::resolution_data(uscp::solution& solution,
   , points_information()
   , subsets_information()
   , tabu_subsets()
+  , subsets_tmp(solution.problem.subsets_number)
   , points_tmp1(solution.problem.points_number)
   , points_tmp2(solution.problem.points_number)
 {
@@ -547,6 +617,28 @@ size_t uscp::rwls::rwls::select_subset_to_remove_no_timestamp(
 	return selected_subset;
 }
 
+size_t uscp::rwls::rwls::restricted_select_subset_to_remove_no_timestamp(
+  uscp::rwls::rwls::resolution_data& data,
+  const dynamic_bitset<>& authorized_subsets) noexcept
+{
+	assert(data.current_solution.selected_subsets.any());
+	dynamic_bitset<>& removable_subsets = data.subsets_tmp;
+	removable_subsets = authorized_subsets;
+	removable_subsets &= data.current_solution.selected_subsets;
+	size_t selected_subset = removable_subsets.find_first();
+	ssize_t best_score = data.subsets_information[selected_subset].score;
+	removable_subsets.iterate_bits_on([&](size_t bit_on) noexcept {
+		if(data.subsets_information[bit_on].score > best_score)
+		{
+			best_score = data.subsets_information[bit_on].score;
+			selected_subset = bit_on;
+		}
+	});
+	ensure(data.current_solution.selected_subsets.test(selected_subset));
+	ensure(authorized_subsets.test(selected_subset));
+	return selected_subset;
+}
+
 size_t uscp::rwls::rwls::select_subset_to_remove(
   const uscp::rwls::rwls::resolution_data& data) noexcept
 {
@@ -565,6 +657,32 @@ size_t uscp::rwls::rwls::select_subset_to_remove(
 		}
 	});
 	ensure(data.current_solution.selected_subsets.test(remove_subset));
+	return remove_subset;
+}
+
+size_t uscp::rwls::rwls::restricted_select_subset_to_remove(
+  uscp::rwls::rwls::resolution_data& data,
+  const dynamic_bitset<>& authorized_subsets) noexcept
+{
+	assert(data.current_solution.selected_subsets.any());
+	dynamic_bitset<>& removable_subsets = data.subsets_tmp;
+	removable_subsets = authorized_subsets;
+	removable_subsets &= data.current_solution.selected_subsets;
+	size_t remove_subset = removable_subsets.find_first();
+	std::pair<ssize_t, ssize_t> best_score_minus_timestamp(
+	  data.subsets_information[remove_subset].score,
+	  -data.subsets_information[remove_subset].timestamp);
+	removable_subsets.iterate_bits_on([&](size_t bit_on) noexcept {
+		const std::pair<ssize_t, ssize_t> current_score_timestamp(
+		  data.subsets_information[bit_on].score, -data.subsets_information[bit_on].timestamp);
+		if(current_score_timestamp > best_score_minus_timestamp && !is_tabu(data, bit_on))
+		{
+			best_score_minus_timestamp = current_score_timestamp;
+			remove_subset = bit_on;
+		}
+	});
+	ensure(data.current_solution.selected_subsets.test(remove_subset));
+	ensure(authorized_subsets.test(remove_subset));
 	return remove_subset;
 }
 
@@ -615,6 +733,64 @@ size_t uscp::rwls::rwls::select_subset_to_add(const uscp::rwls::rwls::resolution
 		m_logger->warn("Selected subset is tabu");
 	}
 	ensure(!data.current_solution.selected_subsets.test(add_subset));
+	return add_subset;
+}
+
+size_t uscp::rwls::rwls::restricted_select_subset_to_add(
+  const uscp::rwls::rwls::resolution_data& data,
+  size_t point_to_cover,
+  const dynamic_bitset<>& authorized_subsets) noexcept
+{
+	assert(point_to_cover < m_problem.points_number);
+	assert(data.uncovered_points.test(point_to_cover));
+	assert(authorized_subsets.size() == m_problem.subsets_number);
+
+	size_t add_subset = 0;
+	bool add_subset_is_tabu = true;
+	std::pair<ssize_t, ssize_t> best_score_minus_timestamp(std::numeric_limits<ssize_t>::min(),
+	                                                       std::numeric_limits<ssize_t>::max());
+	bool found = false;
+	for(size_t subset_covering: m_subsets_covering_points[point_to_cover])
+	{
+		if(!authorized_subsets.test(subset_covering))
+		{
+			continue;
+		}
+		if(data.current_solution.selected_subsets.test(subset_covering))
+		{
+			continue;
+		}
+		if(!data.subsets_information[subset_covering].canAddToSolution)
+		{
+			continue;
+		}
+
+		const std::pair<ssize_t, ssize_t> current_score_minus_timestamp(
+		  data.subsets_information[subset_covering].score,
+		  -data.subsets_information[subset_covering].timestamp);
+		if(add_subset_is_tabu)
+		{
+			best_score_minus_timestamp = current_score_minus_timestamp;
+			add_subset = subset_covering;
+			add_subset_is_tabu = is_tabu(data, add_subset);
+			found = true;
+			continue;
+		}
+		if(current_score_minus_timestamp > best_score_minus_timestamp
+		   && !is_tabu(data, subset_covering))
+		{
+			best_score_minus_timestamp = current_score_minus_timestamp;
+			add_subset = subset_covering;
+		}
+	}
+	ensure(found);
+
+	if(is_tabu(data, add_subset))
+	{
+		m_logger->warn("Selected subset is tabu");
+	}
+	ensure(!data.current_solution.selected_subsets.test(add_subset));
+	ensure(authorized_subsets.test(add_subset));
 	return add_subset;
 }
 
