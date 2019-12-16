@@ -30,7 +30,7 @@
 		<*else*>
 			<<percent(stat/proximity,1)>>
 		<*endif*>
-		& <<round(stat/steps)>> & <<round(stat/time,2)>> & <<stat/repetitions>>
+		& <<sep(round(stat/steps))>> & <<round(stat/time,2)>> & <<stat/repetitions>>
 	<*else*>
 		--- & --- & --- & --- & --- & --- & ---
 	<*endif*>
