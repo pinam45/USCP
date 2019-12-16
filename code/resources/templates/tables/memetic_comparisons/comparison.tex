@@ -6,14 +6,14 @@
 	\toprule
 	\multicolumn{3}{l}{Config} && \multicolumn{5}{l}{Results}\\
 	\cmidrule{1-3}\cmidrule{5-10}
-	Crossover & Weights Crossover & Gen./Limit && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
+	Crossover & Weights Crossover & Stopping criterion && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
 	\midrule
 	\endfirsthead
 	\caption{Memetic parameter comparison for <<comparison/instance/name>> (continued)}\\
 	\toprule
 	\multicolumn{3}{l}{Config} && \multicolumn{5}{l}{Results}\\
 	\cmidrule{1-3}\cmidrule{5-10}
-	Crossover & Weights Crossover & Gen./Limit && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
+	Crossover & Weights Crossover & Stopping criterion && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
 	\midrule
 	\endhead
 	\bottomrule
@@ -22,10 +22,14 @@
 <*for result in comparison/results*>
 	<<result/crossover_operator>> &
 	<<result/wcrossover_operator>> &
-	<*if result/config/rwls_stopping_criterion/steps == 18446744073709551615*>
-		<<result/config/stopping_criterion/generation>>g/<<round(result/config/rwls_stopping_criterion/time)>>seconds
+	<*if result/config/rwls_stopping_criterion/steps >= 18446744073709551615 and result/config/rwls_stopping_criterion/time >= 18446744073709551615*>
+		<<sep(result/config/stopping_criterion/rwls_cumulative_position/steps)>> steps
 	<*else*>
-		<<result/config/stopping_criterion/generation>>g/<<result/config/rwls_stopping_criterion/steps>>steps
+		<*if result/config/rwls_stopping_criterion/steps >= 18446744073709551615*>
+			<<result/config/stopping_criterion/generation>> gen. / <<round(result/config/rwls_stopping_criterion/time)>> seconds
+		<*else*>
+			<<result/config/stopping_criterion/generation>> gen. / <<result/config/rwls_stopping_criterion/steps>> steps
+		<*endif*>
 	<*endif*>
 	 &&
 	<*if result/result/best < comparison/instance/bks*>
