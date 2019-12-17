@@ -1006,6 +1006,29 @@ bool printer::generate_memetic_comparisons_tables(
 		{
 			continue;
 		}
+		for(auto it = memetic_begin; it < memetic_end; ++it)
+		{
+			const uscp::memetic::report_serial& memetic = *it;
+			auto result_it =
+			  std::find_if(std::begin(comparison.results),
+			               std::end(comparison.results),
+			               [&](const memetic_config_result& result) {
+				               return result.crossover_operator == memetic.crossover_operator
+				                      && result.wcrossover_operator == memetic.wcrossover_operator
+				                      && result.config.stopping_criterion.generation
+				                           == memetic.solve_config.stopping_criterion.generation;
+			               });
+			if(result_it == std::end(comparison.results))
+			{
+				continue;
+			}
+			memetic_config_result& result = *result_it;
+			const size_t pos = memetic.solution_final.selected_subsets.size() - result.result.best;
+			if(pos < result.result.top_count.size())
+			{
+				++result.result.top_count[pos];
+			}
+		}
 
 		std::sort(std::begin(comparison.results),
 		          std::end(comparison.results),

@@ -1,27 +1,29 @@
 %!TEX root = ../main.tex
 \rowcolors{1}{gray!10}{white}
-\begin{longtable}{@{\extracolsep{0pt}}ccc{c}cccccc}
+\begin{longtable}{@{\extracolsep{0pt}}ccc{c}ccrcrrr}
 	\hiderowcolors
 	\caption{Memetic parameter comparison for <<comparison/instance/name>>}\\
 	\toprule
 	\multicolumn{3}{l}{Config} && \multicolumn{5}{l}{Results}\\
 	\cmidrule{1-3}\cmidrule{5-10}
-	Crossover & Weights Crossover & Stopping criterion && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
+	Crossover & Weights Crossover & Stopping criterion && Best & Av. & \multicolumn{1}{c}{\#Best} & Dist. & \multicolumn{1}{c}{Gen.} & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)}\\
 	\midrule
 	\endfirsthead
 	\caption{Memetic parameter comparison for <<comparison/instance/name>> (continued)}\\
 	\toprule
 	\multicolumn{3}{l}{Config} && \multicolumn{5}{l}{Results}\\
 	\cmidrule{1-3}\cmidrule{5-10}
-	Crossover & Weights Crossover & Stopping criterion && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
+	Crossover & Weights Crossover & Stopping criterion && Best & Av. & \multicolumn{1}{c}{\#Best} & Dist. & \multicolumn{1}{c}{Gen.} & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)}\\
 	\midrule
 	\endhead
 	\bottomrule
 	\endfoot
 	\showrowcolors
 <*for result in comparison/results*>
-	<<result/crossover_operator>> &
-	<<result/wcrossover_operator>> &
+	<<result/crossover_operator>>
+	&
+	<<result/wcrossover_operator>>
+	&
 	<*if result/config/rwls_stopping_criterion/steps >= 18446744073709551615 and result/config/rwls_stopping_criterion/time >= 18446744073709551615*>
 		<<sep(result/config/stopping_criterion/rwls_cumulative_position/steps)>> steps
 	<*else*>
@@ -31,7 +33,7 @@
 			<<result/config/stopping_criterion/generation>> gen. / <<result/config/rwls_stopping_criterion/steps>> steps
 		<*endif*>
 	<*endif*>
-	 &&
+	&&
 	<*if result/result/best < comparison/instance/bks*>
 		\textbf{<<result/result/best>>*}
 	<*else*>
@@ -41,7 +43,20 @@
 			<<result/result/best>>
 		<*endif*>
 	<*endif*>
-	&  <<round(result/result/average,1)>> &  <<result/result/best_number>>/<<result/result/total_number>> &  <<round(result/result/generations,1)>> &  <<sep(round(result/result/steps))>> &  <<round(result/result/time,2)>>
+	&
+	<<fround(result/result/average,1)>>
+	&
+	<<result/result/best_number>>/<<result/result/total_number>>
+	&
+	<*if existsIn(result/result,"top_count")*>
+		~\tableplot{<*for val in result/result/top_count*><<val>><*if not loop/is_last*>,<*endif*><*endfor*>}
+	<*endif*>
+	&
+	<<fround(result/result/generations,1)>>
+	&
+	<<sep(round(result/result/steps))>>
+	&
+	<<fround(result/result/time,2)>>
 	\\
 <*endfor*>
 \end{longtable}

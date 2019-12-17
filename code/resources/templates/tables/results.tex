@@ -7,14 +7,14 @@
 	\toprule
 	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{6}{l}{RWLS} && \multicolumn{7}{l}{Memetic(RWLS)}\\
 	\cmidrule{4-5}\cmidrule{7-12}\cmidrule{14-20}
-	 & && Val. & \multicolumn{1}{c}{T(s)} && Best & Av. & \multicolumn{1}{c}{\#Best} & Dist. & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)} && Best & Av. & \multicolumn{1}{c}{\#Best} & \multicolumn{1}{c}{Gen.} & Dist. & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)}\\
+	 & && Val. & \multicolumn{1}{c}{T(s)} && Best & Av. & \multicolumn{1}{c}{\#Best} & Dist. & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)} && Best & Av. & \multicolumn{1}{c}{\#Best} & Dist. & \multicolumn{1}{c}{Gen.} & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)}\\
 	\midrule
 	\endfirsthead
 	\caption[]{Results (continued)}\\
 	\toprule
 	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{6}{l}{RWLS} && \multicolumn{7}{l}{Memetic(RWLS)}\\
 	\cmidrule{4-5}\cmidrule{7-12}\cmidrule{14-20}
-	 & && Val. & \multicolumn{1}{c}{T(s)} && Best & Av. & \multicolumn{1}{c}{\#Best} & Dist. & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)} && Best & Av. & \multicolumn{1}{c}{\#Best} & \multicolumn{1}{c}{Gen.} & Dist. & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)}\\
+	 & && Val. & \multicolumn{1}{c}{T(s)} && Best & Av. & \multicolumn{1}{c}{\#Best} & Dist. & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)} && Best & Av. & \multicolumn{1}{c}{\#Best} & Dist. & \multicolumn{1}{c}{Gen.} & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)}\\
 	\midrule
 	\endhead
 	\bottomrule
@@ -78,11 +78,11 @@
 		&
 		<<result/memetic/best_number>>/<<result/memetic/total_number>>
 		&
-		<<fround(result/memetic/generations,1)>>
-		&
 		<*if existsIn(result/memetic,"top_count")*>
-		~\tableplot{<*for val in result/memetic/top_count*><<val>><*if not loop/is_last*>,<*endif*><*endfor*>}
+			~\tableplot{<*for val in result/memetic/top_count*><<val>><*if not loop/is_last*>,<*endif*><*endfor*>}
 		<*endif*>
+		&
+		<<fround(result/memetic/generations,1)>>
 		&
 		<<sep(round(result/memetic/steps))>>
 		&
