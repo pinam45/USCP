@@ -1,38 +1,42 @@
 %!TEX root = ../main.tex
 \rowcolors{1}{gray!10}{white}
 \footnotesize
-\begin{longtable}{@{\extracolsep{0pt}}cc{c}cc{c}ccccc{c}cccccc}
+\begin{longtable}{@{\extracolsep{0pt}}cc{c}cr{c}ccrcrr{c}ccrrcrr}
 	\hiderowcolors
 	\caption{Results}\\
 	\toprule
-	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{5}{l}{RWLS} && \multicolumn{5}{l}{Memetic(RWLS)}\\
-	\cmidrule{4-5}\cmidrule{7-11}\cmidrule{13-18}
-	 & && Value & Time(s) && Best & Av. & \#Best & Steps & Time(s) && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
+	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{6}{l}{RWLS} && \multicolumn{7}{l}{Memetic(RWLS)}\\
+	\cmidrule{4-5}\cmidrule{7-12}\cmidrule{14-20}
+	 & && Val. & \multicolumn{1}{c}{T(s)} && Best & Av. & \multicolumn{1}{c}{\#Best} & Dist. & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)} && Best & Av. & \multicolumn{1}{c}{\#Best} & \multicolumn{1}{c}{Gen.} & Dist. & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)}\\
 	\midrule
 	\endfirsthead
 	\caption[]{Results (continued)}\\
 	\toprule
-	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{5}{l}{RWLS} && \multicolumn{5}{l}{Memetic(RWLS)}\\
-	\cmidrule{4-5}\cmidrule{7-11}\cmidrule{13-18}
-	 & && Value & Time(s) && Best & Av. & \#Best & Steps & Time(s) && Best & Av. & \#Best & Gen. & Steps & Time(s)\\
+	\multirow{2}{*}{\raisebox{-\heavyrulewidth}{Inst.}} & \multirow{2}{*}{\raisebox{-\heavyrulewidth}{BKS}} && \multicolumn{2}{l}{Greedy} && \multicolumn{6}{l}{RWLS} && \multicolumn{7}{l}{Memetic(RWLS)}\\
+	\cmidrule{4-5}\cmidrule{7-12}\cmidrule{14-20}
+	 & && Val. & \multicolumn{1}{c}{T(s)} && Best & Av. & \multicolumn{1}{c}{\#Best} & Dist. & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)} && Best & Av. & \multicolumn{1}{c}{\#Best} & \multicolumn{1}{c}{Gen.} & Dist. & \multicolumn{1}{c}{Steps} & \multicolumn{1}{c}{T(s)}\\
 	\midrule
 	\endhead
 	\bottomrule
 	\endfoot
 	\showrowcolors
 <*for result in results*>
-	<<result/instance/name>> & <<result/instance/bks>> &&
+	<<result/instance/name>>
+	&
+	<<result/instance/bks>>
+	&&
 	<*if result/greedy/exist*>
 		<*if result/greedy/value <= result/instance/bks*>
 			\textbf{<<result/greedy/value>>}
 		<*else*>
 			<<result/greedy/value>>
 		<*endif*>
-		& <<round(result/greedy/time,2)>>
+		&
+		<<fround(result/greedy/time,2)>>
 	<*else*>
 		--- & ---
 	<*endif*>
-	 &&
+	&&
 	<*if result/rwls/exist*>
 		<*if result/rwls/best < result/instance/bks*>
 			\textbf{<<result/rwls/best>>*}
@@ -43,11 +47,22 @@
 				<<result/rwls/best>>
 			<*endif*>
 		<*endif*>
-		&  <<round(result/rwls/average,1)>> &  <<result/rwls/best_number>>/<<result/rwls/total_number>> &  <<sep(round(result/rwls/steps))>> &  <<round(result/rwls/time,2)>>
+		&
+		<<fround(result/rwls/average,1)>>
+		&
+		<<result/rwls/best_number>>/<<result/rwls/total_number>>
+		&
+		<*if existsIn(result/rwls,"top_count")*>
+		~\tableplot{<*for val in result/rwls/top_count*><<val>><*if not loop/is_last*>,<*endif*><*endfor*>}
+		<*endif*>
+		&
+		<<sep(round(result/rwls/steps))>>
+		&
+		<<fround(result/rwls/time,2)>>
 	<*else*>
-		--- & --- & --- & --- & ---
+		--- & --- & --- & & --- & ---
 	<*endif*>
-	 &&
+	&&
 	<*if result/memetic/exist*>
 		<*if result/memetic/best < result/instance/bks*>
 			\textbf{<<result/memetic/best>>*}
@@ -58,9 +73,22 @@
 				<<result/memetic/best>>
 			<*endif*>
 		<*endif*>
-		&  <<round(result/memetic/average,1)>> &  <<result/memetic/best_number>>/<<result/memetic/total_number>> &  <<round(result/memetic/generations,1)>> &  <<sep(round(result/memetic/steps))>> &  <<round(result/memetic/time,2)>>
+		&
+		<<fround(result/memetic/average,1)>>
+		&
+		<<result/memetic/best_number>>/<<result/memetic/total_number>>
+		&
+		<<fround(result/memetic/generations,1)>>
+		&
+		<*if existsIn(result/memetic,"top_count")*>
+		~\tableplot{<*for val in result/memetic/top_count*><<val>><*if not loop/is_last*>,<*endif*><*endfor*>}
+		<*endif*>
+		&
+		<<sep(round(result/memetic/steps))>>
+		&
+		<<fround(result/memetic/time,2)>>
 	<*else*>
-		--- & --- & --- & --- & --- & ---
+		--- & --- & --- & --- & & --- & ---
 	<*endif*>
 	\\
 <*endfor*>

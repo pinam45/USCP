@@ -37,6 +37,7 @@ namespace
 		size_t total_number = 0;
 		double steps = 0;
 		double time = 0;
+		std::array<size_t, 10> top_count = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	};
 	void to_json(nlohmann::json& j, const rwls_result& serial);
 
@@ -50,6 +51,7 @@ namespace
 		double generations = 0;
 		double steps = 0;
 		double time = 0;
+		std::array<size_t, 10> top_count = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	};
 	void to_json(nlohmann::json& j, const memetic_result& serial);
 
@@ -133,6 +135,7 @@ namespace
 		  {"total_number", serial.total_number},
 		  {"steps", serial.steps},
 		  {"time", serial.time},
+		  {"top_count", serial.top_count},
 		};
 	}
 
@@ -147,6 +150,7 @@ namespace
 		  {"generations", serial.generations},
 		  {"steps", serial.steps},
 		  {"time", serial.time},
+		  {"top_count", serial.top_count},
 		};
 	}
 
@@ -323,7 +327,15 @@ printer::printer(std::string_view output_prefix) noexcept
 	m_environment.add_callback(
 	  "round", 1, [](inja::Arguments& args) { return std::llround(args.at(0)->get<double>()); });
 
-	auto percent_callback = [](inja::Arguments& args) {
+	m_environment.add_callback("fround", 2, [](inja::Arguments& args) -> std::string {
+		std::ostringstream txt;
+		txt << std::fixed;
+		txt << std::setprecision(args.at(1)->get<int>());
+		txt << args.at(0)->get<double>();
+		return txt.str();
+	});
+
+	auto percent_callback = [](inja::Arguments& args) -> std::string {
 		std::ostringstream txt;
 		txt << std::fixed;
 		if(args.size() > 1)
@@ -598,6 +610,15 @@ bool printer::generate_results_table() noexcept
 				  (1.0 / result.rwls.best_number) * (rwls.found_at.time - result.rwls.time);
 			}
 		}
+		for(auto it = rwls_begin; it < rwls_end; ++it)
+		{
+			const uscp::rwls::report_serial& rwls = *it;
+			const size_t pos = rwls.solution_final.selected_subsets.size() - result.rwls.best;
+			if(pos < result.rwls.top_count.size())
+			{
+				++result.rwls.top_count[pos];
+			}
+		}
 
 		const auto [memetic_begin, memetic_end] = std::equal_range(std::cbegin(m_memetic_reports),
 		                                                           std::cend(m_memetic_reports),
@@ -636,6 +657,15 @@ bool printer::generate_results_table() noexcept
 				     - result.memetic.steps);
 				result.memetic.time += (1.0 / result.memetic.best_number)
 				                       * (memetic.found_at.time - result.memetic.time);
+			}
+		}
+		for(auto it = memetic_begin; it < memetic_end; ++it)
+		{
+			const uscp::memetic::report_serial& memetic = *it;
+			const size_t pos = memetic.solution_final.selected_subsets.size() - result.memetic.best;
+			if(pos < result.memetic.top_count.size())
+			{
+				++result.memetic.top_count[pos];
 			}
 		}
 

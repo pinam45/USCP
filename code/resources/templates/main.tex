@@ -27,6 +27,7 @@
 \usepackage{datetime2}
 \usepackage{chngcntr}
 \usepackage{pdflscape}
+\usepackage{ifthen}
 % Mathematics
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -84,6 +85,40 @@
 \newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 \counterwithin{table}{section}
+
+\newcommand{\tableplot}[1]{
+	\begin{tikzpicture}
+		\begin{axis}[
+			ybar,
+			width=75pt,
+			height=55pt,
+	  		bar width=0.75,
+			xmin=0,
+			ymin=0,
+			enlargelimits=0,
+	  		axis lines=none,
+	  		xtick=\empty,
+	  		ytick=\empty,
+		]
+		\foreach \x [count=\xi] in {#1}
+		{
+			\ifthenelse{\isodd\xi}{
+				\addplot+[
+					black,
+					fill=black,
+					bar shift=-0.5
+				] coordinates{(\xi,\x)};
+			}{
+				\addplot+[
+					gray,
+					fill=gray,
+					bar shift=-0.5
+				] coordinates{(\xi,\x)};
+			}
+		}
+		\end{axis}
+	\end{tikzpicture}
+}
 
 %----------------------------------------
 % Plots
