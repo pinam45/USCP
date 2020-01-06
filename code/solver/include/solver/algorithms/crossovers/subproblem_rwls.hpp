@@ -27,7 +27,10 @@ namespace uscp::crossover
 		  : problem(problem_), rwls(problem_, NULL_LOGGER)
 		{
 			rwls.initialize();
-			stopping_criterion.steps = problem.subsets_number;
+			stopping_criterion.steps =
+			  std::sqrt((std::pow(static_cast<double>(problem.subsets_number), 2.0)
+			             + std::pow(static_cast<double>(problem.points_number), 2.0))
+			            / 2.0);
 			subsets_covering_points.resize(problem.points_number);
 			for(size_t i = 0; i < problem.points_number; ++i)
 			{
