@@ -15,6 +15,7 @@
 #include "common/utils/timer.hpp"
 #include "common/utils/logger.hpp"
 #include "solver/algorithms/random.hpp"
+#include "greedy.hpp"
 
 #include <array>
 
@@ -72,9 +73,10 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 
 	// Population
 	std::array<solution, 2> population{solution(m_problem), solution(m_problem)};
-	for(solution& solution: population)
+#pragma omp parallel for default(none) shared(population, generator, m_problem, NULL_LOGGER)
+	for(size_t i = 0; i < population.size(); ++i)
 	{
-		solution = uscp::random::solve(generator, m_problem);
+		population[i] = uscp::greedy::random_solve(generator, m_problem, NULL_LOGGER);
 	}
 	SPDLOG_LOGGER_DEBUG(
 	  LOGGER, "({}) Memetic population initialized in {}s", m_problem.name, timer.elapsed());
@@ -169,8 +171,10 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 			  m_problem.name,
 			  generation);
 			config.rwls_stopping_criterion.steps *= 2;
-			rwls_reports[0].solution_final = uscp::random::solve(generator, m_problem, NULL_LOGGER);
-			rwls_reports[1].solution_final = uscp::random::solve(generator, m_problem, NULL_LOGGER);
+			rwls_reports[0].solution_final =
+			  uscp::greedy::random_solve(generator, m_problem, NULL_LOGGER);
+			rwls_reports[1].solution_final =
+			  uscp::greedy::random_solve(generator, m_problem, NULL_LOGGER);
 			LOGGER->info("({}) M g{}: new parents subsets: ({}, {}){}",
 			             m_problem.name,
 			             generation,
@@ -189,9 +193,9 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 				LOGGER->info(
 				  "({}) M g{}: same parents: randomize parents", m_problem.name, generation);
 				rwls_reports[0].solution_final =
-				  uscp::random::solve(generator, m_problem, NULL_LOGGER);
+				  uscp::greedy::random_solve(generator, m_problem, NULL_LOGGER);
 				rwls_reports[1].solution_final =
-				  uscp::random::solve(generator, m_problem, NULL_LOGGER);
+				  uscp::greedy::random_solve(generator, m_problem, NULL_LOGGER);
 				LOGGER->info("({}) M g{}: new parents subsets: ({}, {}){}",
 				             m_problem.name,
 				             generation,
