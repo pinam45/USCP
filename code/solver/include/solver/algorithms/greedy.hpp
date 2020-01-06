@@ -11,8 +11,7 @@
 #include "common/data/solution.hpp"
 #include "common/algorithms/greedy.hpp"
 #include "common/utils/logger.hpp"
-
-#include <nlohmann/json.hpp>
+#include "common/utils/random.hpp"
 
 namespace uscp::greedy
 {
@@ -47,6 +46,16 @@ namespace uscp::greedy
 	  const problem::instance& problem,
 	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
 
+	[[nodiscard, gnu::hot]] solution random_solve(
+	  random_engine& generator,
+	  const problem::instance& problem,
+	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
+
+	[[nodiscard, gnu::hot]] report random_solve_report(
+	  random_engine& generator,
+	  const problem::instance& problem,
+	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
+
 	[[nodiscard, gnu::hot]] solution restricted_solve(
 	  const problem::instance& problem,
 	  const dynamic_bitset<>& authorized_subsets,
@@ -63,6 +72,18 @@ namespace uscp::greedy
 	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
 
 	[[nodiscard, gnu::hot]] report restricted_rsolve_report(
+	  const problem::instance& problem,
+	  const dynamic_bitset<>& authorized_subsets,
+	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
+
+	[[nodiscard, gnu::hot]] solution restricted_random_solve(
+	  random_engine& generator,
+	  const problem::instance& problem,
+	  const dynamic_bitset<>& authorized_subsets,
+	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
+
+	[[nodiscard, gnu::hot]] report restricted_random_solve_report(
+	  random_engine& generator,
 	  const problem::instance& problem,
 	  const dynamic_bitset<>& authorized_subsets,
 	  std::shared_ptr<spdlog::logger> logger = LOGGER) noexcept;
