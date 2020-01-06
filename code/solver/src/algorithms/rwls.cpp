@@ -84,41 +84,44 @@ uscp::rwls::report uscp::rwls::rwls::improve_impl(
 	size_t step = 0;
 	while(step < stopping_criterion.steps && timer.elapsed() < stopping_criterion.time)
 	{
-		while(data.uncovered_points.none())
+		if(data.uncovered_points.none())
 		{
-			data.current_solution.compute_cover();
-			assert(data.current_solution.cover_all_points);
-			if(!data.current_solution.cover_all_points)
+			do
+			{
+				data.best_solution = data.current_solution;
+				report.found_at.steps = step;
+				report.found_at.time = timer.elapsed();
+				for(size_t i = 0; i < m_problem.points_number; ++i)
+				{
+					report.points_weights_final[i] = data.points_information[i].weight;
+				}
+				SPDLOG_LOGGER_DEBUG(m_logger,
+				                    "({}) RWLS new best solution with {} subsets at step {} in {}s",
+				                    m_problem.name,
+				                    data.best_solution.selected_subsets.count(),
+				                    step,
+				                    timer.elapsed());
+
+				size_t selected_subset;
+				if constexpr(restricted)
+				{
+					selected_subset =
+					  restricted_select_subset_to_remove_no_timestamp(data, authorized_subsets);
+				}
+				else
+				{
+					selected_subset = select_subset_to_remove_no_timestamp(data);
+				}
+				remove_subset(data, selected_subset);
+			} while(data.uncovered_points.none());
+
+			data.best_solution.compute_cover();
+			assert(data.best_solution.cover_all_points);
+			if(!data.best_solution.cover_all_points)
 			{
 				LOGGER->error("RWLS new best solution doesn't cover all points");
 				abort();
 			}
-
-			data.best_solution = data.current_solution;
-			report.found_at.steps = step;
-			report.found_at.time = timer.elapsed();
-			for(size_t i = 0; i < m_problem.points_number; ++i)
-			{
-				report.points_weights_final[i] = data.points_information[i].weight;
-			}
-			SPDLOG_LOGGER_DEBUG(m_logger,
-			                    "({}) RWLS new best solution with {} subsets at step {} in {}s",
-			                    m_problem.name,
-			                    data.best_solution.selected_subsets.count(),
-			                    step,
-			                    timer.elapsed());
-
-			size_t selected_subset;
-			if constexpr(restricted)
-			{
-				selected_subset =
-				  restricted_select_subset_to_remove_no_timestamp(data, authorized_subsets);
-			}
-			else
-			{
-				selected_subset = select_subset_to_remove_no_timestamp(data);
-			}
-			remove_subset(data, selected_subset);
 		}
 
 		// remove subset
