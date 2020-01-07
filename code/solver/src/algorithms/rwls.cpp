@@ -75,15 +75,6 @@ uscp::rwls::report uscp::rwls::rwls::improve_impl(
 	report.stopping_criterion = stopping_criterion;
 	report.points_weights_initial = points_weights_initial;
 
-	if constexpr(restricted)
-	{
-		if(authorized_subsets.count() < 3)
-		{
-			LOGGER->warn("RWLS canceled: need at least 3 authorized subsets");
-			return report;
-		}
-	}
-
 	timer timer;
 	resolution_data data(report.solution_final, generator);
 	init(data, points_weights_initial);
@@ -114,8 +105,17 @@ uscp::rwls::report uscp::rwls::rwls::improve_impl(
 				size_t selected_subset;
 				if constexpr(restricted)
 				{
-					selected_subset =
+					const std::optional<size_t> subset =
 					  restricted_select_subset_to_remove_no_timestamp(data, authorized_subsets);
+					if(!subset)
+					{
+						report.ended_at.steps = step;
+						report.ended_at.time = timer.elapsed();
+						m_logger->warn("({}) There is no authorized subset to remove: RWLS stopped",
+						               m_problem.name);
+						return report;
+					}
+					selected_subset = subset.value();
 				}
 				else
 				{
@@ -137,7 +137,17 @@ uscp::rwls::report uscp::rwls::rwls::improve_impl(
 		size_t subset_to_remove;
 		if constexpr(restricted)
 		{
-			subset_to_remove = restricted_select_subset_to_remove(data, authorized_subsets);
+			const std::optional<size_t> subset =
+			  restricted_select_subset_to_remove(data, authorized_subsets);
+			if(!subset)
+			{
+				report.ended_at.steps = step;
+				report.ended_at.time = timer.elapsed();
+				m_logger->warn("({}) There is no authorized subset to remove: RWLS stopped",
+				               m_problem.name);
+				return report;
+			}
+			subset_to_remove = subset.value();
 		}
 		else
 		{
@@ -151,8 +161,17 @@ uscp::rwls::report uscp::rwls::rwls::improve_impl(
 		size_t subset_to_add;
 		if constexpr(restricted)
 		{
-			subset_to_add =
+			const std::optional<size_t> subset =
 			  restricted_select_subset_to_add(data, selected_point, authorized_subsets);
+			if(!subset)
+			{
+				report.ended_at.steps = step;
+				report.ended_at.time = timer.elapsed();
+				m_logger->warn("({}) There is no authorized subset to add: RWLS stopped",
+				               m_problem.name);
+				return report;
+			}
+			subset_to_add = subset.value();
 		}
 		else
 		{
@@ -629,7 +648,7 @@ size_t uscp::rwls::rwls::select_subset_to_remove_no_timestamp(
 	return selected_subset;
 }
 
-size_t uscp::rwls::rwls::restricted_select_subset_to_remove_no_timestamp(
+std::optional<size_t> uscp::rwls::rwls::restricted_select_subset_to_remove_no_timestamp(
   uscp::rwls::rwls::resolution_data& data,
   const dynamic_bitset<>& authorized_subsets) noexcept
 {
@@ -637,6 +656,10 @@ size_t uscp::rwls::rwls::restricted_select_subset_to_remove_no_timestamp(
 	dynamic_bitset<>& removable_subsets = data.subsets_tmp;
 	removable_subsets = authorized_subsets;
 	removable_subsets &= data.current_solution.selected_subsets;
+	if(removable_subsets.none())
+	{
+		return {};
+	}
 	size_t selected_subset = removable_subsets.find_first();
 	ssize_t best_score = data.subsets_information[selected_subset].score;
 	removable_subsets.iterate_bits_on([&](size_t bit_on) noexcept {
@@ -672,7 +695,7 @@ size_t uscp::rwls::rwls::select_subset_to_remove(
 	return remove_subset;
 }
 
-size_t uscp::rwls::rwls::restricted_select_subset_to_remove(
+std::optional<size_t> uscp::rwls::rwls::restricted_select_subset_to_remove(
   uscp::rwls::rwls::resolution_data& data,
   const dynamic_bitset<>& authorized_subsets) noexcept
 {
@@ -680,7 +703,10 @@ size_t uscp::rwls::rwls::restricted_select_subset_to_remove(
 	dynamic_bitset<>& removable_subsets = data.subsets_tmp;
 	removable_subsets = authorized_subsets;
 	removable_subsets &= data.current_solution.selected_subsets;
-	ensure(removable_subsets.any());
+	if(removable_subsets.none())
+	{
+		return {};
+	}
 	size_t remove_subset = removable_subsets.find_first();
 	std::pair<ssize_t, ssize_t> best_score_minus_timestamp(
 	  data.subsets_information[remove_subset].score,
@@ -749,7 +775,7 @@ size_t uscp::rwls::rwls::select_subset_to_add(const uscp::rwls::rwls::resolution
 	return add_subset;
 }
 
-size_t uscp::rwls::rwls::restricted_select_subset_to_add(
+std::optional<size_t> uscp::rwls::rwls::restricted_select_subset_to_add(
   const uscp::rwls::rwls::resolution_data& data,
   size_t point_to_cover,
   const dynamic_bitset<>& authorized_subsets) noexcept
@@ -796,7 +822,10 @@ size_t uscp::rwls::rwls::restricted_select_subset_to_add(
 			add_subset = subset_covering;
 		}
 	}
-	ensure(found);
+	if(!found)
+	{
+		return {};
+	}
 
 	if(is_tabu(data, add_subset))
 	{

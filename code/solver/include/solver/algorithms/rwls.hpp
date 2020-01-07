@@ -147,17 +147,18 @@ namespace uscp::rwls
 
 		[[nodiscard, gnu::hot]] static size_t select_subset_to_remove_no_timestamp(
 		  const resolution_data& data) noexcept;
-		[[nodiscard, gnu::hot]] static size_t restricted_select_subset_to_remove_no_timestamp(
+		[[nodiscard, gnu::hot]] static std::optional<size_t>
+		restricted_select_subset_to_remove_no_timestamp(
 		  resolution_data& data,
 		  const dynamic_bitset<>& authorized_subsets) noexcept;
 		[[nodiscard, gnu::hot]] size_t select_subset_to_remove(
 		  const resolution_data& data) noexcept;
-		[[nodiscard, gnu::hot]] size_t restricted_select_subset_to_remove(
+		[[nodiscard, gnu::hot]] std::optional<size_t> restricted_select_subset_to_remove(
 		  resolution_data& data,
 		  const dynamic_bitset<>& authorized_subsets) noexcept;
 		[[nodiscard, gnu::hot]] size_t select_subset_to_add(const resolution_data& data,
 		                                                    size_t point_to_cover) noexcept;
-		[[nodiscard, gnu::hot]] size_t restricted_select_subset_to_add(
+		[[nodiscard, gnu::hot]] std::optional<size_t> restricted_select_subset_to_add(
 		  const resolution_data& data,
 		  size_t point_to_cover,
 		  const dynamic_bitset<>& authorized_subsets) noexcept;
