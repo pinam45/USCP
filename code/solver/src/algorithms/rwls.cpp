@@ -75,6 +75,15 @@ uscp::rwls::report uscp::rwls::rwls::improve_impl(
 	report.stopping_criterion = stopping_criterion;
 	report.points_weights_initial = points_weights_initial;
 
+	if constexpr(restricted)
+	{
+		if(authorized_subsets.count() < 3)
+		{
+			LOGGER->warn("RWLS canceled: need at least 3 authorized subsets");
+			return report;
+		}
+	}
+
 	timer timer;
 	resolution_data data(report.solution_final, generator);
 	init(data, points_weights_initial);
@@ -671,6 +680,7 @@ size_t uscp::rwls::rwls::restricted_select_subset_to_remove(
 	dynamic_bitset<>& removable_subsets = data.subsets_tmp;
 	removable_subsets = authorized_subsets;
 	removable_subsets &= data.current_solution.selected_subsets;
+	ensure(removable_subsets.any());
 	size_t remove_subset = removable_subsets.find_first();
 	std::pair<ssize_t, ssize_t> best_score_minus_timestamp(
 	  data.subsets_information[remove_subset].score,
