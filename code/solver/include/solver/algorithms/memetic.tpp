@@ -175,10 +175,8 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 			  m_problem.name,
 			  generation);
 			config.rwls_stopping_criterion.steps *= 2;
-			rwls_reports[0].solution_final =
-			  uscp::greedy::random_solve(generator, m_problem, NULL_LOGGER);
-			rwls_reports[1].solution_final =
-			  uscp::greedy::random_solve(generator, m_problem, NULL_LOGGER);
+			rwls_reports[0].solution_final = uscp::random::solve(generator, m_problem, NULL_LOGGER);
+			rwls_reports[1].solution_final = uscp::random::solve(generator, m_problem, NULL_LOGGER);
 			LOGGER->info("({}) M g{}: new parents subsets: ({}, {}){}",
 			             m_problem.name,
 			             generation,
@@ -197,9 +195,9 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 				LOGGER->info(
 				  "({}) M g{}: same parents: randomize parents", m_problem.name, generation);
 				rwls_reports[0].solution_final =
-				  uscp::greedy::random_solve(generator, m_problem, NULL_LOGGER);
+				  uscp::random::solve(generator, m_problem, NULL_LOGGER);
 				rwls_reports[1].solution_final =
-				  uscp::greedy::random_solve(generator, m_problem, NULL_LOGGER);
+				  uscp::random::solve(generator, m_problem, NULL_LOGGER);
 				LOGGER->info("({}) M g{}: new parents subsets: ({}, {}){}",
 				             m_problem.name,
 				             generation,
