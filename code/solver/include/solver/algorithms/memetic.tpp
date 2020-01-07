@@ -92,11 +92,7 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 	// Dynamic steps setup
 	std::deque<size_t> dynamic_steps;
 	static constexpr size_t dynamic_steps_recorded_generations = 10;
-	const size_t base_steps =
-	  2
-	  * std::sqrt((std::pow(static_cast<double>(m_problem.subsets_number), 2.0)
-	               + std::pow(static_cast<double>(m_problem.points_number), 2.0))
-	              / 2.0);
+	const size_t base_steps = m_problem.subsets_number + m_problem.points_number;
 	dynamic_steps.resize(dynamic_steps_recorded_generations, base_steps);
 	config.rwls_stopping_criterion.steps = base_steps;
 
