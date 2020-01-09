@@ -25,22 +25,22 @@
 	<<result/wcrossover_operator>>
 	&
 	<*if result/config/rwls_stopping_criterion/steps >= 18446744073709551615 and result/config/rwls_stopping_criterion/time >= 18446744073709551615*>
-		<<sep(result/config/stopping_criterion/rwls_cumulative_position/steps)>> steps
+	<<sep(result/config/stopping_criterion/rwls_cumulative_position/steps)>> steps
 	<*else*>
 		<*if result/config/rwls_stopping_criterion/steps >= 18446744073709551615*>
-			<<result/config/stopping_criterion/generation>> gen. / <<round(result/config/rwls_stopping_criterion/time)>> seconds
+	<<result/config/stopping_criterion/generation>> gen. / <<round(result/config/rwls_stopping_criterion/time)>> seconds
 		<*else*>
-			<<result/config/stopping_criterion/generation>> gen. / <<result/config/rwls_stopping_criterion/steps>> steps
+	<<result/config/stopping_criterion/generation>> gen. / <<result/config/rwls_stopping_criterion/steps>> steps
 		<*endif*>
 	<*endif*>
 	&&
 	<*if result/result/best < comparison/instance/bks*>
-		\textbf{<<result/result/best>>*}
+	\textbf{<<result/result/best>>*}
 	<*else*>
 		<*if result/result/best <= comparison/instance/bks*>
-			\textbf{<<result/result/best>>}
+	\textbf{<<result/result/best>>}
 		<*else*>
-			<<result/result/best>>
+	<<result/result/best>>
 		<*endif*>
 	<*endif*>
 	&
@@ -49,7 +49,9 @@
 	<<result/result/best_number>>/<<result/result/total_number>>
 	&
 	<*if existsIn(result/result,"top_count")*>
-		~\tableplot{<*for val in result/result/top_count*><<val>><*if not loop/is_last*>,<*endif*><*endfor*>}
+		<*if length(result/result/top_count)*>
+	\tableplot{<*for val in result/result/top_count*><<val>><*if not loop/is_last*>,<*endif*><*endfor*>}
+		<*endif*>
 	<*endif*>
 	&
 	<<fround(result/result/generations,1)>>

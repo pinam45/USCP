@@ -27,68 +27,94 @@
 	&&
 	<*if result/greedy/exist*>
 		<*if result/greedy/value <= result/instance/bks*>
-			\textbf{<<result/greedy/value>>}
+	\textbf{<<result/greedy/value>>}
 		<*else*>
-			<<result/greedy/value>>
+	<<result/greedy/value>>
 		<*endif*>
-		&
-		<<fround(result/greedy/time,2)>>
+	&
+	<<fround(result/greedy/time,2)>>
 	<*else*>
-		--- & ---
+	---
+	&
+	---
 	<*endif*>
 	&&
 	<*if result/rwls/exist*>
 		<*if result/rwls/best < result/instance/bks*>
-			\textbf{<<result/rwls/best>>*}
+	\textbf{<<result/rwls/best>>*}
 		<*else*>
 			<*if result/rwls/best <= result/instance/bks*>
-				\textbf{<<result/rwls/best>>}
+	\textbf{<<result/rwls/best>>}
 			<*else*>
-				<<result/rwls/best>>
+	<<result/rwls/best>>
 			<*endif*>
 		<*endif*>
-		&
-		<<fround(result/rwls/average,1)>>
-		&
-		<<result/rwls/best_number>>/<<result/rwls/total_number>>
-		&
+	&
+	<<fround(result/rwls/average,1)>>
+	&
+	<<result/rwls/best_number>>/<<result/rwls/total_number>>
+	&
 		<*if existsIn(result/rwls,"top_count")*>
-		~\tableplot{<*for val in result/rwls/top_count*><<val>><*if not loop/is_last*>,<*endif*><*endfor*>}
+			<*if length(result/rwls/top_count) > 1*>
+	\tableplot{<*for val in result/rwls/top_count*><<val>><*if not loop/is_last*>,<*endif*><*endfor*>}
+			<*endif*>
 		<*endif*>
-		&
-		<<sep(round(result/rwls/steps))>>
-		&
-		<<fround(result/rwls/time,2)>>
+	&
+	<<sep(round(result/rwls/steps))>>
+	&
+	<<fround(result/rwls/time,2)>>
 	<*else*>
-		--- & --- & --- & & --- & ---
+	---
+	&
+	---
+	&
+	---
+	&
+	&
+	---
+	&
+	---
 	<*endif*>
 	&&
 	<*if result/memetic/exist*>
 		<*if result/memetic/best < result/instance/bks*>
-			\textbf{<<result/memetic/best>>*}
+	\textbf{<<result/memetic/best>>*}
 		<*else*>
 			<*if result/memetic/best <= result/instance/bks*>
-				\textbf{<<result/memetic/best>>}
+	\textbf{<<result/memetic/best>>}
 			<*else*>
-				<<result/memetic/best>>
+	<<result/memetic/best>>
 			<*endif*>
 		<*endif*>
-		&
-		<<fround(result/memetic/average,1)>>
-		&
-		<<result/memetic/best_number>>/<<result/memetic/total_number>>
-		&
+	&
+	<<fround(result/memetic/average,1)>>
+	&
+	<<result/memetic/best_number>>/<<result/memetic/total_number>>
+	&
 		<*if existsIn(result/memetic,"top_count")*>
-			~\tableplot{<*for val in result/memetic/top_count*><<val>><*if not loop/is_last*>,<*endif*><*endfor*>}
+			<*if length(result/memetic/top_count) > 1*>
+	\tableplot{<*for val in result/memetic/top_count*><<val>><*if not loop/is_last*>,<*endif*><*endfor*>}
+			<*endif*>
 		<*endif*>
-		&
-		<<fround(result/memetic/generations,1)>>
-		&
-		<<sep(round(result/memetic/steps))>>
-		&
-		<<fround(result/memetic/time,2)>>
+	&
+	<<fround(result/memetic/generations,1)>>
+	&
+	<<sep(round(result/memetic/steps))>>
+	&
+	<<fround(result/memetic/time,2)>>
 	<*else*>
-		--- & --- & --- & & --- & --- & ---
+	---
+	&
+	---
+	&
+	---
+	&
+	&
+	---
+	&
+	---
+	&
+	---
 	<*endif*>
 	\\
 <*endfor*>

@@ -37,7 +37,7 @@ namespace
 		size_t total_number = 0;
 		double steps = 0;
 		double time = 0;
-		std::array<size_t, 10> top_count = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		std::vector<size_t> top_count = {0};
 	};
 	void to_json(nlohmann::json& j, const rwls_result& serial);
 
@@ -51,7 +51,7 @@ namespace
 		double generations = 0;
 		double steps = 0;
 		double time = 0;
-		std::array<size_t, 10> top_count = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		std::vector<size_t> top_count = {0};
 	};
 	void to_json(nlohmann::json& j, const memetic_result& serial);
 
@@ -613,11 +613,13 @@ bool printer::generate_results_table() noexcept
 		for(auto it = rwls_begin; it < rwls_end; ++it)
 		{
 			const uscp::rwls::report_serial& rwls = *it;
+			assert(rwls.solution_final.selected_subsets.size() >= result.rwls.best);
 			const size_t pos = rwls.solution_final.selected_subsets.size() - result.rwls.best;
-			if(pos < result.rwls.top_count.size())
+			if(pos >= result.rwls.top_count.size())
 			{
-				++result.rwls.top_count[pos];
+				result.rwls.top_count.resize(pos + 1);
 			}
+			++result.rwls.top_count[pos];
 		}
 
 		const auto [memetic_begin, memetic_end] = std::equal_range(std::cbegin(m_memetic_reports),
@@ -662,11 +664,13 @@ bool printer::generate_results_table() noexcept
 		for(auto it = memetic_begin; it < memetic_end; ++it)
 		{
 			const uscp::memetic::report_serial& memetic = *it;
+			assert(memetic.solution_final.selected_subsets.size() >= result.memetic.best);
 			const size_t pos = memetic.solution_final.selected_subsets.size() - result.memetic.best;
-			if(pos < result.memetic.top_count.size())
+			if(pos >= result.memetic.top_count.size())
 			{
-				++result.memetic.top_count[pos];
+				result.memetic.top_count.resize(pos + 1);
 			}
+			++result.memetic.top_count[pos];
 		}
 
 		results.push_back(std::move(result));
@@ -1023,11 +1027,13 @@ bool printer::generate_memetic_comparisons_tables(
 				continue;
 			}
 			memetic_config_result& result = *result_it;
+			assert(memetic.solution_final.selected_subsets.size() >= result.result.best);
 			const size_t pos = memetic.solution_final.selected_subsets.size() - result.result.best;
-			if(pos < result.result.top_count.size())
+			if(pos >= result.result.top_count.size())
 			{
-				++result.result.top_count[pos];
+				result.result.top_count.resize(pos + 1);
 			}
+			++result.result.top_count[pos];
 		}
 
 		std::sort(std::begin(comparison.results),
