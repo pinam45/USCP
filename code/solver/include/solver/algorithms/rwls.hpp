@@ -119,8 +119,6 @@ namespace uscp::rwls
 			std::deque<size_t> tabu_subsets;
 
 			dynamic_bitset<> subsets_tmp;
-			dynamic_bitset<> points_tmp1;
-			dynamic_bitset<> points_tmp2;
 
 			explicit resolution_data(solution& solution, random_engine& generator) noexcept;
 		};

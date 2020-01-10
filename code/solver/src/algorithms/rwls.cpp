@@ -385,8 +385,6 @@ uscp::rwls::rwls::resolution_data::resolution_data(uscp::solution& solution,
   , subsets_information()
   , tabu_subsets()
   , subsets_tmp(solution.problem.subsets_number)
-  , points_tmp1(solution.problem.points_number)
-  , points_tmp2(solution.problem.points_number)
 {
 	points_information.resize(solution.problem.points_number);
 	subsets_information.resize(solution.problem.subsets_number);
@@ -468,63 +466,52 @@ void uscp::rwls::rwls::add_subset(uscp::rwls::rwls::resolution_data& data,
 	assert(!data.current_solution.selected_subsets[subset_number]);
 	assert(data.subsets_information[subset_number].score >= 0);
 
-	// update points information
-	dynamic_bitset<>& points_newly_covered = data.points_tmp1;
-	dynamic_bitset<>& points_now_covered_twice = data.points_tmp2;
-	points_newly_covered.reset();
-	points_now_covered_twice.reset();
+	// add subset to solution
+	data.current_solution.selected_subsets.set(subset_number);
+	data.uncovered_points -= m_problem.subsets_points[subset_number];
+
+	// compute new score
+	const int new_score = -data.subsets_information[subset_number].score;
+
+	// update subsets and points information
 	for(size_t subset_point: m_subsets_points[subset_number])
 	{
 		++data.points_information[subset_point].subsets_covering_in_solution;
 		if(data.points_information[subset_point].subsets_covering_in_solution == 1)
 		{
-			points_newly_covered.set(subset_point);
+			// point newly covered
+			const ssize_t point_weight = data.points_information[subset_point].weight;
+			for(size_t neighbor: m_subsets_covering_points[subset_point])
+			{
+				data.subsets_information[neighbor].canAddToSolution = true;
+
+				// lost score because this point is now covered in the solution
+				data.subsets_information[neighbor].score -= point_weight;
+			}
 		}
 		else if(data.points_information[subset_point].subsets_covering_in_solution == 2)
 		{
-			points_now_covered_twice.set(subset_point);
-		}
-	}
-
-	// add subset to solution
-	data.current_solution.selected_subsets.set(subset_number);
-	data.uncovered_points -= m_problem.subsets_points[subset_number];
-
-	// update score
-	data.subsets_information[subset_number].score = -data.subsets_information[subset_number].score;
-	assert_score(data.subsets_information[subset_number].score
-	             == compute_subset_score(data, subset_number));
-
-	// update neighbors
-	for(size_t subsets_point: m_subsets_points[subset_number])
-	{
-		for(size_t neighbor: m_subsets_covering_points[subsets_point])
-		{
-			if(neighbor == subset_number)
+			// point now covered twice
+			const ssize_t point_weight = data.points_information[subset_point].weight;
+			for(size_t neighbor: m_subsets_covering_points[subset_point])
 			{
-				continue;
-			}
-			data.subsets_information[neighbor].canAddToSolution = true;
-			if(data.current_solution.selected_subsets.test(neighbor))
-			{
-				if(points_now_covered_twice.test(subsets_point))
+				data.subsets_information[neighbor].canAddToSolution = true;
+
+				if(neighbor != subset_number
+				   && data.current_solution.selected_subsets.test(neighbor))
 				{
 					// lost score because it is no longer the only one to cover this point
-					data.subsets_information[neighbor].score +=
-					  data.points_information[subsets_point].weight;
-				}
-			}
-			else
-			{
-				if(points_newly_covered.test(subsets_point))
-				{
-					// lost score because this point is now covered in the solution
-					data.subsets_information[neighbor].score -=
-					  data.points_information[subsets_point].weight;
+					data.subsets_information[neighbor].score += point_weight;
+					break;
 				}
 			}
 		}
 	}
+
+	// update subset information
+	data.subsets_information[subset_number].score = new_score;
+	assert_score(data.subsets_information[subset_number].score
+	             == compute_subset_score(data, subset_number));
 
 #if !defined(NDEBUG) && !defined(NDEBUG_SCORE)
 	for(size_t i = 0; i < m_problem.subsets_number; ++i)
@@ -541,68 +528,53 @@ void uscp::rwls::rwls::remove_subset(uscp::rwls::rwls::resolution_data& data,
 	assert(data.current_solution.selected_subsets[subset_number]);
 	assert(data.subsets_information[subset_number].score <= 0);
 
-	// update points information
-	dynamic_bitset<>& points_newly_uncovered = data.points_tmp1;
-	dynamic_bitset<>& points_now_covered_once = data.points_tmp2;
-	points_newly_uncovered.reset();
-	points_now_covered_once.reset();
+	// remove subset from solution
+	data.current_solution.selected_subsets.reset(subset_number);
+
+	// compute new score
+	const ssize_t new_score = -data.subsets_information[subset_number].score;
+
+	// update subsets and points information
 	for(size_t subset_point: m_subsets_points[subset_number])
 	{
 		--data.points_information[subset_point].subsets_covering_in_solution;
 		if(data.points_information[subset_point].subsets_covering_in_solution == 0)
 		{
-			points_newly_uncovered.set(subset_point);
+			// point newly uncovered
+			data.uncovered_points.set(subset_point);
+			const ssize_t point_weight = data.points_information[subset_point].weight;
+			for(size_t neighbor: m_subsets_covering_points[subset_point])
+			{
+				data.subsets_information[neighbor].canAddToSolution = true;
+
+				// gain score because this point is now uncovered in the solution
+				data.subsets_information[neighbor].score += point_weight;
+			}
 		}
 		else if(data.points_information[subset_point].subsets_covering_in_solution == 1)
 		{
-			points_now_covered_once.set(subset_point);
+			// point now covered once
+			const ssize_t point_weight = data.points_information[subset_point].weight;
+			for(size_t neighbor: m_subsets_covering_points[subset_point])
+			{
+				data.subsets_information[neighbor].canAddToSolution = true;
+
+				if(neighbor != subset_number
+				   && data.current_solution.selected_subsets.test(neighbor))
+				{
+					// gain score because it is now the only one to cover this point in the solution
+					data.subsets_information[neighbor].score -= point_weight;
+					break;
+				}
+			}
 		}
 	}
 
-	// remove subset from solution
-	data.current_solution.selected_subsets.reset(subset_number);
-	assert((data.uncovered_points & points_newly_uncovered).none());
-	data.uncovered_points |= points_newly_uncovered;
-
-	// update score
-	data.subsets_information[subset_number].score = -data.subsets_information[subset_number].score;
+	// update subset information
+	data.subsets_information[subset_number].score = new_score;
 	assert_score(data.subsets_information[subset_number].score
 	             == compute_subset_score(data, subset_number));
-
 	data.subsets_information[subset_number].canAddToSolution = false;
-
-	// update neighbors
-	/*#	pragma omp parallel for default(none) \
-	  shared(data, subset_number, points_newly_uncovered, points_now_covered_once)*/
-	for(size_t subsets_point: m_subsets_points[subset_number])
-	{
-		for(size_t neighbor: m_subsets_covering_points[subsets_point])
-		{
-			if(neighbor == subset_number)
-			{
-				continue;
-			}
-			data.subsets_information[neighbor].canAddToSolution = true;
-			if(data.current_solution.selected_subsets.test(neighbor))
-			{
-				if(points_now_covered_once.test(subsets_point))
-				{
-					// gain score because it is now the only one to cover this point
-					data.subsets_information[neighbor].score -=
-					  data.points_information[subsets_point].weight;
-				}
-			}
-			else
-			{
-				if(points_newly_uncovered.test(subsets_point))
-				{
-					// gain score because this point is now uncovered in the solution
-					data.subsets_information[neighbor].score +=
-					  data.points_information[subsets_point].weight;
-				}
-			}
-		}
-	}
 
 #if !defined(NDEBUG) && !defined(NDEBUG_SCORE)
 	for(size_t i = 0; i < m_problem.subsets_number; ++i)
