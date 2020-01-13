@@ -54,6 +54,34 @@ namespace
 {
 	constexpr bool CHECK_INSTANCES = false;
 
+	struct program_options final
+	{
+		// registered instances
+		std::vector<std::string> instances;
+
+		// unknown instance
+		std::string instance_type;
+		std::string instance_path;
+		std::string instance_name;
+
+		// general options
+		std::string output_prefix = "solver_out_";
+		size_t repetitions = 1;
+
+		// greedy options
+		bool greedy = false;
+
+		// rwls options
+		bool rwls = false;
+		uscp::rwls::position rwls_stop;
+
+		// memetic options
+		bool memetic = false;
+		uscp::memetic::config memetic_config;
+		std::string memetic_crossover;
+		std::string memetic_wcrossover;
+	};
+
 	template<typename... Crossovers>
 	struct crossovers
 	{
@@ -148,211 +176,13 @@ namespace
 		return foreach_crossover_wcrossover(
 		  std::forward<Lambda>(lambda), all_crossovers{}, all_wcrossovers{});
 	}
-} // namespace
 
-int main(int argc, char* argv[])
-{
-	std::ios_base::sync_with_stdio(false);
-	std::setlocale(LC_ALL, "C");
-
-	std::vector<std::string> instances;
-	std::string output_prefix = "solver_out_";
-	size_t repetitions = 1;
-	bool greedy = false;
-	bool rwls = false;
-	uscp::rwls::position rwls_stop;
-	bool memetic = false;
-	uscp::memetic::config memetic_config;
-	std::string memetic_crossover;
-	std::string memetic_wcrossover;
-	try
+	std::optional<std::vector<nlohmann::json>> process_registered_instances(
+	  program_options& program_options,
+	  uscp::random_engine& generator) noexcept
 	{
-		std::ostringstream help_txt;
-		help_txt << "Unicost Set Cover Problem Solver for OR-Library and STS instances";
-		help_txt << "\n";
-		help_txt << "Build commit: ";
-		help_txt << git_info::head_sha1;
-		if(git_info::is_dirty)
-		{
-			help_txt << " (with uncommitted changes)";
-		}
-		help_txt << "\n";
-		cxxopts::Options options("solver", help_txt.str());
-		options.add_option("", cxxopts::Option("help", "Print help"));
-		options.add_option("",
-		                   cxxopts::Option("i,instances",
-		                                   "Instances to process",
-		                                   cxxopts::value<std::vector<std::string>>(instances),
-		                                   "NAME"));
-		options.add_option(
-		  "",
-		  cxxopts::Option("o,output_prefix",
-		                  "Output file prefix",
-		                  cxxopts::value<std::string>(output_prefix)->default_value("solver_out_"),
-		                  "PREFIX"));
-		options.add_option("",
-		                   cxxopts::Option("r,repetitions",
-		                                   "Repetitions number",
-		                                   cxxopts::value<size_t>(repetitions)->default_value("1"),
-		                                   "N"));
-
-		// Greedy
-		options.add_option(
-		  "",
-		  cxxopts::Option("greedy",
-		                  "Solve with greedy algorithm (no repetition as it is determinist)",
-		                  cxxopts::value<bool>(greedy)->default_value("false")));
-
-		// RWLS
-		options.add_option("",
-		                   cxxopts::Option("rwls",
-		                                   "Improve with RWLS algorithm (start with a greedy)",
-		                                   cxxopts::value<bool>(rwls)->default_value("false")));
-		options.add_option(
-		  "",
-		  cxxopts::Option("rwls_steps",
-		                  "RWLS steps limit",
-		                  cxxopts::value<size_t>(rwls_stop.steps)
-		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		                  "N"));
-		options.add_option(
-		  "",
-		  cxxopts::Option("rwls_time",
-		                  "RWLS time (seconds) limit",
-		                  cxxopts::value<double>(rwls_stop.time)
-		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		                  "N"));
-
-		// Memetic
-		options.add_option("",
-		                   cxxopts::Option("memetic",
-		                                   "Solve with memetic algorithm",
-		                                   cxxopts::value<bool>(memetic)->default_value("false")));
-		/*options.add_option(
-		  "",
-		  cxxopts::Option("memetic_generations",
-		                  "Memetic generations number limit",
-		                  cxxopts::value<size_t>(memetic_config.stopping_criterion.generation)
-		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		                  "N"));*/
-		options.add_option(
-		  "",
-		  cxxopts::Option(
-		    "memetic_cumulative_rwls_steps",
-		    "Memetic cumulative RWLS steps limit",
-		    cxxopts::value<size_t>(memetic_config.stopping_criterion.rwls_cumulative_position.steps)
-		      ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		    "N"));
-		options.add_option(
-		  "",
-		  cxxopts::Option(
-		    "memetic_cumulative_rwls_time",
-		    "Memetic cumulative RWLS time (seconds) limit",
-		    cxxopts::value<double>(memetic_config.stopping_criterion.rwls_cumulative_position.time)
-		      ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		    "N"));
-		options.add_option(
-		  "",
-		  cxxopts::Option("memetic_time",
-		                  "Memetic time limit",
-		                  cxxopts::value<double>(memetic_config.stopping_criterion.time)
-		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		                  "N"));
-		/*options.add_option(
-		  "",
-		  cxxopts::Option("memetic_rwls_steps",
-		                  "Memetic RWLS steps limit",
-		                  cxxopts::value<size_t>(memetic_config.rwls_stopping_criterion.steps)
-		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		                  "N"));*/
-		/*options.add_option(
-		  "",
-		  cxxopts::Option("memetic_rwls_time",
-		                  "Memetic RWLS time (seconds) limit",
-		                  cxxopts::value<double>(memetic_config.rwls_stopping_criterion.time)
-		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		                  "N"));*/
-		options.add_option(
-		  "",
-		  cxxopts::Option("memetic_crossover",
-		                  "Memetic crossover operator",
-		                  cxxopts::value<std::string>(memetic_crossover)->default_value("default"),
-		                  "OPERATOR"));
-		options.add_option(
-		  "",
-		  cxxopts::Option("memetic_wcrossover",
-		                  "Memetic RWLS weights crossover operator",
-		                  cxxopts::value<std::string>(memetic_wcrossover)->default_value("default"),
-		                  "OPERATOR"));
-		cxxopts::ParseResult result = options.parse(argc, argv);
-
-		if(result.count("help"))
-		{
-			std::cout << options.help({"", "Group"}) << std::endl;
-			return EXIT_SUCCESS;
-		}
-
-		if(instances.empty())
-		{
-			std::cout << "No instances specified, nothing to do" << std::endl;
-			return EXIT_SUCCESS;
-		}
-
-		if(!greedy && !rwls && !memetic)
-		{
-			std::cout << "No algorithm specified, nothing to do" << std::endl;
-			return EXIT_SUCCESS;
-		}
-
-		if(repetitions == 0)
-		{
-			std::cout << "0 repetitions, nothing to do" << std::endl;
-			return EXIT_SUCCESS;
-		}
-	}
-	catch(const std::exception& e)
-	{
-		std::cout << "error parsing options: " << e.what() << std::endl;
-		return EXIT_FAILURE;
-	}
-	catch(...)
-	{
-		std::cerr << "unknown error parsing options" << std::endl;
-		return EXIT_FAILURE;
-	}
-
-	if(!init_logger())
-	{
-		return EXIT_FAILURE;
-	}
-	LOGGER->info("START");
-	{
-		if(git_info::is_dirty)
-		{
-			LOGGER->info("Commit: {} (with uncommitted changes)", git_info::head_sha1);
-		}
-		else
-		{
-			LOGGER->info("Commit: {}", git_info::head_sha1);
-		}
-
-		// check instances
-		if constexpr(CHECK_INSTANCES)
-		{
-			uscp::problem::check_instances();
-		}
-
-		uscp::random_engine generator(std::random_device{}());
-		nlohmann::json data;
-		data["git"]["retrieved_state"] = git_info::retrieved_state;
-		data["git"]["head_sha1"] = git_info::head_sha1;
-		data["git"]["is_dirty"] = git_info::is_dirty;
-		std::ostringstream now_txt;
-		std::time_t t = std::time(nullptr);
-		now_txt << std::put_time(std::localtime(&t), "%FT%TZ");
-		data["date"] = now_txt.str();
 		std::vector<nlohmann::json> data_instances;
-		for(const std::string& instance_name: instances)
+		for(const std::string& instance_name: program_options.instances)
 		{
 			const auto instance_it =
 			  std::find_if(std::cbegin(uscp::problem::instances),
@@ -390,7 +220,7 @@ int main(int argc, char* argv[])
 
 			nlohmann::json data_instance;
 			data_instance["instance"] = instance_base.serialize();
-			if(greedy && !rwls)
+			if(program_options.greedy && !program_options.rwls)
 			{
 				uscp::greedy::report greedy_report = uscp::greedy::solve_report(instance);
 				if(reduced)
@@ -400,7 +230,7 @@ int main(int argc, char* argv[])
 					if(!expanded_greedy_report.solution_final.cover_all_points)
 					{
 						LOGGER->error("Expanded greedy solution doesn't cover all points");
-						return EXIT_FAILURE;
+						return {};
 					}
 					LOGGER->info("({}) Expanded greedy solution to {} subsets",
 					             instance_base.name,
@@ -418,10 +248,10 @@ int main(int argc, char* argv[])
 					data_instance["greedy"] = greedy_report.serialize();
 				}
 			}
-			if(rwls)
+			if(program_options.rwls)
 			{
 				uscp::greedy::report greedy_report = uscp::greedy::solve_report(instance);
-				if(greedy)
+				if(program_options.greedy)
 				{
 					if(reduced)
 					{
@@ -430,7 +260,7 @@ int main(int argc, char* argv[])
 						if(!expanded_greedy_report.solution_final.cover_all_points)
 						{
 							LOGGER->error("Expanded greedy solution doesn't cover all points");
-							return EXIT_FAILURE;
+							return {};
 						}
 						LOGGER->info(
 						  "({}) Expanded greedy solution to {} subsets",
@@ -453,17 +283,17 @@ int main(int argc, char* argv[])
 				std::vector<nlohmann::json> data_rwls;
 				uscp::rwls::rwls rwls_manager(instance);
 				rwls_manager.initialize();
-				for(size_t repetition = 0; repetition < repetitions; ++repetition)
+				for(size_t repetition = 0; repetition < program_options.repetitions; ++repetition)
 				{
-					uscp::rwls::report rwls_report =
-					  rwls_manager.improve(greedy_report.solution_final, generator, rwls_stop);
+					uscp::rwls::report rwls_report = rwls_manager.improve(
+					  greedy_report.solution_final, generator, program_options.rwls_stop);
 					if(reduced)
 					{
 						uscp::rwls::report expanded_rwls_report = uscp::rwls::expand(rwls_report);
 						if(!expanded_rwls_report.solution_final.cover_all_points)
 						{
 							LOGGER->error("Expanded rwls solution doesn't cover all points");
-							return EXIT_FAILURE;
+							return {};
 						}
 						LOGGER->info("({}) Expanded rwls solution to {} subsets",
 						             instance_base.name,
@@ -485,15 +315,16 @@ int main(int argc, char* argv[])
 				}
 				data_instance["rwls"] = std::move(data_rwls);
 			}
-			if(memetic)
+			if(program_options.memetic)
 			{
 				auto process_memetic = [&](auto memetic_alg) -> bool {
 					std::vector<nlohmann::json> data_memetic;
 					memetic_alg.initialize();
-					for(size_t repetition = 0; repetition < repetitions; ++repetition)
+					for(size_t repetition = 0; repetition < program_options.repetitions;
+					    ++repetition)
 					{
 						uscp::memetic::report memetic_report =
-						  memetic_alg.solve(generator, memetic_config);
+						  memetic_alg.solve(generator, program_options.memetic_config);
 						if(reduced)
 						{
 							uscp::memetic::report expanded_memetic_report =
@@ -531,10 +362,10 @@ int main(int argc, char* argv[])
 				forall_crossover_wcrossover([&](auto crossover, auto wcrossover) noexcept {
 					typedef typename decltype(crossover)::type crossover_type;
 					typedef typename decltype(wcrossover)::type wcrossover_type;
-					if(memetic_crossover == crossover_type::to_string())
+					if(program_options.memetic_crossover == crossover_type::to_string())
 					{
 						found_crossover = true;
-						if(memetic_wcrossover == wcrossover_type::to_string())
+						if(program_options.memetic_wcrossover == wcrossover_type::to_string())
 						{
 							found_wcrossover = true;
 							uscp::memetic::memetic<crossover_type, wcrossover_type> memetic_alg_(
@@ -550,27 +381,261 @@ int main(int argc, char* argv[])
 				});
 				if(!found_crossover)
 				{
-					LOGGER->error("No crossover operator named \"{}\" exist", memetic_crossover);
-					return EXIT_FAILURE;
+					LOGGER->error("No crossover operator named \"{}\" exist",
+					              program_options.memetic_crossover);
+					return {};
 				}
 				if(!found_wcrossover)
 				{
 					LOGGER->error("No RWLS weights crossover operator named \"{}\" exist",
-					              memetic_wcrossover);
-					return EXIT_FAILURE;
+					              program_options.memetic_wcrossover);
+					return {};
 				}
 				if(!success)
 				{
-					return EXIT_FAILURE;
+					return {};
 				}
 			}
 			data_instances.push_back(data_instance);
+
+			return data_instances;
+		}
+	}
+
+	std::optional<nlohmann::json> process_unknown_instance(program_options& program_options,
+	                                                       uscp::random_engine& generator) noexcept
+	{
+		//TODO
+	}
+} // namespace
+
+int main(int argc, char* argv[])
+{
+	std::ios_base::sync_with_stdio(false);
+	std::setlocale(LC_ALL, "C");
+
+	program_options program_options;
+	try
+	{
+		std::ostringstream help_txt;
+		help_txt << "Unicost Set Cover Problem Solver for OR-Library and STS instances";
+		help_txt << "\n";
+		help_txt << "Build commit: ";
+		help_txt << git_info::head_sha1;
+		if(git_info::is_dirty)
+		{
+			help_txt << " (with uncommitted changes)";
+		}
+		help_txt << "\n";
+		cxxopts::Options options("solver", help_txt.str());
+		options.add_option("", cxxopts::Option("help", "Print help"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("i,instances",
+		                  "Instances to process",
+		                  cxxopts::value<std::vector<std::string>>(program_options.instances),
+		                  "NAME"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("instance_type",
+		                  "Type of the instance to process",
+		                  cxxopts::value<std::string>(program_options.instance_type),
+		                  "TYPE"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("instance_path",
+		                  "Path of the instance to process",
+		                  cxxopts::value<std::string>(program_options.instance_path),
+		                  "PATH"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("instance_name",
+		                  "Name of the instance to process",
+		                  cxxopts::value<std::string>(program_options.instance_name),
+		                  "NAME"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("o,output_prefix",
+		                  "Output file prefix",
+		                  cxxopts::value<std::string>(program_options.output_prefix)
+		                    ->default_value("solver_out_"),
+		                  "PREFIX"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("r,repetitions",
+		                  "Repetitions number",
+		                  cxxopts::value<size_t>(program_options.repetitions)->default_value("1"),
+		                  "N"));
+
+		// Greedy
+		options.add_option(
+		  "",
+		  cxxopts::Option("greedy",
+		                  "Solve with greedy algorithm (no repetition as it is determinist)",
+		                  cxxopts::value<bool>(program_options.greedy)->default_value("false")));
+
+		// RWLS
+		options.add_option(
+		  "",
+		  cxxopts::Option("rwls",
+		                  "Improve with RWLS algorithm (start with a greedy)",
+		                  cxxopts::value<bool>(program_options.rwls)->default_value("false")));
+		options.add_option(
+		  "",
+		  cxxopts::Option("rwls_steps",
+		                  "RWLS steps limit",
+		                  cxxopts::value<size_t>(program_options.rwls_stop.steps)
+		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
+		                  "N"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("rwls_time",
+		                  "RWLS time (seconds) limit",
+		                  cxxopts::value<double>(program_options.rwls_stop.time)
+		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
+		                  "N"));
+
+		// Memetic
+		options.add_option(
+		  "",
+		  cxxopts::Option("memetic",
+		                  "Solve with memetic algorithm",
+		                  cxxopts::value<bool>(program_options.memetic)->default_value("false")));
+		options.add_option(
+		  "",
+		  cxxopts::Option(
+		    "memetic_cumulative_rwls_steps",
+		    "Memetic cumulative RWLS steps limit",
+		    cxxopts::value<size_t>(
+		      program_options.memetic_config.stopping_criterion.rwls_cumulative_position.steps)
+		      ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
+		    "N"));
+		options.add_option(
+		  "",
+		  cxxopts::Option(
+		    "memetic_cumulative_rwls_time",
+		    "Memetic cumulative RWLS time (seconds) limit",
+		    cxxopts::value<double>(
+		      program_options.memetic_config.stopping_criterion.rwls_cumulative_position.time)
+		      ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
+		    "N"));
+		options.add_option(
+		  "",
+		  cxxopts::Option(
+		    "memetic_time",
+		    "Memetic time limit",
+		    cxxopts::value<double>(program_options.memetic_config.stopping_criterion.time)
+		      ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
+		    "N"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("memetic_crossover",
+		                  "Memetic crossover operator",
+		                  cxxopts::value<std::string>(program_options.memetic_crossover)
+		                    ->default_value("default"),
+		                  "OPERATOR"));
+		options.add_option(
+		  "",
+		  cxxopts::Option("memetic_wcrossover",
+		                  "Memetic RWLS weights crossover operator",
+		                  cxxopts::value<std::string>(program_options.memetic_wcrossover)
+		                    ->default_value("default"),
+		                  "OPERATOR"));
+		cxxopts::ParseResult result = options.parse(argc, argv);
+
+		if(result.count("help"))
+		{
+			std::cout << options.help({"", "Group"}) << std::endl;
+			return EXIT_SUCCESS;
+		}
+
+		if(program_options.instances.empty() && program_options.instance_type.empty()
+		   && program_options.instance_path.empty() && program_options.instance_name.empty())
+		{
+			std::cout << "No instances specified, nothing to do" << std::endl;
+			return EXIT_SUCCESS;
+		}
+
+		if(!program_options.greedy && !program_options.rwls && !program_options.memetic)
+		{
+			std::cout << "No algorithm specified, nothing to do" << std::endl;
+			return EXIT_SUCCESS;
+		}
+
+		if(program_options.repetitions == 0)
+		{
+			std::cout << "0 repetitions, nothing to do" << std::endl;
+			return EXIT_SUCCESS;
+		}
+	}
+	catch(const std::exception& e)
+	{
+		std::cout << "error parsing options: " << e.what() << std::endl;
+		return EXIT_FAILURE;
+	}
+	catch(...)
+	{
+		std::cerr << "unknown error parsing options" << std::endl;
+		return EXIT_FAILURE;
+	}
+
+	if(!init_logger())
+	{
+		return EXIT_FAILURE;
+	}
+	LOGGER->info("START");
+	{
+		if(git_info::is_dirty)
+		{
+			LOGGER->info("Commit: {} (with uncommitted changes)", git_info::head_sha1);
+		}
+		else
+		{
+			LOGGER->info("Commit: {}", git_info::head_sha1);
+		}
+
+		// check instances
+		if constexpr(CHECK_INSTANCES)
+		{
+			uscp::problem::check_instances();
+		}
+
+		// Prepare data
+		nlohmann::json data;
+		data["git"]["retrieved_state"] = git_info::retrieved_state;
+		data["git"]["head_sha1"] = git_info::head_sha1;
+		data["git"]["is_dirty"] = git_info::is_dirty;
+		std::ostringstream now_txt;
+		std::time_t t = std::time(nullptr);
+		now_txt << std::put_time(std::localtime(&t), "%FT%TZ");
+		data["date"] = now_txt.str();
+
+		// Process instances: generate data
+		uscp::random_engine generator(std::random_device{}());
+		std::optional<std::vector<nlohmann::json>> data_registered_instances =
+		  process_registered_instances(program_options, generator);
+		if(!data_registered_instances)
+		{
+			return EXIT_FAILURE;
+		}
+		std::vector<nlohmann::json> data_instances = std::move(*data_registered_instances);
+
+		if(!program_options.instance_type.empty() || !program_options.instance_path.empty()
+		   || !program_options.instance_name.empty())
+		{
+			std::optional<nlohmann::json> data_unknown_instances =
+			  process_unknown_instance(program_options, generator);
+			if(!data_registered_instances)
+			{
+				return EXIT_FAILURE;
+			}
+			data_instances.push_back(std::move(*data_unknown_instances));
 		}
 		data["instances"] = std::move(data_instances);
 
 		// save data
 		std::ostringstream file_data_stream;
-		file_data_stream << output_prefix;
+		file_data_stream << program_options.output_prefix;
 		file_data_stream << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S");
 		file_data_stream << "_";
 		file_data_stream << generator();
