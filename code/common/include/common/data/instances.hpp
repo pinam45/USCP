@@ -83,6 +83,17 @@ namespace uscp::problem
 	  instances_read_functions = {INSTANCES_TABLE(EXPAND_AS_READ_FUNCTION)};
 	static constexpr std::array<instance_info, INSTANCES_TABLE_SIZE> instances = {
 	  INSTANCES_TABLE(EXPAND_AS_INSTANCE_INFO)};
+
+	struct problem_reader
+	{
+		std::string_view name;
+		bool (*function)(const std::filesystem::path&, uscp::problem::instance&);
+	};
+	static constexpr std::array<problem_reader, 3> readers = {
+	  problem_reader{"orlibrary", &uscp::problem::orlibrary::orlibrary::read},
+	  problem_reader{"orlibrary_rail", &uscp::problem::orlibrary::rail::read},
+	  problem_reader{"sts", &uscp::problem::sts::read},
+	};
 } // namespace uscp::problem
 
 #undef EXPAND_AS_FILE

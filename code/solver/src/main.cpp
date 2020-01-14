@@ -414,6 +414,28 @@ int main(int argc, char* argv[])
 	std::ios_base::sync_with_stdio(false);
 	std::setlocale(LC_ALL, "C");
 
+	std::ostringstream instance_types_stream;
+	instance_types_stream << uscp::problem::readers[0].name;
+	for(size_t i = 1; i < uscp::problem::readers.size(); ++i)
+	{
+		instance_types_stream << '|' << uscp::problem::readers[i].name;
+	}
+	const std::string valid_instance_types = instance_types_stream.str();
+	const std::string default_output_prefix = "solver_out_";
+	const std::string default_repetitions = "1";
+	const std::string default_greedy = "false";
+	const std::string default_rwls = "false";
+	const std::string default_rwls_steps = std::to_string(std::numeric_limits<size_t>::max());
+	const std::string default_rwls_time = std::to_string(std::numeric_limits<size_t>::max());
+	const std::string default_memetic = "false";
+	const std::string default_memetic_cumulative_rwls_steps =
+	  std::to_string(std::numeric_limits<size_t>::max());
+	const std::string default_memetic_cumulative_rwls_time =
+	  std::to_string(std::numeric_limits<size_t>::max());
+	const std::string default_memetic_time = std::to_string(std::numeric_limits<size_t>::max());
+	const std::string default_memetic_crossover = "default";
+	const std::string default_memetic_wcrossover = "default";
+
 	program_options program_options;
 	try
 	{
@@ -440,7 +462,7 @@ int main(int argc, char* argv[])
 		  cxxopts::Option("instance_type",
 		                  "Type of the instance to process",
 		                  cxxopts::value<std::string>(program_options.instance_type),
-		                  "TYPE"));
+		                  valid_instance_types));
 		options.add_option(
 		  "",
 		  cxxopts::Option("instance_path",
@@ -458,49 +480,50 @@ int main(int argc, char* argv[])
 		  cxxopts::Option("o,output_prefix",
 		                  "Output file prefix",
 		                  cxxopts::value<std::string>(program_options.output_prefix)
-		                    ->default_value("solver_out_"),
+		                    ->default_value(default_output_prefix),
 		                  "PREFIX"));
 		options.add_option(
 		  "",
-		  cxxopts::Option("r,repetitions",
-		                  "Repetitions number",
-		                  cxxopts::value<size_t>(program_options.repetitions)->default_value("1"),
-		                  "N"));
+		  cxxopts::Option(
+		    "r,repetitions",
+		    "Repetitions number",
+		    cxxopts::value<size_t>(program_options.repetitions)->default_value(default_repetitions),
+		    "N"));
 
 		// Greedy
 		options.add_option(
 		  "",
-		  cxxopts::Option("greedy",
-		                  "Solve with greedy algorithm (no repetition as it is determinist)",
-		                  cxxopts::value<bool>(program_options.greedy)->default_value("false")));
+		  cxxopts::Option(
+		    "greedy",
+		    "Solve with greedy algorithm (no repetition as it is determinist)",
+		    cxxopts::value<bool>(program_options.greedy)->default_value(default_greedy)));
 
 		// RWLS
 		options.add_option(
 		  "",
 		  cxxopts::Option("rwls",
 		                  "Improve with RWLS algorithm (start with a greedy)",
-		                  cxxopts::value<bool>(program_options.rwls)->default_value("false")));
-		options.add_option(
-		  "",
-		  cxxopts::Option("rwls_steps",
-		                  "RWLS steps limit",
-		                  cxxopts::value<size_t>(program_options.rwls_stop.steps)
-		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		                  "N"));
-		options.add_option(
-		  "",
-		  cxxopts::Option("rwls_time",
-		                  "RWLS time (seconds) limit",
-		                  cxxopts::value<double>(program_options.rwls_stop.time)
-		                    ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		                  "N"));
+		                  cxxopts::value<bool>(program_options.rwls)->default_value(default_rwls)));
+		options.add_option("",
+		                   cxxopts::Option("rwls_steps",
+		                                   "RWLS steps limit",
+		                                   cxxopts::value<size_t>(program_options.rwls_stop.steps)
+		                                     ->default_value(default_rwls_steps),
+		                                   "N"));
+		options.add_option("",
+		                   cxxopts::Option("rwls_time",
+		                                   "RWLS time (seconds) limit",
+		                                   cxxopts::value<double>(program_options.rwls_stop.time)
+		                                     ->default_value(default_rwls_time),
+		                                   "N"));
 
 		// Memetic
 		options.add_option(
 		  "",
-		  cxxopts::Option("memetic",
-		                  "Solve with memetic algorithm",
-		                  cxxopts::value<bool>(program_options.memetic)->default_value("false")));
+		  cxxopts::Option(
+		    "memetic",
+		    "Solve with memetic algorithm",
+		    cxxopts::value<bool>(program_options.memetic)->default_value(default_memetic)));
 		options.add_option(
 		  "",
 		  cxxopts::Option(
@@ -508,7 +531,7 @@ int main(int argc, char* argv[])
 		    "Memetic cumulative RWLS steps limit",
 		    cxxopts::value<size_t>(
 		      program_options.memetic_config.stopping_criterion.rwls_cumulative_position.steps)
-		      ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
+		      ->default_value(default_memetic_cumulative_rwls_steps),
 		    "N"));
 		options.add_option(
 		  "",
@@ -517,29 +540,28 @@ int main(int argc, char* argv[])
 		    "Memetic cumulative RWLS time (seconds) limit",
 		    cxxopts::value<double>(
 		      program_options.memetic_config.stopping_criterion.rwls_cumulative_position.time)
-		      ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
+		      ->default_value(default_memetic_cumulative_rwls_time),
 		    "N"));
-		options.add_option(
-		  "",
-		  cxxopts::Option(
-		    "memetic_time",
-		    "Memetic time limit",
-		    cxxopts::value<double>(program_options.memetic_config.stopping_criterion.time)
-		      ->default_value(std::to_string(std::numeric_limits<size_t>::max())),
-		    "N"));
+		options.add_option("",
+		                   cxxopts::Option("memetic_time",
+		                                   "Memetic time limit",
+		                                   cxxopts::value<double>(
+		                                     program_options.memetic_config.stopping_criterion.time)
+		                                     ->default_value(default_memetic_time),
+		                                   "N"));
 		options.add_option(
 		  "",
 		  cxxopts::Option("memetic_crossover",
 		                  "Memetic crossover operator",
 		                  cxxopts::value<std::string>(program_options.memetic_crossover)
-		                    ->default_value("default"),
+		                    ->default_value(default_memetic_crossover),
 		                  "OPERATOR"));
 		options.add_option(
 		  "",
 		  cxxopts::Option("memetic_wcrossover",
 		                  "Memetic RWLS weights crossover operator",
 		                  cxxopts::value<std::string>(program_options.memetic_wcrossover)
-		                    ->default_value("default"),
+		                    ->default_value(default_memetic_wcrossover),
 		                  "OPERATOR"));
 		cxxopts::ParseResult result = options.parse(argc, argv);
 
