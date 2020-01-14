@@ -30,6 +30,7 @@ namespace
 bool init_logger()
 {
 	assert(NULL_LOGGER != nullptr);
+	assert(LOGGER != nullptr);
 	try
 	{
 		// Clear null sink

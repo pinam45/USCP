@@ -471,7 +471,7 @@ void uscp::rwls::rwls::add_subset(uscp::rwls::rwls::resolution_data& data,
 	data.uncovered_points -= m_problem.subsets_points[subset_number];
 
 	// compute new score
-	const int new_score = -data.subsets_information[subset_number].score;
+	const ssize_t new_score = -data.subsets_information[subset_number].score;
 
 	// update subsets and points information
 	for(size_t subset_point: m_subsets_points[subset_number])
