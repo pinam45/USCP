@@ -11,6 +11,7 @@
 #include "common/data/instances/orlibrary/orlibrary.hpp"
 #include "common/data/instances/orlibrary/rail.hpp"
 #include "common/data/instances/sts.hpp"
+#include "common/data/instances/gvcp.hpp"
 
 #include <array>
 #include <string_view>
@@ -89,10 +90,11 @@ namespace uscp::problem
 		std::string_view name;
 		bool (*function)(const std::filesystem::path&, uscp::problem::instance&);
 	};
-	static constexpr std::array<problem_reader, 3> readers = {
+	static constexpr std::array<problem_reader, 4> readers = {
 	  problem_reader{"orlibrary", &uscp::problem::orlibrary::orlibrary::read},
 	  problem_reader{"orlibrary_rail", &uscp::problem::orlibrary::rail::read},
 	  problem_reader{"sts", &uscp::problem::sts::read},
+	  problem_reader{"gvcp", &uscp::problem::gvcp::read},
 	};
 } // namespace uscp::problem
 

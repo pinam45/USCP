@@ -19,6 +19,9 @@
 bool uscp::problem::orlibrary::rail::read(const std::filesystem::path& path,
                                           uscp::problem::instance& instance_out) noexcept
 {
+	instance_out.subsets_number = 0;
+	instance_out.points_number = 0;
+	instance_out.subsets_points.clear();
 	const timer timer;
 
 	std::error_code error;
