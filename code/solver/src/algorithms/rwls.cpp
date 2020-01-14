@@ -208,7 +208,7 @@ uscp::rwls::report uscp::rwls::rwls::improve_impl(
 	report.ended_at.steps = step;
 	report.ended_at.time = timer.elapsed();
 
-	m_logger->info("({}) Optimised RWLS solution to {} subsets in {} steps {}s",
+	m_logger->info("({}) Optimised by RWLS solution to {} subsets in {} steps {}s",
 	               m_problem.name,
 	               data.best_solution.selected_subsets.count(),
 	               step,
@@ -741,7 +741,7 @@ size_t uscp::rwls::rwls::select_subset_to_add(const uscp::rwls::rwls::resolution
 
 	if(is_tabu(data, add_subset))
 	{
-		m_logger->warn("Selected subset is tabu");
+		m_logger->warn("({}) Selected subset is tabu", m_problem.name);
 	}
 	ensure(!data.current_solution.selected_subsets.test(add_subset));
 	return add_subset;
@@ -801,7 +801,7 @@ std::optional<size_t> uscp::rwls::rwls::restricted_select_subset_to_add(
 
 	if(is_tabu(data, add_subset))
 	{
-		m_logger->warn("Selected subset is tabu");
+		m_logger->warn("({}) Selected subset is tabu", m_problem.name);
 	}
 	ensure(!data.current_solution.selected_subsets.test(add_subset));
 	ensure(authorized_subsets.test(add_subset));

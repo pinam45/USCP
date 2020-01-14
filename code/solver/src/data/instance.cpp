@@ -339,6 +339,11 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 	LOGGER->info("({}) Start reducing instance", full_instance.name);
 	reduction_info reduction = compute_reduction(full_instance);
 	instance reduced_instance = apply_reduction(reduction);
+	if(!uscp::problem::has_solution(reduced_instance))
+	{
+		LOGGER->error("Reduced instance has no solution");
+		abort();
+	}
 
 	LOGGER->info("({}) Reduced instance from {} subsets {} points to {} subsets {} points in {}s",
 	             full_instance.name,
@@ -352,8 +357,18 @@ uscp::problem::instance uscp::problem::reduce(const uscp::problem::instance& ful
 
 namespace
 {
+	void remove_reduction_cache(const uscp::problem::instance& full_instance) noexcept
+	{
+		std::filesystem::path reduction_cache_path =
+		  std::string(uscp::problem::REDUCTIONS_CACHE_FOLDER) + full_instance.name + ".json";
+		std::error_code ignored;
+		std::filesystem::remove(reduction_cache_path, ignored);
+		LOGGER->info("({}) removed cache: {}", full_instance.name, reduction_cache_path);
+	}
+
 	uscp::problem::reduction_info compute_reduction_cache(
-	  const uscp::problem::instance& full_instance) noexcept
+	  const uscp::problem::instance& full_instance,
+	  bool& from_cache) noexcept
 	{
 		std::filesystem::path reduction_cache_path =
 		  std::string(uscp::problem::REDUCTIONS_CACHE_FOLDER) + full_instance.name + ".json";
@@ -390,9 +405,16 @@ namespace
 						LOGGER->info("({}) Loaded reduction from cache {}",
 						             full_instance.name,
 						             reduction_cache_path);
-						uscp::problem::reduction_info reduction_info(&full_instance);
-						reduction_info.reduction_applied = reduction;
-						return reduction_info;
+						if(reduction.subsets_included.size() == full_instance.subsets_number
+						   && reduction.subsets_dominated.size() == full_instance.subsets_number
+						   && reduction.points_covered.size() == full_instance.points_number)
+						{
+							uscp::problem::reduction_info reduction_info(&full_instance);
+							reduction_info.reduction_applied = reduction;
+							from_cache = true;
+							return reduction_info;
+						}
+						LOGGER->info("Loaded reduction does not correspond to the instance");
 					}
 					else
 					{
@@ -433,6 +455,7 @@ namespace
 			LOGGER->error("({}) Failed to generate cache", full_instance.name);
 		}
 
+		from_cache = false;
 		return reduction;
 	}
 } // namespace
@@ -449,8 +472,27 @@ uscp::problem::instance uscp::problem::reduce_cache(
 
 	const timer timer;
 	LOGGER->info("({}) Start reducing instance", full_instance.name);
-	reduction_info reduction = compute_reduction_cache(full_instance);
+	bool from_cache = false;
+	reduction_info reduction = compute_reduction_cache(full_instance, from_cache);
 	instance reduced_instance = apply_reduction(reduction);
+	if(!uscp::problem::has_solution(reduced_instance))
+	{
+		if(!from_cache)
+		{
+			LOGGER->error("Reduced instance has no solution");
+			abort();
+		}
+		LOGGER->warn(
+		  "Reduced instance has no solution: erasing reduction cache and generating new one");
+		remove_reduction_cache(full_instance);
+		reduction = compute_reduction_cache(full_instance, from_cache);
+		reduced_instance = apply_reduction(reduction);
+		if(!uscp::problem::has_solution(reduced_instance))
+		{
+			LOGGER->error("Reduced instance has no solution");
+			abort();
+		}
+	}
 
 	LOGGER->info("({}) Reduced instance from {} subsets {} points to {} subsets {} points in {}s",
 	             full_instance.name,
