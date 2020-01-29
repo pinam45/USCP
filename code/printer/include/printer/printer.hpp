@@ -9,6 +9,7 @@
 #define USCP_PRINTER_HPP
 
 #include "common/data/solution.hpp"
+#include "common/data/instances.hpp"
 #include "common/algorithms/greedy.hpp"
 #include "common/algorithms/rwls.hpp"
 #include "common/algorithms/memetic.hpp"
@@ -112,6 +113,102 @@ public:
 	bool generate_document() noexcept;
 
 private:
+	struct greedy_result final
+	{
+		bool exist = false;
+		size_t value = 0;
+		double time = 0;
+	};
+	friend void to_json(nlohmann::json& j, const printer::greedy_result& serial);
+
+	struct rwls_result final
+	{
+		bool exist = false;
+		size_t best = 0;
+		double average = 0;
+		size_t best_number = 0;
+		size_t total_number = 0;
+		double steps = 0;
+		double time = 0;
+		std::vector<size_t> top_count = {0};
+	};
+	friend void to_json(nlohmann::json& j, const printer::rwls_result& serial);
+
+	struct memetic_result final
+	{
+		bool exist = false;
+		size_t best = 0;
+		double average = 0;
+		size_t best_number = 0;
+		size_t total_number = 0;
+		double generations = 0;
+		double steps = 0;
+		double time = 0;
+		std::vector<size_t> top_count = {0};
+	};
+	friend void to_json(nlohmann::json& j, const printer::memetic_result& serial);
+
+	struct instance_info final
+	{
+		std::string name;
+		size_t points_number = 0;
+		size_t subsets_number = 0;
+		size_t bks = 0;
+	};
+	friend void to_json(nlohmann::json& j, const printer::instance_info& serial);
+
+	struct instance_result final
+	{
+		instance_info instance;
+		greedy_result greedy;
+		rwls_result rwls;
+		memetic_result memetic;
+	};
+	friend void to_json(nlohmann::json& j, const printer::instance_result& serial);
+
+	struct rwls_stat final
+	{
+		instance_info instance;
+		bool exist = false;
+		double initial = 0;
+		double final = 0;
+		double kept = 0;
+		double proximity = 0;
+		double steps = 0;
+		double time = 0;
+		size_t repetitions = 0;
+	};
+	friend void to_json(nlohmann::json& j, const printer::rwls_stat& serial);
+
+	struct memetic_config_result final
+	{
+		uscp::memetic::config_serial config;
+		std::string crossover_operator;
+		std::string wcrossover_operator;
+		memetic_result result;
+	};
+	friend void to_json(nlohmann::json& j, const printer::memetic_config_result& serial);
+
+	struct memetic_comparison final
+	{
+		instance_info instance;
+		bool exist = false;
+		std::vector<memetic_config_result> results;
+	};
+	friend void to_json(nlohmann::json& j, const printer::memetic_comparison& serial);
+
+	struct rwls_weights_stats final
+	{
+		instance_info instance;
+		bool exist = false;
+		//uscp::rwls::position_serial stopping_criterion;
+		size_t repetitions = 0;
+		float weights_mean_mean = 0;
+		std::string data_file; //csv
+		std::string plot_file; //tex
+	};
+	friend void to_json(nlohmann::json& j, const printer::rwls_weights_stats& serial);
+
 	std::string output_folder;
 	std::string tables_output_folder;
 	std::string memetic_comparisons_tables_output_folder;
@@ -130,15 +227,22 @@ private:
 	bool m_generate_rwls_weights;
 	bool m_generate_memetic_comparisons;
 
+	template<typename... Report>
+	friend std::vector<instance_info> gather_instances_infos_(
+	  const std::vector<Report>&... reports) noexcept;
+	std::vector<instance_info> gather_instances_infos() noexcept;
+
 	bool create_output_folders() noexcept;
 
 	bool copy_latexmkrc() noexcept;
 	bool copy_instances_tables() noexcept;
 
-	bool generate_results_table() noexcept;
-	bool generate_rwls_stats_table() noexcept;
-	bool generate_rwls_weights_plots(std::vector<std::string>& generated_plots_files) noexcept;
+	bool generate_results_table(const std::vector<instance_info>& instances) noexcept;
+	bool generate_rwls_stats_table(const std::vector<instance_info>& instances) noexcept;
+	bool generate_rwls_weights_plots(const std::vector<instance_info>& instances,
+	                                 std::vector<std::string>& generated_plots_files) noexcept;
 	bool generate_memetic_comparisons_tables(
+	  const std::vector<instance_info>& instances,
 	  std::vector<std::string>& generated_tables_files) noexcept;
 
 	[[nodiscard]] std::string generate_output_folder_name(std::string_view output_prefix) const

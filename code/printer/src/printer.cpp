@@ -7,7 +7,6 @@
 //
 #include "printer/printer.hpp"
 #include "common/utils/logger.hpp"
-#include "common/data/instances.hpp"
 #include "common/utils/timer.hpp"
 #include "common/utils/utils.hpp"
 
@@ -20,207 +19,6 @@
 
 namespace
 {
-	struct greedy_result final
-	{
-		bool exist = false;
-		size_t value = 0;
-		double time = 0;
-	};
-	void to_json(nlohmann::json& j, const greedy_result& serial);
-
-	struct rwls_result final
-	{
-		bool exist = false;
-		size_t best = 0;
-		double average = 0;
-		size_t best_number = 0;
-		size_t total_number = 0;
-		double steps = 0;
-		double time = 0;
-		std::vector<size_t> top_count = {0};
-	};
-	void to_json(nlohmann::json& j, const rwls_result& serial);
-
-	struct memetic_result final
-	{
-		bool exist = false;
-		size_t best = 0;
-		double average = 0;
-		size_t best_number = 0;
-		size_t total_number = 0;
-		double generations = 0;
-		double steps = 0;
-		double time = 0;
-		std::vector<size_t> top_count = {0};
-	};
-	void to_json(nlohmann::json& j, const memetic_result& serial);
-
-	struct instance_info final
-	{
-		std::string name;
-		size_t points_number = 0;
-		size_t subsets_number = 0;
-		size_t bks = 0;
-	};
-	void to_json(nlohmann::json& j, const instance_info& serial);
-
-	struct instance_result final
-	{
-		instance_info instance;
-		greedy_result greedy;
-		rwls_result rwls;
-		memetic_result memetic;
-	};
-	void to_json(nlohmann::json& j, const instance_result& serial);
-
-	struct rwls_stat final
-	{
-		instance_info instance;
-		bool exist = false;
-		double initial = 0;
-		double final = 0;
-		double kept = 0;
-		double proximity = 0;
-		double steps = 0;
-		double time = 0;
-		size_t repetitions = 0;
-	};
-	void to_json(nlohmann::json& j, const rwls_stat& serial);
-
-	struct memetic_config_result final
-	{
-		uscp::memetic::config_serial config;
-		std::string crossover_operator;
-		std::string wcrossover_operator;
-		memetic_result result;
-	};
-	void to_json(nlohmann::json& j, const memetic_config_result& serial);
-
-	struct memetic_comparison final
-	{
-		instance_info instance;
-		bool exist = false;
-		std::vector<memetic_config_result> results;
-	};
-	void to_json(nlohmann::json& j, const memetic_comparison& serial);
-
-	struct rwls_weights_stats final
-	{
-		instance_info instance;
-		bool exist = false;
-		//uscp::rwls::position_serial stopping_criterion;
-		size_t repetitions = 0;
-		float weights_mean_mean = 0;
-		std::string data_file; //csv
-		std::string plot_file; //tex
-	};
-	void to_json(nlohmann::json& j, const rwls_weights_stats& serial);
-
-	void to_json(nlohmann::json& j, const greedy_result& serial)
-	{
-		j = nlohmann::json{
-		  {"exist", serial.exist},
-		  {"value", serial.value},
-		  {"time", serial.time},
-		};
-	}
-
-	void to_json(nlohmann::json& j, const rwls_result& serial)
-	{
-		j = nlohmann::json{
-		  {"exist", serial.exist},
-		  {"best", serial.best},
-		  {"average", serial.average},
-		  {"best_number", serial.best_number},
-		  {"total_number", serial.total_number},
-		  {"steps", serial.steps},
-		  {"time", serial.time},
-		  {"top_count", serial.top_count},
-		};
-	}
-
-	void to_json(nlohmann::json& j, const memetic_result& serial)
-	{
-		j = nlohmann::json{
-		  {"exist", serial.exist},
-		  {"best", serial.best},
-		  {"average", serial.average},
-		  {"best_number", serial.best_number},
-		  {"total_number", serial.total_number},
-		  {"generations", serial.generations},
-		  {"steps", serial.steps},
-		  {"time", serial.time},
-		  {"top_count", serial.top_count},
-		};
-	}
-
-	void to_json(nlohmann::json& j, const instance_info& serial)
-	{
-		j = nlohmann::json{
-		  {"name", serial.name},
-		  {"points_number", serial.points_number},
-		  {"subsets_number", serial.subsets_number},
-		  {"bks", serial.bks},
-		};
-	}
-
-	void to_json(nlohmann::json& j, const instance_result& serial)
-	{
-		j = nlohmann::json{
-		  {"instance", serial.instance},
-		  {"greedy", serial.greedy},
-		  {"rwls", serial.rwls},
-		  {"memetic", serial.memetic},
-		};
-	}
-
-	void to_json(nlohmann::json& j, const rwls_stat& serial)
-	{
-		j = nlohmann::json{
-		  {"instance", serial.instance},
-		  {"exist", serial.exist},
-		  {"initial", serial.initial},
-		  {"final", serial.final},
-		  {"kept", serial.kept},
-		  {"proximity", serial.proximity},
-		  {"steps", serial.steps},
-		  {"time", serial.time},
-		  {"repetitions", serial.repetitions},
-		};
-	}
-
-	void to_json(nlohmann::json& j, const memetic_config_result& serial)
-	{
-		j = nlohmann::json{
-		  {"config", serial.config},
-		  {"crossover_operator", serial.crossover_operator},
-		  {"wcrossover_operator", serial.wcrossover_operator},
-		  {"result", serial.result},
-		};
-	}
-
-	void to_json(nlohmann::json& j, const memetic_comparison& serial)
-	{
-		j = nlohmann::json{
-		  {"instance", serial.instance},
-		  {"exist", serial.exist},
-		  {"results", serial.results},
-		};
-	}
-
-	void to_json(nlohmann::json& j, const rwls_weights_stats& serial)
-	{
-		j = nlohmann::json{
-		  {"instance", serial.instance},
-		  {"exist", serial.exist},
-		  //{"stopping_criterion", serial.stopping_criterion},
-		  {"repetitions", serial.repetitions},
-		  {"weights_mean_mean", serial.weights_mean_mean},
-		  {"data_file", serial.data_file},
-		  {"plot_file", serial.plot_file},
-		};
-	}
-
 	void replace(std::string& data, std::string_view search, std::string_view replace)
 	{
 		size_t pos = data.find(search);
@@ -422,7 +220,13 @@ bool printer::generate_document() noexcept
 		return false;
 	}
 
-	if(!generate_results_table())
+	// generate tables
+	std::sort(std::begin(m_greedy_reports), std::end(m_greedy_reports), greedy_report_less);
+	std::sort(std::begin(m_rwls_reports), std::end(m_rwls_reports), rwls_report_less);
+	std::sort(std::begin(m_memetic_reports), std::end(m_memetic_reports), memetic_report_less);
+	std::vector<instance_info> instances = gather_instances_infos();
+
+	if(!generate_results_table(instances))
 	{
 		LOGGER->warn("Failed to generate result table");
 		return false;
@@ -430,7 +234,7 @@ bool printer::generate_document() noexcept
 
 	if(m_generate_rwls_stats)
 	{
-		if(!generate_rwls_stats_table())
+		if(!generate_rwls_stats_table(instances))
 		{
 			LOGGER->warn("Failed to generate rwls stats table");
 			return false;
@@ -440,7 +244,7 @@ bool printer::generate_document() noexcept
 	std::vector<std::string> rwls_weights_plots_files;
 	if(m_generate_rwls_weights)
 	{
-		if(!generate_rwls_weights_plots(rwls_weights_plots_files))
+		if(!generate_rwls_weights_plots(instances, rwls_weights_plots_files))
 		{
 			LOGGER->warn("Failed to generate rwls weights plots");
 			return false;
@@ -450,7 +254,7 @@ bool printer::generate_document() noexcept
 	std::vector<std::string> memetic_comparisons_tables_files;
 	if(m_generate_memetic_comparisons)
 	{
-		if(!generate_memetic_comparisons_tables(memetic_comparisons_tables_files))
+		if(!generate_memetic_comparisons_tables(instances, memetic_comparisons_tables_files))
 		{
 			LOGGER->warn("Failed to generate memetic comparison tables");
 			return false;
@@ -483,6 +287,58 @@ bool printer::generate_document() noexcept
 
 	LOGGER->info("Generated full document in {}s", timer.elapsed());
 	return true;
+}
+
+template<typename... Report>
+std::vector<printer::instance_info> gather_instances_infos_(
+  const std::vector<Report>&... reports) noexcept
+{
+	std::vector<printer::instance_info> instances;
+	instances.reserve(uscp::problem::instances.size());
+	for(const uscp::problem::instance_info& instance_full_info: uscp::problem::instances)
+	{
+		printer::instance_info instance;
+		instance.name = instance_full_info.name;
+		instance.bks = instance_full_info.bks;
+		instance.subsets_number = instance_full_info.subsets;
+		instance.points_number = instance_full_info.points;
+
+		instances.push_back(std::move(instance));
+	}
+
+	auto process_report = [&](const auto& report) noexcept
+	{
+		auto it = std::find_if(
+		  std::cbegin(instances),
+		  std::cend(instances),
+		  [&](const printer::instance_info& instance) noexcept {
+			  return instance.name == report.solution_final.problem.name;
+		  });
+		if(it == std::cend(instances))
+		{
+			printer::instance_info instance;
+			instance.name = report.solution_final.problem.name;
+			instance.bks = 0;
+			instance.subsets_number = report.solution_final.problem.subsets_number;
+			instance.points_number = report.solution_final.problem.points_number;
+			instances.push_back(std::move(instance));
+		}
+	};
+	auto process_reports = [&](const auto& reports_) noexcept
+	{
+		for(const auto& report: reports_)
+		{
+			process_report(report);
+		}
+	};
+	(process_reports(reports), ...);
+
+	return instances;
+}
+
+std::vector<printer::instance_info> printer::gather_instances_infos() noexcept
+{
+	return gather_instances_infos_(m_greedy_reports, m_rwls_reports, m_memetic_reports);
 }
 
 bool printer::create_output_folders() noexcept
@@ -543,24 +399,16 @@ bool printer::copy_instances_tables() noexcept
 	return true;
 }
 
-bool printer::generate_results_table() noexcept
+bool printer::generate_results_table(const std::vector<instance_info>& instances) noexcept
 {
 	const timer timer;
 
 	// generate data
-	std::sort(std::begin(m_greedy_reports), std::end(m_greedy_reports), greedy_report_less);
-	std::sort(std::begin(m_rwls_reports), std::end(m_rwls_reports), rwls_report_less);
-	std::sort(std::begin(m_memetic_reports), std::end(m_memetic_reports), memetic_report_less);
-
 	std::vector<instance_result> results;
-	results.reserve(uscp::problem::instances.size());
-	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
+	for(const instance_info& instance: instances)
 	{
 		instance_result result;
-		result.instance.name = instance.name;
-		result.instance.bks = instance.bks;
-		result.instance.subsets_number = instance.subsets;
-		result.instance.points_number = instance.points;
+		result.instance = instance;
 
 		const auto [greedy_begin, greedy_end] = std::equal_range(std::cbegin(m_greedy_reports),
 		                                                         std::cend(m_greedy_reports),
@@ -693,22 +541,17 @@ bool printer::generate_results_table() noexcept
 	return true;
 }
 
-bool printer::generate_rwls_stats_table() noexcept
+bool printer::generate_rwls_stats_table(const std::vector<instance_info>& instances) noexcept
 {
 	const timer timer;
 
 	// generate data
-	std::sort(std::begin(m_rwls_reports), std::end(m_rwls_reports), rwls_report_less);
-
 	std::vector<rwls_stat> stats;
 	stats.reserve(uscp::problem::instances.size());
-	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
+	for(const instance_info& instance: instances)
 	{
 		rwls_stat stat;
-		stat.instance.name = instance.name;
-		stat.instance.bks = instance.bks;
-		stat.instance.subsets_number = instance.subsets;
-		stat.instance.points_number = instance.points;
+		stat.instance = instance;
 
 		const auto [rwls_begin, rwls_end] = std::equal_range(
 		  std::begin(m_rwls_reports), std::end(m_rwls_reports), instance.name, rwls_report_less);
@@ -780,11 +623,10 @@ bool printer::generate_rwls_stats_table() noexcept
 	return true;
 }
 
-bool printer::generate_rwls_weights_plots(std::vector<std::string>& generated_plots_files) noexcept
+bool printer::generate_rwls_weights_plots(const std::vector<instance_info>& instances,
+                                          std::vector<std::string>& generated_plots_files) noexcept
 {
 	// generate data
-	std::sort(std::begin(m_rwls_reports), std::end(m_rwls_reports), rwls_report_less);
-
 	struct weights_data
 	{
 		float mean = 0;
@@ -792,14 +634,14 @@ bool printer::generate_rwls_weights_plots(std::vector<std::string>& generated_pl
 		float min = std::numeric_limits<float>::max();
 		float max = std::numeric_limits<float>::min();
 	};
-	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
+	for(const instance_info& instance: instances)
 	{
 		const timer timer;
 		rwls_weights_stats weights_stat;
 		weights_stat.instance.name = instance.name;
 		weights_stat.instance.bks = instance.bks;
-		weights_stat.instance.subsets_number = instance.subsets;
-		weights_stat.instance.points_number = instance.points;
+		weights_stat.instance.subsets_number = instance.subsets_number;
+		weights_stat.instance.points_number = instance.points_number;
 		weights_stat.repetitions = 0;
 
 		std::vector<const uscp::rwls::report_serial*> rwls_reports_with_weights;
@@ -807,7 +649,7 @@ bool printer::generate_rwls_weights_plots(std::vector<std::string>& generated_pl
 		  std::begin(m_rwls_reports), std::end(m_rwls_reports), instance.name, rwls_report_less);
 		for(auto it = rwls_begin; it < rwls_end; ++it)
 		{
-			if(it->points_weights_final.size() != instance.points)
+			if(it->points_weights_final.size() != instance.points_number)
 			{
 				// no final weights information
 				continue;
@@ -818,11 +660,11 @@ bool printer::generate_rwls_weights_plots(std::vector<std::string>& generated_pl
 		}
 
 		std::vector<weights_data> weights_data;
-		weights_data.resize(instance.points);
+		weights_data.resize(instance.points_number);
 		for(const uscp::rwls::report_serial* rwls_ptr: rwls_reports_with_weights)
 		{
 			const uscp::rwls::report_serial& rwls = *rwls_ptr;
-			for(size_t i = 0; i < instance.points; ++i)
+			for(size_t i = 0; i < instance.points_number; ++i)
 			{
 				weights_data[i].mean += rwls.points_weights_final[i];
 				if(rwls.points_weights_final[i] < weights_data[i].min)
@@ -839,23 +681,23 @@ bool printer::generate_rwls_weights_plots(std::vector<std::string>& generated_pl
 		{
 			continue;
 		}
-		for(size_t i = 0; i < instance.points; ++i)
+		for(size_t i = 0; i < instance.points_number; ++i)
 		{
 			weights_data[i].mean /= weights_stat.repetitions;
 			weights_stat.weights_mean_mean += weights_data[i].mean;
 		}
-		weights_stat.weights_mean_mean /= instance.points;
+		weights_stat.weights_mean_mean /= instance.points_number;
 		for(const uscp::rwls::report_serial* rwls_ptr: rwls_reports_with_weights)
 		{
 			const uscp::rwls::report_serial& rwls = *rwls_ptr;
 
-			for(size_t i = 0; i < instance.points; ++i)
+			for(size_t i = 0; i < instance.points_number; ++i)
 			{
 				weights_data[i].stddev +=
 				  std::pow(rwls.points_weights_final[i] - weights_data[i].mean, 2.f);
 			}
 		}
-		for(size_t i = 0; i < instance.points; ++i)
+		for(size_t i = 0; i < instance.points_number; ++i)
 		{
 			weights_data[i].stddev /= weights_stat.repetitions;
 			weights_data[i].stddev = std::sqrt(weights_data[i].stddev);
@@ -929,20 +771,16 @@ bool printer::generate_rwls_weights_plots(std::vector<std::string>& generated_pl
 }
 
 bool printer::generate_memetic_comparisons_tables(
+  const std::vector<instance_info>& instances,
   std::vector<std::string>& generated_tables_files) noexcept
 {
 	// generate data
-	std::sort(std::begin(m_memetic_reports), std::end(m_memetic_reports), memetic_report_less);
-
-	for(const uscp::problem::instance_info& instance: uscp::problem::instances)
+	for(const instance_info& instance: instances)
 	{
 		const timer timer;
 
 		memetic_comparison comparison;
-		comparison.instance.name = instance.name;
-		comparison.instance.bks = instance.bks;
-		comparison.instance.subsets_number = instance.subsets;
-		comparison.instance.points_number = instance.points;
+		comparison.instance = instance;
 
 		const auto [memetic_begin, memetic_end] = std::equal_range(std::cbegin(m_memetic_reports),
 		                                                           std::cend(m_memetic_reports),
@@ -1126,4 +964,109 @@ bool printer::write_and_save(const std::string& template_file,
 	}
 	data_stream << data.dump(4);
 	return true;
+}
+
+void to_json(nlohmann::json& j, const printer::greedy_result& serial)
+{
+	j = nlohmann::json{
+	  {"exist", serial.exist},
+	  {"value", serial.value},
+	  {"time", serial.time},
+	};
+}
+
+void to_json(nlohmann::json& j, const printer::rwls_result& serial)
+{
+	j = nlohmann::json{
+	  {"exist", serial.exist},
+	  {"best", serial.best},
+	  {"average", serial.average},
+	  {"best_number", serial.best_number},
+	  {"total_number", serial.total_number},
+	  {"steps", serial.steps},
+	  {"time", serial.time},
+	  {"top_count", serial.top_count},
+	};
+}
+
+void to_json(nlohmann::json& j, const printer::memetic_result& serial)
+{
+	j = nlohmann::json{
+	  {"exist", serial.exist},
+	  {"best", serial.best},
+	  {"average", serial.average},
+	  {"best_number", serial.best_number},
+	  {"total_number", serial.total_number},
+	  {"generations", serial.generations},
+	  {"steps", serial.steps},
+	  {"time", serial.time},
+	  {"top_count", serial.top_count},
+	};
+}
+
+void to_json(nlohmann::json& j, const printer::instance_info& serial)
+{
+	j = nlohmann::json{
+	  {"name", serial.name},
+	  {"points_number", serial.points_number},
+	  {"subsets_number", serial.subsets_number},
+	  {"bks", serial.bks},
+	};
+}
+
+void to_json(nlohmann::json& j, const printer::instance_result& serial)
+{
+	j = nlohmann::json{
+	  {"instance", serial.instance},
+	  {"greedy", serial.greedy},
+	  {"rwls", serial.rwls},
+	  {"memetic", serial.memetic},
+	};
+}
+
+void to_json(nlohmann::json& j, const printer::rwls_stat& serial)
+{
+	j = nlohmann::json{
+	  {"instance", serial.instance},
+	  {"exist", serial.exist},
+	  {"initial", serial.initial},
+	  {"final", serial.final},
+	  {"kept", serial.kept},
+	  {"proximity", serial.proximity},
+	  {"steps", serial.steps},
+	  {"time", serial.time},
+	  {"repetitions", serial.repetitions},
+	};
+}
+
+void to_json(nlohmann::json& j, const printer::memetic_config_result& serial)
+{
+	j = nlohmann::json{
+	  {"config", serial.config},
+	  {"crossover_operator", serial.crossover_operator},
+	  {"wcrossover_operator", serial.wcrossover_operator},
+	  {"result", serial.result},
+	};
+}
+
+void to_json(nlohmann::json& j, const printer::memetic_comparison& serial)
+{
+	j = nlohmann::json{
+	  {"instance", serial.instance},
+	  {"exist", serial.exist},
+	  {"results", serial.results},
+	};
+}
+
+void to_json(nlohmann::json& j, const printer::rwls_weights_stats& serial)
+{
+	j = nlohmann::json{
+	  {"instance", serial.instance},
+	  {"exist", serial.exist},
+	  //{"stopping_criterion", serial.stopping_criterion},
+	  {"repetitions", serial.repetitions},
+	  {"weights_mean_mean", serial.weights_mean_mean},
+	  {"data_file", serial.data_file},
+	  {"plot_file", serial.plot_file},
+	};
 }
