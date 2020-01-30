@@ -49,7 +49,7 @@
 	<<result/result/best_number>>/<<result/result/total_number>>
 	&
 	<*if existsIn(result/result,"top_count")*>
-		<*if length(result/result/top_count)*>
+		<*if length(result/result/top_count) > 1*>
 	\tableplot{<*for val in result/result/top_count*><<val>><*if not loop/is_last*>,<*endif*><*endfor*>}
 		<*endif*>
 	<*endif*>
