@@ -15,6 +15,24 @@
 #include <utility>
 #include <functional>
 
+#if defined(__GNUC__)
+#	define COND_LIKELY(expr) __builtin_expect(!!(expr), 1)
+#	define COND_UNLIKELY(expr) __builtin_expect(!!(expr), 0)
+#else
+#	define COND_LIKELY(expr) (!!(expr))
+#	define COND_UNLIKELY(expr) (!!(expr))
+#endif
+
+#define ensure(expr)                                                        \
+	do                                                                      \
+	{                                                                       \
+		if(COND_UNLIKELY(!(expr)))                                          \
+		{                                                                   \
+			LOGGER->error("[{}:{}] failed: {}", __FILE__, __LINE__, #expr); \
+			abort();                                                        \
+		}                                                                   \
+	} while(false)
+
 namespace
 {
 	template<typename is_greater_t, bool restricted>
@@ -84,6 +102,8 @@ namespace
 		}
 
 		report.time = timer.elapsed();
+		report.solution_final.compute_cover();
+		ensure(report.solution_final.cover_all_points);
 		SPDLOG_LOGGER_DEBUG(logger,
 		                    "({}) Built greedy solution with {} subsets in {}s",
 		                    problem.name,
@@ -172,6 +192,8 @@ namespace
 		}
 
 		report.time = timer.elapsed();
+		report.solution_final.compute_cover();
+		ensure(report.solution_final.cover_all_points);
 		SPDLOG_LOGGER_DEBUG(logger,
 		                    "({}) Built random greedy solution with {} subsets in {}s",
 		                    problem.name,
