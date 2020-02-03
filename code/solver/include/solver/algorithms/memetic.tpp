@@ -89,6 +89,21 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 	std::array<uscp::rwls::report, 2> rwls_reports{uscp::rwls::report(m_problem),
 	                                               uscp::rwls::report(m_problem)};
 
+	// Best initial solution
+	{
+		const std::array<size_t, 2> initial_population_subsets_number = {
+		  population[0].selected_subsets.count(), population[1].selected_subsets.count()};
+		const size_t initial_population_best =
+		  initial_population_subsets_number[0] < initial_population_subsets_number[1] ? 0 : 1;
+		best_solution_subsets_number = initial_population_subsets_number[initial_population_best];
+		report.solution_final = population[initial_population_best];
+		report.found_at.generation = 0;
+		report.found_at.rwls_cumulative_position.steps = 0;
+		report.found_at.rwls_cumulative_position.time = 0;
+		report.found_at.time = timer.elapsed();
+		report.points_weights_final = rwls_reports[initial_population_best].points_weights_final;
+	}
+
 	// Dynamic steps setup
 	std::deque<size_t> dynamic_steps;
 	static constexpr size_t dynamic_steps_recorded_generations = 10;
