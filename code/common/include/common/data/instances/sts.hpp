@@ -36,7 +36,7 @@
 	STS_ENTRY(ENTRY, "data.405", "STS405", 27270, 405, 0.007f, 1, 1, 335)      \
 	STS_ENTRY(ENTRY, "data.729", "STS729", 88452, 729, 0.004f, 1, 1, 617)      \
 	STS_ENTRY(ENTRY, "data.1215", "STS1215", 245835, 1215, 0.002f, 1, 1, 1063) \
-	STS_ENTRY(ENTRY, "data.2187", "STS2187", 796797, 2187, 0.001f, 1, 1, 0)
+	STS_ENTRY(ENTRY, "data.2187", "STS2187", 796797, 2187, 0.001f, 1, 1, 1963)
 
 namespace uscp::problem::sts
 {
