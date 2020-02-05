@@ -527,6 +527,7 @@ int main(int argc, char* argv[])
 		     "    ./solver --instance_type=orlibrary_rail --instance_path=./rail_inst.txt --instance_name=R42 --memetic --memetic_crossover=subproblem_rwls --memetic_wcrossover=max --memetic_time=360\n";
 		cxxopts::Options options("solver", help_txt.str());
 		options.add_option("", cxxopts::Option("help", "Print help"));
+		options.add_option("", cxxopts::Option("version", "Print version"));
 		options.add_option(
 		  "",
 		  cxxopts::Option("i,instances",
@@ -644,6 +645,17 @@ int main(int argc, char* argv[])
 		if(result.count("help"))
 		{
 			std::cout << options.help({"", "Group"}) << std::endl;
+			return EXIT_SUCCESS;
+		}
+
+		if(result.count("version"))
+		{
+			std::cout << "Build commit: " << git_info::head_sha1;
+			if(git_info::is_dirty)
+			{
+				std::cout << " (with uncommitted changes)";
+			}
+			std::cout << std::endl;
 			return EXIT_SUCCESS;
 		}
 
