@@ -499,15 +499,32 @@ int main(int argc, char* argv[])
 	try
 	{
 		std::ostringstream help_txt;
-		help_txt << "Unicost Set Cover Problem Solver for OR-Library and STS instances";
-		help_txt << "\n";
-		help_txt << "Build commit: ";
-		help_txt << git_info::head_sha1;
+		help_txt << "Unicost Set Cover Problem Solver for OR-Library and STS instances\n";
+		help_txt << "Build commit: " << git_info::head_sha1;
 		if(git_info::is_dirty)
 		{
 			help_txt << " (with uncommitted changes)";
 		}
-		help_txt << "\n";
+		help_txt
+		  << "\n"
+		     "\n"
+		     "This program must be launched in the folder containing the resources, it implement 3 algorithms for solving the USCP: greedy, RWLS and Memetic\n"
+		     "To specify the algorithm to use and the parameters of the algorithm, see the Usage section\n"
+		     "\n"
+		     "To specify known instances, use --instances=<comma separated list of instances>\n"
+		     "To specify an unknown instances, use --instance_type=<orlibrary|orlibrary_rail|sts|gvcp> --instance_path=<path> --instance_name=<name>\n"
+		     "\n"
+		     "Known instances: 4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,4.10,5.1,5.2,5.3,5.4,5.5,5.6,5.7,5.8,5.9,5.10,6.1,6.2,6.3,6.4,6.5,A.1,A.2,A.3,A.4,A.5,B.1,B.2,B.3,B.4,B.5,C.1,C.2,C.3,C.4,C.5,D.1,D.2,D.3,D.4,D.5,E.1,E.2,E.3,E.4,E.5,NRE.1,NRE.2,NRE.3,NRE.4,NRE.5,NRF.1,NRF.2,NRF.3,NRF.4,NRF.5,NRG.1,NRG.2,NRG.3,NRG.4,NRG.5,NRH.1,NRH.2,NRH.3,NRH.4,NRH.5,CLR10,CLR11,CLR12,CLR13,CYC6,CYC7,CYC8,CYC9,CYC10,CYC11,RAIL507,RAIL516,RAIL582,RAIL2536,RAIL2586,RAIL4284,RAIL4872,STS9,STS15,STS27,STS45,STS81,STS135,STS243,STS405,STS729,STS1215,STS2187\n"
+		     "\n"
+		     "Implemented crossovers: identity, merge, greedy_merge, subproblem_random, extended_subproblem_random, subproblem_greedy, extended_subproblem_greedy, subproblem_rwls, extended_subproblem_rwls\n"
+		     "Implemented wcrossovers: reset, keep, average, mix_random, add, difference, max, min, minmax, shuffle\n"
+		     "\n"
+		     "Usage examples:\n"
+		     "  Solve CYC10 and CYC11 with RWLS and a limit of 5000 steps:\n"
+		     "    ./solver --instances=CYC10,CYC11 --rwls --rwls_steps=5000\n"
+		     "\n"
+		     "  Solve R42, an unknown RAIL instance in ./rail_inst.txt using the same format as in OR-Library, with the Memetic algorithm, the subproblem_rwls crossover, the max wcrossover and a limit of 360 seconds:\n"
+		     "    ./solver --instance_type=orlibrary_rail --instance_path=./rail_inst.txt --instance_name=R42 --memetic --memetic_crossover=subproblem_rwls --memetic_wcrossover=max --memetic_time=360\n";
 		cxxopts::Options options("solver", help_txt.str());
 		options.add_option("", cxxopts::Option("help", "Print help"));
 		options.add_option(
