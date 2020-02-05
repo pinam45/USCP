@@ -45,7 +45,14 @@ int main(int argc, char* argv[])
 		{
 			help_txt << " (with uncommitted changes)";
 		}
-		help_txt << "\n";
+		help_txt
+		  << "\n"
+		     "\n"
+		     "This program must be launched in the folder containing the resources\n"
+		     "\n"
+		     "Usage example:\n"
+		     "  Generate result document with RWLS stats for solver reports stored in ./solver_out:\n"
+		     "    ./printer --input=./solver_out --rwls_stats\n";
 		cxxopts::Options options("solver", help_txt.str());
 		options.add_option("", cxxopts::Option("help", "Print help"));
 		options.add_option(
