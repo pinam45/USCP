@@ -55,6 +55,7 @@ int main(int argc, char* argv[])
 		     "    ./printer --input=./solver_out --rwls_stats\n";
 		cxxopts::Options options("solver", help_txt.str());
 		options.add_option("", cxxopts::Option("help", "Print help"));
+		options.add_option("", cxxopts::Option("version", "Print version"));
 		options.add_option(
 		  "",
 		  cxxopts::Option("i,input",
@@ -94,6 +95,17 @@ int main(int argc, char* argv[])
 		if(result.count("help"))
 		{
 			std::cout << options.help({"", "Group"}) << std::endl;
+			return EXIT_SUCCESS;
+		}
+
+		if(result.count("version"))
+		{
+			std::cout << "Build commit: " << git_info::head_sha1;
+			if(git_info::is_dirty)
+			{
+				std::cout << " (with uncommitted changes)";
+			}
+			std::cout << std::endl;
 			return EXIT_SUCCESS;
 		}
 
