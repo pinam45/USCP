@@ -29,16 +29,16 @@ namespace uscp::wcrossover
 		reset& operator=(const reset& other) = delete;
 		reset& operator=(reset&& other) noexcept = delete;
 
-		std::vector<ssize_t> apply1([[maybe_unused]] const std::vector<ssize_t>& a,
-		                            [[maybe_unused]] const std::vector<ssize_t>& b,
-		                            [[maybe_unused]] random_engine& generator) const noexcept
+		std::vector<long long> apply1([[maybe_unused]] const std::vector<long long>& a,
+		                              [[maybe_unused]] const std::vector<long long>& b,
+		                              [[maybe_unused]] random_engine& generator) const noexcept
 		{
 			return weights;
 		}
 
-		std::vector<ssize_t> apply2([[maybe_unused]] const std::vector<ssize_t>& a,
-		                            [[maybe_unused]] const std::vector<ssize_t>& b,
-		                            [[maybe_unused]] random_engine& generator) const noexcept
+		std::vector<long long> apply2([[maybe_unused]] const std::vector<long long>& a,
+		                              [[maybe_unused]] const std::vector<long long>& b,
+		                              [[maybe_unused]] random_engine& generator) const noexcept
 		{
 			return weights;
 		}
@@ -49,7 +49,7 @@ namespace uscp::wcrossover
 		}
 
 		const uscp::problem::instance& problem;
-		std::vector<ssize_t> weights;
+		std::vector<long long> weights;
 	};
 } // namespace uscp::wcrossover
 

@@ -28,17 +28,17 @@ namespace uscp::wcrossover
 		keep& operator=(const keep& other) = delete;
 		keep& operator=(keep&& other) noexcept = delete;
 
-		std::vector<ssize_t> apply1(const std::vector<ssize_t>& a,
-		                            [[maybe_unused]] const std::vector<ssize_t>& b,
-		                            [[maybe_unused]] random_engine& generator) const noexcept
+		std::vector<long long> apply1(const std::vector<long long>& a,
+		                              [[maybe_unused]] const std::vector<long long>& b,
+		                              [[maybe_unused]] random_engine& generator) const noexcept
 		{
 			assert(a.size() == problem.points_number && b.size() == problem.points_number);
 			return a;
 		}
 
-		std::vector<ssize_t> apply2([[maybe_unused]] const std::vector<ssize_t>& a,
-		                            const std::vector<ssize_t>& b,
-		                            [[maybe_unused]] random_engine& generator) const noexcept
+		std::vector<long long> apply2([[maybe_unused]] const std::vector<long long>& a,
+		                              const std::vector<long long>& b,
+		                              [[maybe_unused]] random_engine& generator) const noexcept
 		{
 			assert(a.size() == problem.points_number && b.size() == problem.points_number);
 			return b;

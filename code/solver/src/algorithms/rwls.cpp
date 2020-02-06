@@ -39,10 +39,10 @@
 #	define assert_score(expr) static_cast<void>(0)
 #endif
 
-template<bool restricted = false>
+template<bool restricted>
 uscp::rwls::report uscp::rwls::rwls::improve_impl(
   const uscp::solution& solution,
-  const std::vector<ssize_t>& points_weights_initial,
+  const std::vector<long long>& points_weights_initial,
   uscp::random_engine& generator,
   uscp::rwls::position stopping_criterion,
   [[maybe_unused]] const dynamic_bitset<>& authorized_subsets) noexcept
@@ -154,7 +154,7 @@ uscp::rwls::report uscp::rwls::rwls::improve_impl(
 			subset_to_remove = select_subset_to_remove(data);
 		}
 		remove_subset(data, subset_to_remove);
-		data.subsets_information[subset_to_remove].timestamp = static_cast<ssize_t>(step);
+		data.subsets_information[subset_to_remove].timestamp = static_cast<long long>(step);
 
 		// add subset
 		const size_t selected_point = select_uncovered_point(data);
@@ -179,7 +179,7 @@ uscp::rwls::report uscp::rwls::rwls::improve_impl(
 		}
 		add_subset(data, subset_to_add);
 
-		data.subsets_information[subset_to_add].timestamp = static_cast<ssize_t>(step);
+		data.subsets_information[subset_to_add].timestamp = static_cast<long long>(step);
 		make_tabu(data, subset_to_add);
 
 		// update points weights
@@ -340,12 +340,12 @@ uscp::rwls::report uscp::rwls::rwls::improve(const uscp::solution& solution,
                                              uscp::random_engine& generator,
                                              uscp::rwls::position stopping_criterion) noexcept
 {
-	std::vector<ssize_t> points_initial_weights(m_problem.points_number, 1);
+	std::vector<long long> points_initial_weights(m_problem.points_number, 1);
 	return improve(solution, points_initial_weights, generator, stopping_criterion);
 }
 
 uscp::rwls::report uscp::rwls::rwls::improve(const uscp::solution& solution,
-                                             const std::vector<ssize_t>& points_weights_initial,
+                                             const std::vector<long long>& points_weights_initial,
                                              uscp::random_engine& generator,
                                              uscp::rwls::position stopping_criterion) noexcept
 {
@@ -359,14 +359,14 @@ uscp::rwls::report uscp::rwls::rwls::restricted_improve(
   uscp::rwls::position stopping_criterion,
   const dynamic_bitset<>& authorized_subsets) noexcept
 {
-	std::vector<ssize_t> points_initial_weights(m_problem.points_number, 1);
+	std::vector<long long> points_initial_weights(m_problem.points_number, 1);
 	return restricted_improve(
 	  solution, points_initial_weights, generator, stopping_criterion, authorized_subsets);
 }
 
 uscp::rwls::report uscp::rwls::rwls::restricted_improve(
   const uscp::solution& solution,
-  const std::vector<ssize_t>& points_weights_initial,
+  const std::vector<long long>& points_weights_initial,
   uscp::random_engine& generator,
   uscp::rwls::position stopping_criterion,
   const dynamic_bitset<>& authorized_subsets) noexcept
@@ -390,12 +390,12 @@ uscp::rwls::rwls::resolution_data::resolution_data(uscp::solution& solution,
 	subsets_information.resize(solution.problem.subsets_number);
 }
 
-ssize_t uscp::rwls::rwls::compute_subset_score(const uscp::rwls::rwls::resolution_data& data,
-                                               size_t subset_number) noexcept
+long long uscp::rwls::rwls::compute_subset_score(const uscp::rwls::rwls::resolution_data& data,
+                                                 size_t subset_number) noexcept
 {
 	assert(subset_number < m_problem.subsets_number);
 
-	ssize_t subset_score = 0;
+	long long subset_score = 0;
 	if(data.current_solution.selected_subsets[subset_number])
 	{
 		// if in solution, gain score for points covered only by the subset
@@ -429,14 +429,14 @@ ssize_t uscp::rwls::rwls::compute_subset_score(const uscp::rwls::rwls::resolutio
 }
 
 void uscp::rwls::rwls::init(uscp::rwls::rwls::resolution_data& data,
-                            const std::vector<ssize_t>& points_weights_initial) noexcept
+                            const std::vector<long long>& points_weights_initial) noexcept
 {
 	assert(points_weights_initial.size() == m_problem.points_number);
 
 	// points information
 	dynamic_bitset<> tmp;
 #pragma omp parallel for default(none) shared(data, points_weights_initial) private(tmp)
-	for(size_t i = 0; i < m_problem.points_number; ++i)
+	for(/*no size_t for openMP on Windows*/ int i = 0; i < m_problem.points_number; ++i)
 	{
 		data.points_information[i].weight = points_weights_initial[i];
 		data.points_information[i].subsets_covering_in_solution = 0;
@@ -451,7 +451,7 @@ void uscp::rwls::rwls::init(uscp::rwls::rwls::resolution_data& data,
 
 // subset scores
 #pragma omp parallel for default(none) shared(data)
-	for(size_t i = 0; i < m_problem.subsets_number; ++i)
+	for(/*no size_t for openMP on Windows*/ int i = 0; i < m_problem.subsets_number; ++i)
 	{
 		data.subsets_information[i].score = compute_subset_score(data, i);
 		assert(data.current_solution.selected_subsets[i] ? data.subsets_information[i].score <= 0
@@ -471,7 +471,7 @@ void uscp::rwls::rwls::add_subset(uscp::rwls::rwls::resolution_data& data,
 	data.uncovered_points -= m_problem.subsets_points[subset_number];
 
 	// compute new score
-	const ssize_t new_score = -data.subsets_information[subset_number].score;
+	const long long new_score = -data.subsets_information[subset_number].score;
 
 	// update subsets and points information
 	for(size_t subset_point: m_subsets_points[subset_number])
@@ -480,7 +480,7 @@ void uscp::rwls::rwls::add_subset(uscp::rwls::rwls::resolution_data& data,
 		if(data.points_information[subset_point].subsets_covering_in_solution == 1)
 		{
 			// point newly covered
-			const ssize_t point_weight = data.points_information[subset_point].weight;
+			const long long point_weight = data.points_information[subset_point].weight;
 			for(size_t neighbor: m_subsets_covering_points[subset_point])
 			{
 				data.subsets_information[neighbor].canAddToSolution = true;
@@ -492,7 +492,7 @@ void uscp::rwls::rwls::add_subset(uscp::rwls::rwls::resolution_data& data,
 		else if(data.points_information[subset_point].subsets_covering_in_solution == 2)
 		{
 			// point now covered twice
-			const ssize_t point_weight = data.points_information[subset_point].weight;
+			const long long point_weight = data.points_information[subset_point].weight;
 			for(size_t neighbor: m_subsets_covering_points[subset_point])
 			{
 				data.subsets_information[neighbor].canAddToSolution = true;
@@ -532,7 +532,7 @@ void uscp::rwls::rwls::remove_subset(uscp::rwls::rwls::resolution_data& data,
 	data.current_solution.selected_subsets.reset(subset_number);
 
 	// compute new score
-	const ssize_t new_score = -data.subsets_information[subset_number].score;
+	const long long new_score = -data.subsets_information[subset_number].score;
 
 	// update subsets and points information
 	for(size_t subset_point: m_subsets_points[subset_number])
@@ -542,7 +542,7 @@ void uscp::rwls::rwls::remove_subset(uscp::rwls::rwls::resolution_data& data,
 		{
 			// point newly uncovered
 			data.uncovered_points.set(subset_point);
-			const ssize_t point_weight = data.points_information[subset_point].weight;
+			const long long point_weight = data.points_information[subset_point].weight;
 			for(size_t neighbor: m_subsets_covering_points[subset_point])
 			{
 				data.subsets_information[neighbor].canAddToSolution = true;
@@ -554,7 +554,7 @@ void uscp::rwls::rwls::remove_subset(uscp::rwls::rwls::resolution_data& data,
 		else if(data.points_information[subset_point].subsets_covering_in_solution == 1)
 		{
 			// point now covered once
-			const ssize_t point_weight = data.points_information[subset_point].weight;
+			const long long point_weight = data.points_information[subset_point].weight;
 			for(size_t neighbor: m_subsets_covering_points[subset_point])
 			{
 				data.subsets_information[neighbor].canAddToSolution = true;
@@ -608,7 +608,7 @@ size_t uscp::rwls::rwls::select_subset_to_remove_no_timestamp(
 {
 	assert(data.current_solution.selected_subsets.any());
 	size_t selected_subset = data.current_solution.selected_subsets.find_first();
-	ssize_t best_score = data.subsets_information[selected_subset].score;
+	long long best_score = data.subsets_information[selected_subset].score;
 	data.current_solution.selected_subsets.iterate_bits_on([&](size_t bit_on) noexcept {
 		if(data.subsets_information[bit_on].score > best_score)
 		{
@@ -633,7 +633,7 @@ std::optional<size_t> uscp::rwls::rwls::restricted_select_subset_to_remove_no_ti
 		return {};
 	}
 	size_t selected_subset = removable_subsets.find_first();
-	ssize_t best_score = data.subsets_information[selected_subset].score;
+	long long best_score = data.subsets_information[selected_subset].score;
 	removable_subsets.iterate_bits_on([&](size_t bit_on) noexcept {
 		if(data.subsets_information[bit_on].score > best_score)
 		{
@@ -651,11 +651,11 @@ size_t uscp::rwls::rwls::select_subset_to_remove(
 {
 	assert(data.current_solution.selected_subsets.any());
 	size_t remove_subset = data.current_solution.selected_subsets.find_first();
-	std::pair<ssize_t, ssize_t> best_score_minus_timestamp(
+	std::pair<long long, long long> best_score_minus_timestamp(
 	  data.subsets_information[remove_subset].score,
 	  -data.subsets_information[remove_subset].timestamp);
 	data.current_solution.selected_subsets.iterate_bits_on([&](size_t bit_on) noexcept {
-		const std::pair<ssize_t, ssize_t> current_score_timestamp(
+		const std::pair<long long, long long> current_score_timestamp(
 		  data.subsets_information[bit_on].score, -data.subsets_information[bit_on].timestamp);
 		if(current_score_timestamp > best_score_minus_timestamp && !is_tabu(data, bit_on))
 		{
@@ -680,11 +680,11 @@ std::optional<size_t> uscp::rwls::rwls::restricted_select_subset_to_remove(
 		return {};
 	}
 	size_t remove_subset = removable_subsets.find_first();
-	std::pair<ssize_t, ssize_t> best_score_minus_timestamp(
+	std::pair<long long, long long> best_score_minus_timestamp(
 	  data.subsets_information[remove_subset].score,
 	  -data.subsets_information[remove_subset].timestamp);
 	removable_subsets.iterate_bits_on([&](size_t bit_on) noexcept {
-		const std::pair<ssize_t, ssize_t> current_score_timestamp(
+		const std::pair<long long, long long> current_score_timestamp(
 		  data.subsets_information[bit_on].score, -data.subsets_information[bit_on].timestamp);
 		if(current_score_timestamp > best_score_minus_timestamp && !is_tabu(data, bit_on))
 		{
@@ -705,8 +705,8 @@ size_t uscp::rwls::rwls::select_subset_to_add(const uscp::rwls::rwls::resolution
 
 	size_t add_subset = 0;
 	bool add_subset_is_tabu = true;
-	std::pair<ssize_t, ssize_t> best_score_minus_timestamp(std::numeric_limits<ssize_t>::min(),
-	                                                       std::numeric_limits<ssize_t>::max());
+	std::pair<long long, long long> best_score_minus_timestamp(
+	  std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max());
 	bool found = false;
 	for(size_t subset_covering: m_subsets_covering_points[point_to_cover])
 	{
@@ -719,7 +719,7 @@ size_t uscp::rwls::rwls::select_subset_to_add(const uscp::rwls::rwls::resolution
 			continue;
 		}
 
-		const std::pair<ssize_t, ssize_t> current_score_minus_timestamp(
+		const std::pair<long long, long long> current_score_minus_timestamp(
 		  data.subsets_information[subset_covering].score,
 		  -data.subsets_information[subset_covering].timestamp);
 		if(add_subset_is_tabu)
@@ -758,8 +758,8 @@ std::optional<size_t> uscp::rwls::rwls::restricted_select_subset_to_add(
 
 	size_t add_subset = 0;
 	bool add_subset_is_tabu = true;
-	std::pair<ssize_t, ssize_t> best_score_minus_timestamp(std::numeric_limits<ssize_t>::min(),
-	                                                       std::numeric_limits<ssize_t>::max());
+	std::pair<long long, long long> best_score_minus_timestamp(
+	  std::numeric_limits<long long>::min(), std::numeric_limits<long long>::max());
 	bool found = false;
 	for(size_t subset_covering: m_subsets_covering_points[point_to_cover])
 	{
@@ -776,7 +776,7 @@ std::optional<size_t> uscp::rwls::rwls::restricted_select_subset_to_add(
 			continue;
 		}
 
-		const std::pair<ssize_t, ssize_t> current_score_minus_timestamp(
+		const std::pair<long long, long long> current_score_minus_timestamp(
 		  data.subsets_information[subset_covering].score,
 		  -data.subsets_information[subset_covering].timestamp);
 		if(add_subset_is_tabu)

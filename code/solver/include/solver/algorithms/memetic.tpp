@@ -65,18 +65,18 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 	timer timer;
 
 	// Population weights
-	std::array<std::vector<ssize_t>, 2> population_weights;
-	for(std::vector<ssize_t>& weights: population_weights)
+	std::array<std::vector<long long>, 2> population_weights;
+	for(std::vector<long long>& weights: population_weights)
 	{
 		weights.resize(m_problem.points_number, 1);
 	}
 
 	// Population
 	std::array<solution, 2> population{solution(m_problem), solution(m_problem)};
-#pragma omp parallel for default(none) shared(population, generator, m_problem, NULL_LOGGER)
-	for(size_t i = 0; i < population.size(); ++i)
+#pragma omp parallel for default(none) shared(population, generator, NULL_LOGGER)
+	for(/*no size_t for openMP on Windows*/ int i = 0; i < population.size(); ++i)
 	{
-		population[i] = uscp::greedy::random_solve(generator, m_problem, NULL_LOGGER);
+		population[i] = uscp::greedy::random_solve(generator, population[i].problem, NULL_LOGGER);
 	}
 	SPDLOG_LOGGER_DEBUG(
 	  LOGGER, "({}) Memetic population initialized in {}s", m_problem.name, timer.elapsed());
@@ -122,7 +122,7 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 		             timer.elapsed());
 #pragma omp parallel for default(none) \
   shared(population, population_weights, rwls_reports, config, generator)
-		for(size_t i = 0; i < population.size(); ++i)
+		for(/*no size_t for openMP on Windows*/ int i = 0; i < population.size(); ++i)
 		{
 			rwls_reports[i] = m_rwls.improve(
 			  population[i], population_weights[i], generator, config.rwls_stopping_criterion);

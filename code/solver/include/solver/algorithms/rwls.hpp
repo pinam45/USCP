@@ -44,9 +44,9 @@ namespace uscp::rwls
 	struct report final
 	{
 		solution solution_initial;
-		std::vector<ssize_t> points_weights_initial;
+		std::vector<long long> points_weights_initial;
 		solution solution_final;
-		std::vector<ssize_t> points_weights_final;
+		std::vector<long long> points_weights_final;
 		position found_at;
 		position ended_at;
 		position stopping_criterion;
@@ -77,7 +77,7 @@ namespace uscp::rwls
 		                                       position stopping_criterion) noexcept;
 
 		[[nodiscard, gnu::hot]] report improve(const uscp::solution& solution,
-		                                       const std::vector<ssize_t>& points_weights_initial,
+		                                       const std::vector<long long>& points_weights_initial,
 		                                       random_engine& generator,
 		                                       position stopping_criterion) noexcept;
 
@@ -89,7 +89,7 @@ namespace uscp::rwls
 
 		[[nodiscard, gnu::hot]] report restricted_improve(
 		  const uscp::solution& solution,
-		  const std::vector<ssize_t>& points_weights_initial,
+		  const std::vector<long long>& points_weights_initial,
 		  random_engine& generator,
 		  position stopping_criterion,
 		  const dynamic_bitset<>& authorized_subsets) noexcept;
@@ -97,14 +97,14 @@ namespace uscp::rwls
 	private:
 		struct point_information final // row
 		{
-			ssize_t weight = 1;
+			long long weight = 1;
 			size_t subsets_covering_in_solution = 0;
 		};
 
 		struct subset_information final // column
 		{
-			ssize_t score = 0;
-			ssize_t timestamp = 1;
+			long long score = 0;
+			long long timestamp = 1;
 			bool canAddToSolution = true;
 		};
 
@@ -123,18 +123,18 @@ namespace uscp::rwls
 			explicit resolution_data(solution& solution, random_engine& generator) noexcept;
 		};
 
-		template<bool restricted>
+		template<bool restricted = false>
 		[[nodiscard, gnu::hot]] report improve_impl(
 		  const uscp::solution& solution,
-		  const std::vector<ssize_t>& points_weights_initial,
+		  const std::vector<long long>& points_weights_initial,
 		  random_engine& generator,
 		  position stopping_criterion,
 		  const dynamic_bitset<>& authorized_subsets) noexcept;
 
-		[[gnu::hot]] ssize_t compute_subset_score(const resolution_data& data,
-		                                          size_t subset_number) noexcept;
+		[[gnu::hot]] long long compute_subset_score(const resolution_data& data,
+		                                            size_t subset_number) noexcept;
 		[[gnu::hot]] void init(resolution_data& data,
-		                       const std::vector<ssize_t>& points_weights_initial) noexcept;
+		                       const std::vector<long long>& points_weights_initial) noexcept;
 
 		[[gnu::hot]] void add_subset(resolution_data& data, size_t subset_number) noexcept;
 		[[gnu::hot]] void remove_subset(resolution_data& data, size_t subset_number) noexcept;

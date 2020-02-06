@@ -37,7 +37,7 @@ namespace uscp::memetic
 	struct report_serial final
 	{
 		solution_serial solution_final;
-		std::vector<ssize_t> points_weights_final;
+		std::vector<long long> points_weights_final;
 		position_serial found_at;
 		position_serial ended_at;
 		config_serial solve_config;

@@ -12,13 +12,14 @@
 #include <fstream>
 #include <cassert>
 #include <deque>
+#include <sstream>
 
 namespace
 {
 	std::optional<std::stringstream> get_content_line(std::ifstream& instance_stream) noexcept
 	{
 		std::stringstream line_stream;
-		char c = instance_stream.get();
+		char c = static_cast<char>(instance_stream.get());
 		while(instance_stream.good())
 		{
 			switch(c)
@@ -33,7 +34,7 @@ namespace
 					// ignore line
 					do
 					{
-						c = instance_stream.get();
+						c = static_cast<char>(instance_stream.get());
 					} while(instance_stream.good() && c != '\n');
 					break;
 				}
@@ -43,12 +44,12 @@ namespace
 					do
 					{
 						line_stream << c;
-						c = instance_stream.get();
+						c = static_cast<char>(instance_stream.get());
 					} while(instance_stream.good() && c != '\n');
 					return line_stream;
 				}
 			}
-			c = instance_stream.get();
+			c = static_cast<char>(instance_stream.get());
 		}
 		return {};
 	}
@@ -176,7 +177,7 @@ bool uscp::problem::gvcp::read(const std::filesystem::path& base_path,
 		paths.push_back(base_path);
 		while(!paths.empty())
 		{
-			const std::string path = paths.front();
+			const std::filesystem::path path = paths.front();
 			paths.pop_front();
 
 			if(!std::filesystem::exists(path, error))

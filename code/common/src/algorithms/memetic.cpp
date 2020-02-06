@@ -59,6 +59,6 @@ void uscp::memetic::from_json(const nlohmann::json& j, uscp::memetic::report_ser
 	j.at("crossover_operator").get_to(serial.crossover_operator);
 
 	// support for versions after de859b75cec4bb457af200479b4deb071df256e9
-	serial.points_weights_final = j.value<std::vector<ssize_t>>("points_weights_final", {});
+	serial.points_weights_final = j.value<std::vector<long long>>("points_weights_final", {});
 	serial.wcrossover_operator = j.value<std::string>("wcrossover_operator", {});
 }

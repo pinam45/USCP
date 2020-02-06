@@ -28,11 +28,11 @@ namespace uscp::wcrossover
 		mix_random& operator=(const mix_random& other) = delete;
 		mix_random& operator=(mix_random&& other) noexcept = delete;
 
-		[[nodiscard]] std::vector<ssize_t> apply(const std::vector<ssize_t>& a,
-		                                         const std::vector<ssize_t>& b,
-		                                         random_engine& generator) const noexcept
+		[[nodiscard]] std::vector<long long> apply(const std::vector<long long>& a,
+		                                           const std::vector<long long>& b,
+		                                           random_engine& generator) const noexcept
 		{
-			std::vector<ssize_t> weights;
+			std::vector<long long> weights;
 			weights.reserve(problem.points_number);
 			std::bernoulli_distribution dist;
 			for(size_t i = 0; i < problem.points_number; ++i)
@@ -42,17 +42,17 @@ namespace uscp::wcrossover
 			return weights;
 		}
 
-		std::vector<ssize_t> apply1(const std::vector<ssize_t>& a,
-		                            const std::vector<ssize_t>& b,
-		                            random_engine& generator) const noexcept
+		std::vector<long long> apply1(const std::vector<long long>& a,
+		                              const std::vector<long long>& b,
+		                              random_engine& generator) const noexcept
 		{
 			assert(a.size() == problem.points_number && b.size() == problem.points_number);
 			return apply(a, b, generator);
 		}
 
-		std::vector<ssize_t> apply2(const std::vector<ssize_t>& a,
-		                            const std::vector<ssize_t>& b,
-		                            random_engine& generator) const noexcept
+		std::vector<long long> apply2(const std::vector<long long>& a,
+		                              const std::vector<long long>& b,
+		                              random_engine& generator) const noexcept
 		{
 			assert(a.size() == problem.points_number && b.size() == problem.points_number);
 			return apply(a, b, generator);

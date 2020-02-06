@@ -49,6 +49,6 @@ void uscp::rwls::from_json(const nlohmann::json& j, uscp::rwls::report_serial& s
 	serial.stopping_criterion = j.value<position_serial>("stopping_criterion", {0, 0});
 
 	// support for versions after 3a02851fe586fd37329ebd5309e9d92ba5d76dfc
-	serial.points_weights_initial = j.value<std::vector<ssize_t>>("points_weights_initial", {});
-	serial.points_weights_final = j.value<std::vector<ssize_t>>("points_weights_final", {});
+	serial.points_weights_initial = j.value<std::vector<long long>>("points_weights_initial", {});
+	serial.points_weights_final = j.value<std::vector<long long>>("points_weights_final", {});
 }

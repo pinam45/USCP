@@ -43,9 +43,6 @@ cmutils_target_enable_warnings(printer)
 # Build in C++17
 cmutils_target_set_standard(printer CXX 17)
 
-# Set static runtime
-cmutils_target_set_runtime(printer STATIC)
-
 # Enable sanitizers in debug
 cmutils_target_enable_sanitizers(
   printer

@@ -42,7 +42,7 @@ namespace uscp::memetic
 	struct report final
 	{
 		solution solution_final;
-		std::vector<ssize_t> points_weights_final;
+		std::vector<long long> points_weights_final;
 		position found_at;
 		position ended_at;
 		config solve_config;

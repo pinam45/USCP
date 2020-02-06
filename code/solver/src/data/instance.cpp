@@ -138,7 +138,7 @@ namespace
 		dynamic_bitset<> extended_subset; // to minimize memory allocations
 #pragma omp parallel for default(none) shared(reduction, ignored_subsets, reduced) private( \
   extended_subset) if(reduction.parent_instance->subsets_number > 128)
-		for(size_t i_current_subset = 0;
+		for(/*no size_t for openMP on Windows*/ int i_current_subset = 0;
 		    i_current_subset < reduction.parent_instance->subsets_number;
 		    ++i_current_subset)
 		{
@@ -150,7 +150,7 @@ namespace
 			}
 			extended_subset = reduction.parent_instance->subsets_points[i_current_subset];
 			extended_subset |= reduction.reduction_applied.points_covered;
-			for(size_t i_other_subset = 0;
+			for(/*no size_t for openMP on Windows*/ int i_other_subset = 0;
 			    i_other_subset < reduction.parent_instance->subsets_number;
 			    ++i_other_subset)
 			{

@@ -654,7 +654,7 @@ bool printer::generate_rwls_weights_plots(const std::vector<instance_info>& inst
 				// no final weights information
 				continue;
 			}
-			rwls_reports_with_weights.push_back(it.base());
+			rwls_reports_with_weights.push_back(&(*it));
 			weights_stat.exist = true;
 			++weights_stat.repetitions;
 		}
@@ -803,7 +803,7 @@ bool printer::generate_memetic_comparisons_tables(
 			memetic_config_result* result;
 			if(result_it != std::end(comparison.results))
 			{
-				result = result_it.base();
+				result = &(*result_it);
 			}
 			else
 			{

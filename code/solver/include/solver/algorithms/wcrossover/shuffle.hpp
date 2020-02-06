@@ -29,22 +29,22 @@ namespace uscp::wcrossover
 		shuffle& operator=(const shuffle& other) = delete;
 		shuffle& operator=(shuffle&& other) noexcept = delete;
 
-		std::vector<ssize_t> apply1(const std::vector<ssize_t>& a,
-		                            [[maybe_unused]] const std::vector<ssize_t>& b,
-		                            random_engine& generator) const noexcept
+		std::vector<long long> apply1(const std::vector<long long>& a,
+		                              [[maybe_unused]] const std::vector<long long>& b,
+		                              random_engine& generator) const noexcept
 		{
 			assert(a.size() == problem.points_number && b.size() == problem.points_number);
-			std::vector<ssize_t> weights = a;
+			std::vector<long long> weights = a;
 			std::shuffle(std::begin(weights), std::end(weights), generator);
 			return weights;
 		}
 
-		std::vector<ssize_t> apply2([[maybe_unused]] const std::vector<ssize_t>& a,
-		                            const std::vector<ssize_t>& b,
-		                            random_engine& generator) const noexcept
+		std::vector<long long> apply2([[maybe_unused]] const std::vector<long long>& a,
+		                              const std::vector<long long>& b,
+		                              random_engine& generator) const noexcept
 		{
 			assert(a.size() == problem.points_number && b.size() == problem.points_number);
-			std::vector<ssize_t> weights = b;
+			std::vector<long long> weights = b;
 			std::shuffle(std::begin(weights), std::end(weights), generator);
 			return weights;
 		}

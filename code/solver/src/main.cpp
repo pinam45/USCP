@@ -170,7 +170,7 @@ namespace
 	                                    uscp::wcrossover::minmax,
 	                                    uscp::wcrossover::shuffle>;
 
-	template<typename Lambda, typename... Crossovers, typename... WCrossovers>
+	template<typename Lambda>
 	bool forall_crossover_wcrossover(Lambda&& lambda) noexcept
 	{
 		return foreach_crossover_wcrossover(
@@ -520,11 +520,11 @@ int main(int argc, char* argv[])
 		     "Implemented wcrossovers: reset, keep, average, mix_random, add, difference, max, min, minmax, shuffle\n"
 		     "\n"
 		     "Usage examples:\n"
-		     "  Solve CYC10 and CYC11 with RWLS and a limit of 5000 steps:\n"
+		     "  Solve CYC10 and CYC11 instances with RWLS and a limit of 5000 steps:\n"
 		     "    ./solver --instances=CYC10,CYC11 --rwls --rwls_steps=5000\n"
 		     "\n"
-		     "  Solve R42, an unknown RAIL instance in ./rail_inst.txt using the same format as in OR-Library, with the Memetic algorithm, the subproblem_rwls crossover, the max wcrossover and a limit of 360 seconds:\n"
-		     "    ./solver --instance_type=orlibrary_rail --instance_path=./rail_inst.txt --instance_name=R42 --memetic --memetic_crossover=subproblem_rwls --memetic_wcrossover=max --memetic_time=360\n";
+		     "  Solve R42, an unknown RAIL instance in ./rail_42.txt using the same format as in OR-Library, with the Memetic algorithm, the subproblem_rwls crossover, the max wcrossover and a limit of 360 seconds:\n"
+		     "    ./solver --instance_type=orlibrary_rail --instance_path=./rail_42.txt --instance_name=R42 --memetic --memetic_crossover=subproblem_rwls --memetic_wcrossover=max --memetic_time=360\n";
 		cxxopts::Options options("solver", help_txt.str());
 		options.add_option("", cxxopts::Option("help", "Print help"));
 		options.add_option("", cxxopts::Option("version", "Print version"));
