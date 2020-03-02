@@ -73,7 +73,13 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 
 	// Population
 	std::array<solution, 2> population{solution(m_problem), solution(m_problem)};
-#pragma omp parallel for default(none) shared(population, generator, NULL_LOGGER)
+// OpenMP implementation changed in GCC9, see:
+// https://gcc.gnu.org/gcc-9/porting_to.html#ompdatasharing
+#if __GNUC__ < 9
+#	pragma omp parallel for default(none) shared(population, generator)
+#else
+#	pragma omp parallel for default(none) shared(population, generator, NULL_LOGGER)
+#endif
 	for(/*no size_t for openMP on Windows*/ int i = 0; i < population.size(); ++i)
 	{
 		population[i] = uscp::greedy::random_solve(generator, population[i].problem, NULL_LOGGER);

@@ -16,6 +16,7 @@
 #include <ctime>
 #include <iterator>
 #include <functional>
+#include <iomanip>
 
 namespace
 {
