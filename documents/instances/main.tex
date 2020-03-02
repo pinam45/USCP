@@ -1,0 +1,86 @@
+%!TEX program = lualatex
+\documentclass[12pt,a4paper,twoside]{article}
+
+%----------------------------------------
+% Packages
+%----------------------------------------
+
+% Programming facilities
+\usepackage{etoolbox}
+\usepackage{ifxetex}
+\usepackage{ifluatex}
+% Encoding
+\usepackage[T1]{fontenc}
+\ifboolexpr{bool{xetex} or bool{luatex}}{%
+	\usepackage{fontspec}
+}{%
+	\usepackage[utf8]{inputenc}
+}
+% General purpose
+\usepackage[english]{babel}
+\usepackage[top=2cm, bottom=1.8cm, left=1.8cm, right=1.8cm, head=14pt, foot=36pt]{geometry}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage[table]{xcolor}
+\usepackage{float}
+% Mathematics
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathrsfs}
+\usepackage{amsthm}
+\usepackage{dsfont}
+\usepackage{braket}
+\usepackage{stmaryrd}
+% Tables
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{ltablex}
+\usepackage{tabu}
+\usepackage{booktabs}
+\usepackage{multirow}
+
+%----------------------------------------
+% Informations
+%----------------------------------------
+
+% Cover infos
+\title{USCP Instances}
+\author{\url{https://github.com/pinam45/USCP}}
+\date{\today}
+
+% Fancy style options
+\lhead{\small USCP Instances}
+\rhead{\small \today}
+\chead{}
+\lfoot{\url{https://github.com/pinam45/USCP}}
+\rfoot{\thepage}
+\cfoot{}
+\pagestyle{fancy}
+
+
+%----------------------------------------
+% Links
+%----------------------------------------
+
+% Links config, especialy for the table of contents
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  linktoc=all,
+  citecolor=black
+}
+
+%----------------------------------------
+% Document
+%----------------------------------------
+\begin{document}
+	\maketitle{}
+	\input{./tables/orlibrary_instances_base}
+	\input{./tables/orlibrary_instances_cyc_clr}
+	\newpage
+	\input{./tables/orlibrary_instances_rail}
+	\input{./tables/sts_instances}
+\end{document}
