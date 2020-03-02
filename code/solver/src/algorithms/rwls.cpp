@@ -436,8 +436,11 @@ void uscp::rwls::rwls::init(uscp::rwls::rwls::resolution_data& data,
 	// points information
 	dynamic_bitset<> tmp;
 #pragma omp parallel for default(none) shared(data, points_weights_initial) private(tmp)
-	for(/*no size_t for openMP on Windows*/ int i = 0; i < m_problem.points_number; ++i)
+	for(/*no size_t for openMP on Windows*/ int i_int = 0;
+	    static_cast<size_t>(i_int) < m_problem.points_number;
+	    ++i_int)
 	{
+		const size_t i = static_cast<size_t>(i_int);
 		data.points_information[i].weight = points_weights_initial[i];
 		data.points_information[i].subsets_covering_in_solution = 0;
 		for(size_t subset_covering_point: m_subsets_covering_points[i])
@@ -451,8 +454,11 @@ void uscp::rwls::rwls::init(uscp::rwls::rwls::resolution_data& data,
 
 // subset scores
 #pragma omp parallel for default(none) shared(data)
-	for(/*no size_t for openMP on Windows*/ int i = 0; i < m_problem.subsets_number; ++i)
+	for(/*no size_t for openMP on Windows*/ int i_int = 0;
+	    static_cast<size_t>(i_int) < m_problem.subsets_number;
+	    ++i_int)
 	{
+		const size_t i = static_cast<size_t>(i_int);
 		data.subsets_information[i].score = compute_subset_score(data, i);
 		assert(data.current_solution.selected_subsets[i] ? data.subsets_information[i].score <= 0
 		                                                 : data.subsets_information[i].score >= 0);

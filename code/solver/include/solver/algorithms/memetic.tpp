@@ -80,8 +80,11 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 #else
 #	pragma omp parallel for default(none) shared(population, generator, NULL_LOGGER)
 #endif
-	for(/*no size_t for openMP on Windows*/ int i = 0; i < population.size(); ++i)
+	for(/*no size_t for openMP on Windows*/ int i_int = 0;
+	    i_int < static_cast<int>(population.size());
+	    ++i_int)
 	{
+		const size_t i = static_cast<size_t>(i_int);
 		population[i] = uscp::greedy::random_solve(generator, population[i].problem, NULL_LOGGER);
 	}
 	SPDLOG_LOGGER_DEBUG(
@@ -128,8 +131,11 @@ uscp::memetic::report uscp::memetic::memetic<Crossover, WeightsCrossover>::solve
 		             timer.elapsed());
 #pragma omp parallel for default(none) \
   shared(population, population_weights, rwls_reports, config, generator)
-		for(/*no size_t for openMP on Windows*/ int i = 0; i < population.size(); ++i)
+		for(/*no size_t for openMP on Windows*/ int i_int = 0;
+		    i_int < static_cast<int>(population.size());
+		    ++i_int)
 		{
+			const size_t i = static_cast<size_t>(i_int);
 			rwls_reports[i] = m_rwls.improve(
 			  population[i], population_weights[i], generator, config.rwls_stopping_criterion);
 		}
