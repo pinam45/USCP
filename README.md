@@ -1,5 +1,9 @@
 # Unicost Set Covering Problem (USCP)
 
+[![Build Status](https://travis-ci.org/pinam45/USCP.svg?branch=master)](https://travis-ci.org/pinam45/USCP)
+[![Build status](https://ci.appveyor.com/api/projects/status/xepey5vj71wws7cq/branch/master?svg=true)](https://ci.appveyor.com/project/pinam45/uscp/branch/master)
+[![license](https://img.shields.io/github/license/pinam45/USCP.svg)](http://opensource.org/licenses/MIT)
+
 This repository contain documents and code related to the research I made on the USCP during my internship at the [Institut de Recherche en Informatique, Mathématiques, Automatique et Signal (IRIMAS)](https://www.irimas.uha.fr/) laboratory of the [Université de Haute-Alsace (UHA)](https://www.uha.fr/).
 
 The internship was from *2019-09-02* to *2020-02-07* and was my last year internship for the [Université de technologie de Belfort Montbéliard (UTBM)](https://www.uha.fr/) and the [Université du Québec à Chicoutimi (UQAC)](https://www.uqac.ca/).
