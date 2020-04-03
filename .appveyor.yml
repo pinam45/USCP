@@ -1,0 +1,27 @@
+image:
+  - Visual Studio 2019
+
+platform:
+  - x86
+  - x64
+
+configuration:
+  - Debug
+  - Release
+
+init:
+  - cmake --version
+  - msbuild /version
+
+install:
+  - git submodule update --init --recursive
+
+before_build:
+  - if "%platform%"=="x86" (set generator_platform=Win32) else (set generator_platform=x64)
+  - pushd code
+  - mkdir build-VS
+  - pushd build-VS
+  - cmake .. -G "Visual Studio 16 2019" -A "%generator_platform%" -DCMAKE_CONFIGURATION_TYPES=%configuration%
+
+build_script:
+  - cmake --build . --config "%configuration%" -- /M
