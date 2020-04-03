@@ -1,0 +1,95 @@
+language: cpp
+
+dist: bionic
+
+git:
+  depth: 1
+  submodules: true
+
+matrix:
+  include:
+
+    # Linux / GCC
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+            - ninja-build
+      env:
+        - COMPILER=g++-8
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9
+            - ninja-build
+      env:
+        - COMPILER=g++-9
+
+#    - os: linux
+#      compiler: gcc
+#      addons:
+#        apt:
+#          sources:
+#            - ubuntu-toolchain-r-test
+#          packages:
+#            - g++-10
+#            - ninja-build
+#      env:
+#        - COMPILER=g++-10
+
+    # Linux / Clang
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-bionic-8
+          packages:
+            - clang-8
+            - g++-8
+            - ninja-build
+      env:
+        - COMPILER=clang++-8
+
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-bionic-9
+          packages:
+            - clang-9
+            - g++-9
+            - ninja-build
+      env:
+        - COMPILER=clang++-9
+
+script:
+  - if [[ "${COMPILER}" != "" ]]; then export CXX=${COMPILER}; fi
+  - uname -a
+  - cmake --version
+  - ninja --version
+  - ${CXX} --version
+
+  - cd code
+  - mkdir cmake-build-debug
+  - cd cmake-build-debug
+  - cmake .. -DCMAKE_BUILD_TYPE=Debug ${CMAKE_EXTRA_ARGS} -GNinja
+  - cmake --build . --config Debug
+
+  - cd ..
+  - mkdir cmake-build-release
+  - cd cmake-build-release
+  - cmake .. -DCMAKE_BUILD_TYPE=Release ${CMAKE_EXTRA_ARGS} -GNinja
+  - cmake --build . --config Release
